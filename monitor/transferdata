@@ -1,0 +1,13 @@
+#!/bin/bash
+
+while true
+do
+    scp -i /home/utopea/.ssh/thor_rsa "/home/utopea/WIFIS-Team/controlcode/monitor/t_stream.html" suresh@thor.dunlap.utoronto.ca:Sites/wifis/
+    scp -i /home/utopea/.ssh/thor_rsa "/home/utopea/WIFIS-Team/controlcode/monitor/history_plot.jpg" suresh@thor.dunlap.utoronto.ca:Sites/wifis/
+    scp -i /home/utopea/.ssh/thor_rsa "/home/utopea/WIFIS-Team/controlcode/monitor/history_plot_heater.jpg" suresh@thor.dunlap.utoronto.ca:Sites/wifis/
+    scp -i /home/utopea/.ssh/thor_rsa "/home/utopea/WIFIS-Team/controlcode/monitor/history_plot_Tgrad.jpg" suresh@thor.dunlap.utoronto.ca:Sites/wifis/
+    scp -i /home/utopea/.ssh/thor_rsa "/home/utopea/WIFIS-Team/controlcode/monitor/pressure_plot.jpg" suresh@thor.dunlap.utoronto.ca:Sites/wifis/
+    scp -i /home/utopea/.ssh/thor_rsa "/home/utopea/WIFIS-Team/controlcode/monitor/Mon Jun 12 11-57-22 2017.csv" suresh@thor.dunlap.utoronto.ca:Dropbox/WIFIS-Electronics/temp_files/
+
+    sleep 20
+done
