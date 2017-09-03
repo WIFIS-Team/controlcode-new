@@ -126,10 +126,11 @@ class h2rg:
         ax.format_coord = Formatter(im)
         ax.set_title(fileName1)
         fig.colorbar(im)
-
+        plt.show()
+	
 class h2rgExposeThread(QThread):
 
-    plotImage = pyqtSignal(str,str,str)
+    finished = pyqtSignal(str,str,str)
 
     def __init__(self,detector,exposureType,nreads=2,nramps=1,obsType="None",sourceName="None"):
         QThread.__init__(self)
@@ -145,12 +146,13 @@ class h2rgExposeThread(QThread):
         
     def run(self):
         if(self.exposureType == "SF"):
-            output = detector.exposeSF()
-            self.plotImage.emit("SF",output,"None")
+            output = self.detector.exposeSF()
+            print(output)
+            self.finished.emit("SF",output,"None")
         elif(self.exposureType == "CDS"):
-            output = detector.exposeCDS()
+            output = self.detector.exposeCDS()
         elif(self.exposureType == "Ramp"):
-            output = detector.exposeRamp()
+            output = self.detector.exposeRamp()
             
             
         
