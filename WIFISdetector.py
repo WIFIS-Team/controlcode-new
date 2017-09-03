@@ -2,17 +2,22 @@ import numpy as np
 import astropy.io.fits as fits
 import socket
 import os
-import PyQt5.QtCore import QThread
+import sys
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+import matplotlib.pyplot as plt
+from astropy.visualization import (PercentileInterval, LinearStretch,
+                                   ImageNormalize)
 
+# Define global variables here
 servername = "192.168.0.20"
 serverport = 5000
 path_to_watch = "/Data/WIFIS/H2RG-G17084-ASIC-08-319/"
 buffersize = 1024
 
 class h2rg:
-    def __init__(self,servername,port,buffersize,path_to_watch):
+    def __init__(self):
         self.servername = servername
-        self.port = port
+        self.port = serverport
         self.buffersize = buffersize
         self.path = path_to_watch
         
@@ -21,7 +26,7 @@ class h2rg:
         self.initialized = False
     
     def connect(self):
-        self.s.connect(self.servername,self.port)
+        self.s.connect((self.servername,self.port))
         self.connected = True
         
         return(True)
@@ -106,26 +111,48 @@ class h2rg:
         self.writeObs(self,finalPath,obsType,sourceName)
         
         return(finalPath)
+    
+    @pyqtSlot(str,str,str)    
+    def plotImage(obsType,fileName1,fileName2):
+        hdu = fits.open(fileName1)
+        image = hdu[0].data*1.0
+        
+        norm = ImageNormalize(image, interval=PercentileInterval(99.5),
+                              stretch=LinearStretch())
+                              
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
+        ax.format_coord = Formatter(im)
+        ax.set_title(fileName1)
+        fig.colorbar(im)
 
 class h2rgExposeThread(QThread):
 
-    def __init__(self,detector,exposureType,nreads=2,nramps=1):
+    plotImage = pyqtSignal(str,str,str)
+
+    def __init__(self,detector,exposureType,nreads=2,nramps=1,obsType="None",sourceName="None"):
         QThread.__init__(self)
         self.detector = detector
         self.exposureType = exposureType
         self.nreads = nreads
         self.nramps = nramps
+        self.obsType = obsType
+        self.sourceName = sourceName
         
     def __del__(self):
         self.wait()
         
-    def expose():
+    def run(self):
         if(self.exposureType == "SF"):
-            detector.exposeSF()
-        else if(self.exposureType == "CDS"):
+            output = detector.exposeSF()
+            self.plotImage.emit("SF",output,"None")
+        elif(self.exposureType == "CDS"):
+            output = detector.exposeCDS()
+        elif(self.exposureType == "Ramp"):
+            output = detector.exposeRamp()
             
-        else if(self.exposureType == "Ramp"):
-            detector.exposeRamp()
+            
         
             
             
