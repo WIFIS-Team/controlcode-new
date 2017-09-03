@@ -135,7 +135,7 @@ def get_telemetry(telSock, verbose=True):
     if verbose:
         reqString = "%s TCS %i REQUEST ALL" % (TELID, REF_NUM)
 
-    cleanResp = query_telescope(telSock, reqString, telem=True)
+    cleanResp = query_telescope(telSock, reqString, telem=True, verbose=verbose)
     #gather the telemetry into a dict
     telemDict = {}
     II = 0
