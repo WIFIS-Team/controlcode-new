@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 import sys
 from design import Ui_MainWindow
 import wifis_guiding as wg
+import WIFISdetector as wd
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
@@ -10,7 +11,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
         
-        self.telSock = wg.connect_to_telescope()
+#        self.telSock = wg.connect_to_telescope()
+	self.scidet = wd.h2rg()
 
     #def updateTelem(self):
      #   telemDict = wg.get_telemetry(self.telSock)

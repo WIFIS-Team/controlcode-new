@@ -234,21 +234,6 @@
          <string>TextLabel</string>
         </property>
        </widget>
-       <zorder>label_2</zorder>
-       <zorder>label_3</zorder>
-       <zorder>label_4</zorder>
-       <zorder>label_5</zorder>
-       <zorder>label_6</zorder>
-       <zorder>label_7</zorder>
-       <zorder>RALabel</zorder>
-       <zorder>DECLabel</zorder>
-       <zorder>AZLabel</zorder>
-       <zorder>ELLabel</zorder>
-       <zorder>IISLabel</zorder>
-       <zorder>HALabel</zorder>
-       <zorder>groupBox_2</zorder>
-       <zorder>groupBox_2</zorder>
-       <zorder>groupBox_2</zorder>
       </widget>
      </item>
      <item>
@@ -369,15 +354,6 @@ p, li { white-space: pre-wrap; }
          <string>Move to WIFIS</string>
         </property>
        </widget>
-       <zorder>groupBox</zorder>
-       <zorder>groupBox</zorder>
-       <zorder>label_8</zorder>
-       <zorder>label_9</zorder>
-       <zorder>RAMoveBox</zorder>
-       <zorder>DECMoveBox</zorder>
-       <zorder>moveTelescopeButton</zorder>
-       <zorder>pushButton_2</zorder>
-       <zorder>pushButton_3</zorder>
       </widget>
      </item>
     </layout>
@@ -582,7 +558,7 @@ p, li { white-space: pre-wrap; }
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -648,15 +624,6 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
        </widget>
-       <zorder>label_20</zorder>
-       <zorder>label_21</zorder>
-       <zorder>textEdit_6</zorder>
-       <zorder>textEdit_7</zorder>
-       <zorder>groupBox_6</zorder>
-       <zorder>groupBox_5</zorder>
-       <zorder>groupBox_5</zorder>
-       <zorder>groupBox_5</zorder>
-       <zorder>groupBox_5</zorder>
       </widget>
      </item>
      <item>
@@ -762,7 +729,7 @@ p, li { white-space: pre-wrap; }
           <x>320</x>
           <y>20</y>
           <width>160</width>
-          <height>151</height>
+          <height>314</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -907,8 +874,8 @@ p, li { white-space: pre-wrap; }
          <rect>
           <x>20</x>
           <y>140</y>
-          <width>141</width>
-          <height>31</height>
+          <width>147</width>
+          <height>32</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -1001,30 +968,15 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </widget>
-       <zorder>verticalLayoutWidget</zorder>
-       <zorder>verticalLayoutWidget_2</zorder>
-       <zorder>verticalLayoutWidget_3</zorder>
-       <zorder>SaveImageButton_2</zorder>
-       <zorder>verticalLayoutWidget_4</zorder>
-       <zorder>horizontalLayoutWidget_3</zorder>
-       <zorder>FocPosition</zorder>
-       <zorder>verticalLayoutWidget_5</zorder>
       </widget>
      </item>
     </layout>
    </widget>
-   <zorder>tableWidget_2</zorder>
-   <zorder>horizontalLayoutWidget</zorder>
+   <zorder>layoutWidget</zorder>
    <zorder>horizontalLayoutWidget</zorder>
    <zorder>label</zorder>
    <zorder>horizontalLayoutWidget_2</zorder>
-   <zorder>groupBox_3</zorder>
-   <zorder>groupBox_4</zorder>
-   <zorder>groupBox_5</zorder>
    <zorder>groupBox_6</zorder>
-   <zorder>groupBox_4</zorder>
-   <zorder>groupBox_4</zorder>
-   <zorder>groupBox_4</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1047,14 +999,41 @@ p, li { white-space: pre-wrap; }
    </widget>
    <widget class="QMenu" name="menuInitialie">
     <property name="title">
-     <string>Initialize</string>
+     <string>H2RG</string>
     </property>
+    <addaction name="actionConnect"/>
+    <addaction name="actionInitialize"/>
+    <addaction name="actionDisconnect"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPower"/>
    <addaction name="menuInitialie"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionConnect">
+   <property name="text">
+    <string>Connect</string>
+   </property>
+   <property name="toolTip">
+    <string>Connect to H2RG Server</string>
+   </property>
+  </action>
+  <action name="actionInitialize">
+   <property name="text">
+    <string>Initialize</string>
+   </property>
+   <property name="toolTip">
+    <string>Initialize H2RG Detector</string>
+   </property>
+  </action>
+  <action name="actionDisconnect">
+   <property name="text">
+    <string>Disconnect</string>
+   </property>
+   <property name="toolTip">
+    <string>Disconnect from H2RG Server</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
