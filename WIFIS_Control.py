@@ -12,7 +12,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         
 #        self.telSock = wg.connect_to_telescope()
-	self.scidet = wd.h2rg()
+        self.scidet = wd.h2rg()
+        self.actionConnect.triggered.connect(self.scidet.connect)
 
     #def updateTelem(self):
      #   telemDict = wg.get_telemetry(self.telSock)
