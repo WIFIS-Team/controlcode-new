@@ -10,6 +10,7 @@ from Tkinter import *
 import ttk
 import sys
 import signal
+from power_control import connect_to_power
 
 ###################################################
 def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
@@ -116,6 +117,18 @@ class MainApplication(Frame):
         self.ser = ser
         self.ser2 = ser2
         self.create_widgets()
+        self.switch1, self.switch2 = connect_to_power()
+
+        if self.switch2[0].state == 'OFF':
+            self.b7.config(fg='red')
+        else:
+            self.b7.config(fg='green')
+
+        if self.switch2[1].state == 'OFF':
+            self.b6.config(fg='red')
+        else:
+            self.b6.config(fg='green')
+
 
     def create_widgets(self): #create all the buttons and labesl and stuff
         
@@ -162,7 +175,16 @@ class MainApplication(Frame):
         self.b4.grid(row=3, column=4)
         self.s2 = Label(self, text='in position', fg ='green' )
         self.s2.grid(row=3, column=5, padx=15)
-        
+
+        self.b5 = Button(self, text='Source Setup', \
+                command=self.sourcesetup)
+        self.b5.grid(row=4, column=2)
+        self.b6 = Button(self, text='Arc Setup', \
+                command=self.arcsetup)
+        self.b6.grid(row=4,column=3)
+        self.b7 = Button(self, text='Flat Setup', \
+                command=self.flatsetup)
+        self.b7.grid(row=4, column=4)
     #Sphere Control#
     ######################################################
     def toggle_sphere(self):
@@ -240,6 +262,36 @@ class MainApplication(Frame):
         self.s2["fg"] = "green" 
         self.b4['relief']=SUNKEN
         self.b3['relief']=RAISED
+
+    def flatsetup(self):
+        self.flip2pos2()
+        self.flip1pos1()
+        if self.switch2[0].state == 'OFF':
+            self.switch2[0].state = 'ON'
+            self.b7.config(fg='green')
+        if self.switch2[1].state == 'ON':
+            self.switch2[1].state = 'OFF'
+            self.b6.config(fg='red') 
+
+
+    def arcsetup(self):
+        self.flip2pos2()
+        self.flip1pos2()
+        if self.switch2[0].state == 'ON':
+            self.switch2[0].state = 'OFF'
+            self.b7.config(fg='red')
+        if self.switch2[1].state == 'OFF':
+            self.switch2[1].state = 'ON'
+            self.b6.config(fg='green')
+
+    def sourcesetup(self):
+        self.flip2pos1()
+        if self.switch2[0].state == 'ON':
+            self.switch2[0].state = 'OFF'
+            self.b7.config(fg='red')
+        if self.switch2[1].state == 'ON':
+            self.switch2[1].state = 'OFF'
+            self.b6.config(fg='red')
 
 def run_calib_gui(tkroot,mainloop = False):
     """Function for running the calibration as part of the launch_controls.py

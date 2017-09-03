@@ -13,12 +13,11 @@ from glob import glob
 from astropy.io import fits
 from sys import exit
 
+plate_scale = 0.29125
+guideroffsets = np.array([-4.15,365.88])
 
-
-####### CHANGE THESE VALUES TO CHANGE THE GUIDER FIELD OFFSET ######
-plate_scale = 0.29125 #"/pixel
-guideroffsets = np.array([-4.0, 414.1]) # [ RA, DEC ], field should be 7 armin off in DEC
-###################################################################################
+#June 2017 -4.0,414.1
+#May 2017 -6.0, 424.1
 
 # !!IMPORTANT!!: Before guiding can work we need to characterize the offset of the 
 #                guiding field from the primary field.
@@ -200,13 +199,17 @@ def get_rotation_solution(telSock, forcerot=90):
     if forcerot == True:
         rotangle = 90
     else:
-        rotangle = float(query_telescope(telSock, 'BOK TCS 123 REQUEST IIS')[-1]) - 90
+        rotangle = float(query_telescope(telSock, 'BOK TCS 123 REQUEST IIS')[-1]) - 90 - 0.26
 
     rotangle_rad = rotangle*np.pi/180.0
     rotation_matrix = np.array([[np.cos(rotangle_rad),1*np.sin(rotangle_rad)],\
         [-1*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
     rotation_matrix_offsets = np.array([[np.cos(rotangle_rad),-1*np.sin(rotangle_rad)],\
         [1*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+
+    #if (rotangle < 90) & (rotangle > 0):
+    #    rotation_matrix = rotation_matrix_offsets
+    #    print "CHANGING MATRIX"
 
     offsets = np.dot(rotation_matrix_offsets, guideroffsets)
     x_rot = np.dot(rotation_matrix, x_sol)
@@ -313,6 +316,7 @@ def wifis_simple_guiding(telSock):
                     pass
            
             time.sleep(1)
+
     except KeyboardInterrupt:
         cam.end_exposure()
 
@@ -370,7 +374,9 @@ def wifis_simple_guiding_setup(telSock, cam, exptime, gfls):
     if check_guidestar:
         img2 = cam.take_photo()
         mpl.ion()
-        imgbox = img2[stary1-boxsize:stary1+boxsize, starx1-boxsize:starx1+boxsize]
+        starybox = int(stary1)
+        starxbox = int(starx1)
+        imgbox = img2[starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize]
         mpl.imshow(imgbox, interpolation='none', origin='lower')
         mpl.plot([boxsize],[boxsize], 'rx', markersize=10)
         #mpl.plot(starx1, stary1, 'ro', markeredgecolor = 'r', markerfacecolor='none', markersize = 5)
@@ -473,8 +479,10 @@ def run_guiding(inputguiding, parent, cam, telSock):
 
     #Take an image
     img = cam.take_photo(shutter='open')
-    imgbox = img[stary1-boxsize:stary1+boxsize, starx1-boxsize:starx1+boxsize]
-  
+    starx_box = int(starx1)
+    stary_box = int(stary1)
+    imgbox = img[stary_box-boxsize:stary_box+boxsize, starx_box-boxsize:starx_box+boxsize]
+
     #if guideplot:
     #    ax.clear()
     #    imgplot = ax.imshow(imgbox, interpolation='none', origin='lower')

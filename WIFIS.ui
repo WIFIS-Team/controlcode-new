@@ -182,7 +182,7 @@
          <string>TextLabel</string>
         </property>
        </widget>
-       <widget class="QLabel" name="label_10">
+       <widget class="QLabel" name="AZLabel">
         <property name="geometry">
          <rect>
           <x>50</x>
@@ -195,7 +195,7 @@
          <string>TextLabel</string>
         </property>
        </widget>
-       <widget class="QLabel" name="label_11">
+       <widget class="QLabel" name="ELLabel">
         <property name="geometry">
          <rect>
           <x>50</x>
@@ -208,7 +208,7 @@
          <string>TextLabel</string>
         </property>
        </widget>
-       <widget class="QLabel" name="label_12">
+       <widget class="QLabel" name="IISLabel">
         <property name="geometry">
          <rect>
           <x>50</x>
@@ -221,7 +221,7 @@
          <string>TextLabel</string>
         </property>
        </widget>
-       <widget class="QLabel" name="label_13">
+       <widget class="QLabel" name="HALabel">
         <property name="geometry">
          <rect>
           <x>50</x>
@@ -242,10 +242,10 @@
        <zorder>label_7</zorder>
        <zorder>RALabel</zorder>
        <zorder>DECLabel</zorder>
-       <zorder>label_10</zorder>
-       <zorder>label_11</zorder>
-       <zorder>label_12</zorder>
-       <zorder>label_13</zorder>
+       <zorder>AZLabel</zorder>
+       <zorder>ELLabel</zorder>
+       <zorder>IISLabel</zorder>
+       <zorder>HALabel</zorder>
        <zorder>groupBox_2</zorder>
        <zorder>groupBox_2</zorder>
        <zorder>groupBox_2</zorder>
