@@ -14,6 +14,14 @@ serverport = 5000
 path_to_watch = "/Data/WIFIS/H2RG-G17084-ASIC-08-319/"
 buffersize = 1024
 
+ 
+class Formatter(object):
+    def __init__(self, im):
+        self.im = im
+    def __call__(self, x, y):
+        z = self.im.get_array()[int(y), int(x)]
+	return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
+
 class h2rg:
     def __init__(self):
         self.servername = servername
@@ -113,7 +121,7 @@ class h2rg:
         return(finalPath)
     
     @pyqtSlot(str,str,str)    
-    def plotImage(obsType,fileName1,fileName2):
+    def plotImage(self,obsType,fileName1,fileName2):
         hdu = fits.open(fileName1)
         image = hdu[0].data*1.0
         
