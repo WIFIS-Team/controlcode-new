@@ -588,7 +588,7 @@ p, li { white-space: pre-wrap; }
       <x>0</x>
       <y>340</y>
       <width>811</width>
-      <height>331</height>
+      <height>361</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -655,6 +655,8 @@ p, li { white-space: pre-wrap; }
        <zorder>groupBox_6</zorder>
        <zorder>groupBox_5</zorder>
        <zorder>groupBox_5</zorder>
+       <zorder>groupBox_5</zorder>
+       <zorder>groupBox_5</zorder>
       </widget>
      </item>
      <item>
@@ -667,221 +669,16 @@ p, li { white-space: pre-wrap; }
        <property name="title">
         <string>Guider Control</string>
        </property>
-       <widget class="QLabel" name="label_22">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>30</y>
-          <width>41</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>13</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Filter:</string>
-        </property>
-       </widget>
-       <widget class="QComboBox" name="comboBox">
-        <property name="geometry">
-         <rect>
-          <x>50</x>
-          <y>30</y>
-          <width>104</width>
-          <height>26</height>
-         </rect>
-        </property>
-        <property name="currentText">
-         <string>Z</string>
-        </property>
-        <item>
-         <property name="text">
-          <string>Z</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>I</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>R</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>G</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>H-Alpha</string>
-         </property>
-        </item>
-       </widget>
-       <widget class="QLabel" name="label_23">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>60</y>
-          <width>101</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>13</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Focus Pos:</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="FocPosition">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>60</y>
-          <width>60</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>TextLabel</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_24">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>80</y>
-          <width>101</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>13</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Focus Step:</string>
-        </property>
-       </widget>
-       <widget class="QTextEdit" name="textEdit_8">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>80</y>
-          <width>61</width>
-          <height>21</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pushButton_4">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>100</y>
-          <width>81</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>FWD</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pushButton_5">
-        <property name="geometry">
-         <rect>
-          <x>80</x>
-          <y>100</y>
-          <width>81</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>BWD</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pushButton_6">
-        <property name="geometry">
-         <rect>
-          <x>180</x>
-          <y>120</y>
-          <width>101</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Take Image</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pushButton_7">
-        <property name="geometry">
-         <rect>
-          <x>290</x>
-          <y>120</y>
-          <width>111</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Focus Camera</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pushButton_8">
-        <property name="geometry">
-         <rect>
-          <x>450</x>
-          <y>20</y>
-          <width>113</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Centroid Stars</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pushButton_9">
-        <property name="geometry">
-         <rect>
-          <x>460</x>
-          <y>80</y>
-          <width>113</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Set Temp</string>
-        </property>
-       </widget>
        <widget class="QWidget" name="verticalLayoutWidget">
         <property name="geometry">
          <rect>
-          <x>190</x>
+          <x>170</x>
           <y>20</y>
-          <width>101</width>
-          <height>101</height>
+          <width>141</width>
+          <height>151</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_27">
-           <property name="font">
-            <font>
-             <pointsize>13</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>CCD Temp:</string>
-           </property>
-          </widget>
-         </item>
          <item>
           <widget class="QLabel" name="label_26">
            <property name="font">
@@ -891,6 +688,24 @@ p, li { white-space: pre-wrap; }
            </property>
            <property name="text">
             <string>Exposure Type:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_33">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Exposure Time (ms):</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -904,6 +719,24 @@ p, li { white-space: pre-wrap; }
            <property name="text">
             <string>Camera Object:</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_27">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>CCD Temp:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
           </widget>
          </item>
          <item>
@@ -914,7 +747,10 @@ p, li { white-space: pre-wrap; }
             </font>
            </property>
            <property name="text">
-            <string>Set Temp:</string>
+            <string>Temp</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -923,15 +759,15 @@ p, li { white-space: pre-wrap; }
        <widget class="QWidget" name="verticalLayoutWidget_2">
         <property name="geometry">
          <rect>
-          <x>290</x>
+          <x>320</x>
           <y>20</y>
           <width>160</width>
-          <height>101</height>
+          <height>151</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="QComboBox" name="comboBox_2">
+          <widget class="QComboBox" name="ExpType">
            <property name="currentText">
             <string>Normal</string>
            </property>
@@ -948,6 +784,12 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
+          <widget class="QTextEdit" name="ExpTime"/>
+         </item>
+         <item>
+          <widget class="QTextEdit" name="CCDObject"/>
+         </item>
+         <item>
           <widget class="QLabel" name="CCDTemp">
            <property name="text">
             <string>TextLabel</string>
@@ -955,13 +797,218 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="QTextEdit" name="textEdit_9"/>
-         </item>
-         <item>
-          <widget class="QTextEdit" name="textEdit_10"/>
+          <widget class="QTextEdit" name="SetTempValue"/>
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="verticalLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>480</x>
+          <y>20</y>
+          <width>130</width>
+          <height>151</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <item>
+          <widget class="QPushButton" name="SaveImageButton">
+           <property name="text">
+            <string>Save Image</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="FocusCameraButton">
+           <property name="text">
+            <string>Focus Camera</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="CentroidButton">
+           <property name="text">
+            <string>Centroid Stars</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="SetTempButton">
+           <property name="text">
+            <string>Set Temp</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QPushButton" name="SaveImageButton_2">
+        <property name="geometry">
+         <rect>
+          <x>660</x>
+          <y>20</y>
+          <width>130</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Take Image</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="verticalLayoutWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>30</y>
+          <width>74</width>
+          <height>111</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <widget class="QLabel" name="label_22">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Filter:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_23">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Focus Pos:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_24">
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Focus Step:</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>140</y>
+          <width>141</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QPushButton" name="BKWButton">
+           <property name="text">
+            <string>BWD</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="FWDButton">
+           <property name="text">
+            <string>FWD</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="verticalLayoutWidget_5">
+        <property name="geometry">
+         <rect>
+          <x>80</x>
+          <y>30</y>
+          <width>104</width>
+          <height>111</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <widget class="QComboBox" name="FilterVal">
+           <property name="currentText">
+            <string>Z</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Z</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>I</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>R</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>G</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>H-Alpha</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="FocPosition">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>TextLabel</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTextEdit" name="textEdit_8">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>25</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <zorder>verticalLayoutWidget</zorder>
+       <zorder>verticalLayoutWidget_2</zorder>
+       <zorder>verticalLayoutWidget_3</zorder>
+       <zorder>SaveImageButton_2</zorder>
+       <zorder>verticalLayoutWidget_4</zorder>
+       <zorder>horizontalLayoutWidget_3</zorder>
+       <zorder>FocPosition</zorder>
+       <zorder>verticalLayoutWidget_5</zorder>
       </widget>
      </item>
     </layout>
