@@ -12,9 +12,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         
         self.telSock = wg.connect_to_telescope()
 
-    def updateTelem(self):
-        telemDict = wg.get_telemetry(self.telSock)
-        self.RALabel = 
+    #def updateTelem(self):
+     #   telemDict = wg.get_telemetry(self.telSock)
+     #   self.RALabel = 
 
 
 
