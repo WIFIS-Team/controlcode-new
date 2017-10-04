@@ -624,6 +624,11 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
        </widget>
+       <zorder>label_20</zorder>
+       <zorder>label_21</zorder>
+       <zorder>textEdit_6</zorder>
+       <zorder>textEdit_7</zorder>
+       <zorder>groupBox_5</zorder>
       </widget>
      </item>
      <item>
@@ -639,7 +644,7 @@ p, li { white-space: pre-wrap; }
        <widget class="QWidget" name="verticalLayoutWidget">
         <property name="geometry">
          <rect>
-          <x>170</x>
+          <x>210</x>
           <y>20</y>
           <width>141</width>
           <height>151</height>
@@ -723,55 +728,10 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="verticalLayoutWidget_2">
-        <property name="geometry">
-         <rect>
-          <x>320</x>
-          <y>20</y>
-          <width>160</width>
-          <height>314</height>
-         </rect>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <item>
-          <widget class="QComboBox" name="ExpType">
-           <property name="currentText">
-            <string>Normal</string>
-           </property>
-           <item>
-            <property name="text">
-             <string>Normal</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Dark</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item>
-          <widget class="QTextEdit" name="ExpTime"/>
-         </item>
-         <item>
-          <widget class="QTextEdit" name="CCDObject"/>
-         </item>
-         <item>
-          <widget class="QLabel" name="CCDTemp">
-           <property name="text">
-            <string>TextLabel</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QTextEdit" name="SetTempValue"/>
-         </item>
-        </layout>
-       </widget>
        <widget class="QWidget" name="verticalLayoutWidget_3">
         <property name="geometry">
          <rect>
-          <x>480</x>
+          <x>530</x>
           <y>20</y>
           <width>130</width>
           <height>151</height>
@@ -968,6 +928,59 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="verticalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>350</x>
+          <y>20</y>
+          <width>160</width>
+          <height>151</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QComboBox" name="ExpType">
+           <property name="currentText">
+            <string>Normal</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Normal</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Dark</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTextEdit" name="ExpTime"/>
+         </item>
+         <item>
+          <widget class="QTextEdit" name="CCDObject"/>
+         </item>
+         <item>
+          <widget class="QLabel" name="CCDTemp">
+           <property name="text">
+            <string>TextLabel</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTextEdit" name="SetTempValue"/>
+         </item>
+        </layout>
+       </widget>
+       <zorder>verticalLayoutWidget</zorder>
+       <zorder>verticalLayoutWidget_3</zorder>
+       <zorder>SaveImageButton_2</zorder>
+       <zorder>verticalLayoutWidget_4</zorder>
+       <zorder>horizontalLayoutWidget_3</zorder>
+       <zorder>verticalLayoutWidget_5</zorder>
+       <zorder>verticalLayoutWidget_2</zorder>
+       <zorder>SaveImageButton</zorder>
       </widget>
      </item>
     </layout>
