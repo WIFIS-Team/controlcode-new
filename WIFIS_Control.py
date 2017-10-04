@@ -1,8 +1,10 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
 import sys
-from design import Ui_MainWindow
+from wifis import Ui_MainWindow
 import wifis_guiding as wg
 import WIFISdetector as wd
+import power_control as pc
+from PyQt5.QtCore import QThread
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
@@ -10,16 +12,51 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         super(WIFISUI, self).__init__()
 
         self.setupUi(self)
-        
-#        self.telSock = wg.connect_to_telescope()
+       
+        #Defining various control/serial variables
+        self.telSock = wg.connect_to_telescope()
+        self.switch1, self.switch2 = pc.connect_to_power()
         self.scidet = wd.h2rg()
+
+        self.telemThread = UpdateTelemetry(self.telSock, self.RALabel, self.DECLabel,\
+                self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel)
+        self.telemThread.start()
+
+        #Defining actions for exposurecontrol
         self.actionConnect.triggered.connect(self.scidet.connect)
+        self.actionInitialize.triggered.connect(self.scidet.initialize)
+        self.actionDisconnect.triggered.connect(self.scidet.disconnect)
+        
 
-    #def updateTelem(self):
-     #   telemDict = wg.get_telemetry(self.telSock)
-     #   self.RALabel = 
 
+class UpdateTelemetry(QThread):
 
+    def __init__(self, telsock, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, HALabel):
+        QThread.__init__(self)
+
+        self.telsock = telsock
+        self.RALabel = RALabel
+        self.DECLabel = DECLabel
+        self.AZLabel = AZLabel
+        self.ELLabel = ELLabel
+        self.IISLabel = IISLabel
+        self.HALabel = HALabel
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+
+        while True:
+            telemDict = wg.get_telemetry(self.telsock, verbose=False)
+            self.RALabel.setText(telemDict['RA'])
+            self.DECLabel.setText(telemDict['DEC'])
+            self.AZLabel.setText(telemDict['AZ'])
+            self.ELLabel.setText(telemDict['EL'])
+            self.IISLabel.setText(telemDict['IIS'])
+            self.HALabel.setText(telemDict['HA'])
+
+            self.sleep(3)
 
 
 def main():
