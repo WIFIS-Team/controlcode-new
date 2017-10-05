@@ -5,6 +5,7 @@ import wifis_guiding as wg
 import WIFISdetector as wd
 import power_control as pc
 from PyQt5.QtCore import QThread
+import guiding_functions as gf
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
@@ -14,24 +15,34 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
        
         #Defining various control/serial variables
-        self.telSock = wg.connect_to_telescope()
-        self.switch1, self.switch2 = pc.connect_to_power()
-        self.scidet = wd.h2rg()
+        try:
+            self.telSock = wg.connect_to_telescope()
+            self.switch1, self.switch2 = pc.connect_to_power()
+            self.scidet = wd.h2rg()
+            self.cam, self.foc, self.flt = gf.load_FLIDevices()
+        except:
+            print "Something isn't connecting properly"
+            return False 
 
-        self.telemThread = UpdateTelemetry(self.telSock, self.RALabel, self.DECLabel,\
-                self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel)
-        self.telemThread.start()
+        self.guidedirec, self.todaydate = gf.initGuideFolder()
 
-        #Defining actions for exposurecontrol
+        #Starting function to update labels. Still need to add guider info.
+        self.labelsThread = UpdateLabels(self.telSock, self.RALabel, self.DECLabel,\
+                self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel, self.cam, \
+                self.foc, self.CCDTemp,self.FocPosition)
+        self.labelsThread.start()
+
+        #Defining actions for Exposure Control
         self.actionConnect.triggered.connect(self.scidet.connect)
         self.actionInitialize.triggered.connect(self.scidet.initialize)
         self.actionDisconnect.triggered.connect(self.scidet.disconnect)
         
+        #Defining actions for Guider Control
 
+class UpdateLabels(QThread):
 
-class UpdateTelemetry(QThread):
-
-    def __init__(self, telsock, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, HALabel):
+    def __init__(self, telsock, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, \
+            HALabel, cam, foc, ccdTemp, focpos):
         QThread.__init__(self)
 
         self.telsock = telsock
@@ -41,6 +52,10 @@ class UpdateTelemetry(QThread):
         self.ELLabel = ELLabel
         self.IISLabel = IISLabel
         self.HALabel = HALabel
+        self.cam = cam
+        self.foc = foc
+        self.ccdTemp = ccdTemp
+        self.focpos = focpos
 
     def __del__(self):
         self.wait()
@@ -49,12 +64,15 @@ class UpdateTelemetry(QThread):
 
         while True:
             telemDict = wg.get_telemetry(self.telsock, verbose=False)
+
             self.RALabel.setText(telemDict['RA'])
             self.DECLabel.setText(telemDict['DEC'])
             self.AZLabel.setText(telemDict['AZ'])
             self.ELLabel.setText(telemDict['EL'])
             self.IISLabel.setText(telemDict['IIS'])
             self.HALabel.setText(telemDict['HA'])
+            gf.getCCDTemp(self.cam, self.ccdTemp)            
+            gf.writeStepNum(self.foc, self.focpos)
 
             self.sleep(3)
 

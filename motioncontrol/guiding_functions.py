@@ -114,7 +114,17 @@ def measure_focus(img, sideregions = 3, fitwidth = 10, plot=False, verbose=False
 
     return [np.mean([xavg, yavg]), brightestx, brightesty]
 
+def initGuideFolder():
+
+    todaydate = time.strftime("%Y%m%d")
+    direc = u'/Data/WIFISGuider/'+todaydate+'/'
+    if not os.path.exists(direc):
+        os.makedirs(direc)
+    
+    return direc, todaydate
+
 ################################################################################
+
 class FLIApplication(_tk.Frame): 
     '''Creates the FLI GUI window and also contains a number of 
     functions for controlling the Filter Wheel, Focuser, and
@@ -128,20 +138,6 @@ class FLIApplication(_tk.Frame):
         self.deltRA = 0
         self.deltDEC = 0
 
-        #Try to import FLI devices
-        try:
-            self.cam, self.foc, self.flt = load_FLIDevices()
-        except (ImportError, RuntimeError, NameError):
-            self.cam, self.foc, self.flt = [None,None,None]
-
-        try: self.telSock = WG.connect_to_telescope()
-        except:
-            self.telSock = None
-
-        self.todaydate = time.strftime("%Y%m%d")
-        self.direc = u'/Data/WIFISGuider/'+self.todaydate+'/'
-        if not os.path.exists(self.direc):
-            os.makedirs(self.direc)
 
         self.guideButtonVar = _tk.StringVar()
         self.guideButtonVar.set('Start Guiding')
@@ -150,13 +146,6 @@ class FLIApplication(_tk.Frame):
         self.skyMoveVar.set('Move to Sky')
 
         self.initialize()
-
-        # Call the functions to continuously update the reporting fields    
-        # An error will most likely appear after you close the window as
-        # the mainloop will still attempt to run these commands.
-        self.writeFilterNum()
-        self.getCCDTemp()
-        self.writeStepNum()
 
     def initialize(self):
         '''Creates the actual GUI elements as well as run the various
@@ -430,406 +419,307 @@ class FLIApplication(_tk.Frame):
 
     ## Telescope Functions
 
-    def calcOffset(self):
-        #Get rotation solution
-        offsets,x_rot,y_rot = WG.get_rotation_solution(self.telSock)
-        yc = float(self.xOffsetVar.get())
-        xc = float(self.yOffsetVar.get())
-
-        offsetx = xc - 512
-        offsety = yc - 512
-        dx = offsetx*x_rot
-        dy = offsety*y_rot
-        radec = dx + dy
-
-        print "### MOVE ###\nRA:\t%f\nDEC:\t%f\n" % (-1*radec[1], -1*radec[0])
-
-        return
-
-    def printTelemetry(self):
-        if self.telSock:
-            telemDict = WG.get_telemetry(self.telSock)
-            WG.clean_telem(telemDict)
-            #WG.write_telemetry(telemDict)
-
-    def moveTelescope(self):
-        if self.telSock:
-            if self.guidingOnVariable.get():
-                self.guidingOnVariable.set(0)
-                time.sleep(4)
-            WG.move_telescope(self.telSock,float(self.raAdjVariable.get()), \
-                float(self.decAdjVariable.get()))
-
-    def initGuiding(self):
-        if self.telSock:
-            self.deltRA = 0
-            self.deltDEC = 0
-            if self.guidingOnVariable.get():
-                self.guidingOnVariable.set(0)
-                return
-            elif not self.guidingOnVariable.get():
-                self.guidingOnVariable.set(1)
-                print "###### STARTING GUIDING ON %s ######" % (self.guideTargetVariable.get())
-                self.guideButtonVar.set("Stop Guiding")
-                gfls = self.checkGuideVariable()
-                guidingstuff = WG.wifis_simple_guiding_setup(self.telSock, self.cam, \
-                    int(self.guideExpVariable.get()),gfls)
-                self.startGuiding(guidingstuff)
-                #print "Guiding not enabled. Please check the box."
-
-    def startGuiding(self, guidingstuff):
-        if self.telSock:
-            if not self.guidingOnVariable.get():
-                print "###### STOPPING GUIDING ######"
-                self.cam.end_exposure()
-                self.guideButtonVar.set("Start Guiding")
-                print "###### FINISHED GUIDING ######"
-                return
-            else:
-                try:
-                    dRA, dDEC = WG.run_guiding(guidingstuff, self.cam, self.telSock)
-                    self.deltRA += dRA
-                    self.deltDEC += dDEC
-                    print "DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC)
-                except Exception as e:
-                    print e
-                    print "SOMETHING WENT WRONG... CONTINUING"
-                    pass
-                self.parent.after(3000, lambda: self.startGuiding(guidingstuff))
-
-    def skyMove(self):
-        if self.telSock:
-            if self.guidingOnVariable.get():
-                self.guidingOnVariable.set(0)
-                time.sleep(4)
-                gtv = self.guideTargetVariable.get()
-                if gtv[-3:] != 'Sky':
-                    self.moveTelescope()
-                    time.sleep(3)
-                    self.guideTargetVariable.set(gtv+'Sky')
-                elif gtv[-3:] == 'Sky':
-                    ra = self.raAdjVariable.get()
-                    dec = self.decAdjVariable.get()
-                    self.raAdjVariable.set(-1.0*float(ra))
-                    self.decAdjVariable.set(-1.0*float(dec))
-                    self.moveTelescope()
-                    time.sleep(3)
-                    self.guideTargetVariable.set(gtv[:-3])
-                self.initGuiding()
-            else:
-                return
-
-    def checkGuideVariable(self):
-        gfl = '/home/utopea/elliot/guidefiles/'+time.strftime('%Y%m%d')+'_'+self.guideTargetVariable.get()+'.txt'
-        guidefls = glob('/home/utopea/elliot/guidefiles/*.txt')
-        if self.guideTargetVariable.get() == '':
-            return '', False
-        if gfl not in guidefls:
-            print "OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR"
-            return gfl, False
-        else:
-            print "OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR"
-            return gfl, True
-                
-    def offsetToGuider(self):
-        if self.telSock:
-            print "### OFFSETTING TO GUIDER FIELD ###"
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
-            WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
-            #self.offsetButton.configure(text='Move to WIFIS',\
-            #    command=self.offsetToWIFIS)
-            time.sleep(3)
-
-    def offsetToWIFIS(self):
-        if self.telSock:
-            print "### OFFSETTING TO WIFIS FIELD ###"
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
-            WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
-            #self.offsetButton.configure(text='Move to Guider',\
-            #    command=self.offsetToGuider)
-            time.sleep(3)
-
-    def brightStarCorrect(self):
-        if self.telSock:
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
-            WG.move_telescope(self.telSock, offsets[0], offsets[1])
-            time.sleep(5)
-            img, dra, ddec = self.checkCentroids(auto=True)
-            time.sleep(3)
-            WG.move_telescope(self.telSock, dra, ddec)
-            time.sleep(3)
-            WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
-            time.sleep(5)
-
-    ## Filter Wheel Functions
-    def gotoFilter1(self):
-        if self.flt:
-            self.flt.set_filter_pos(0)
-
-    def gotoFilter2(self):
-        if self.flt:
-            self.flt.set_filter_pos(1)
-
-    def gotoFilter3(self):
-        if self.flt:
-            self.flt.set_filter_pos(2)
-
-    def gotoFilter4(self):
-        if self.flt:
-            self.flt.set_filter_pos(3)
-
-    def gotoFilter5(self):
-        if self.flt:
-            self.flt.set_filter_pos(4)
-
-    def getFilterType(self):
-        if self.flt:
-            filterpos = (self.flt.get_filter_pos() + 1)
-            if filterpos == 1:
-                flttype = 'Z'
-            if filterpos == 2:
-                flttype = 'I'
-            if filterpos == 3:
-                flttype = 'R'
-            if filterpos == 4:
-                flttype = 'G'
-            if filterpos == 5:
-                flttype = 'H-Alpha'
-
-            return flttype
-
-    def writeFilterNum(self):
-        if self.flt:
-            filterpos = (self.flt.get_filter_pos() + 1)
-            if filterpos == 1:
-                self.filterNumText.set("Z")
-            if filterpos == 2:
-                self.filterNumText.set("I")
-            if filterpos == 3:
-                self.filterNumText.set("R")
-            if filterpos == 4:
-                self.filterNumText.set("G")
-            if filterpos == 5:
-                self.filterNumText.set("H-Alpha")
-            self.after(500,self.writeFilterNum)
-
-    ## Focuser Functions
-    def homeFocuser(self):
-        if self.foc:
-            self.foc.home_focuser()
-
-    def stepForward(self):
-        if self.foc:
-            self.foc.step_motor(int(self.entryfocVariable.get()))
-
-    def stepBackward(self):
-        if self.foc:
-            self.foc.step_motor(-1*int(self.entryfocVariable.get()))    
-
-    def writeStepNum(self):
-        if self.foc:
-            self.stepNumText.set(str(self.foc.get_stepper_position()))
-            self.after(2000, self.writeStepNum)
-
-    ## Camera Functions
-    def saveImage(self):
-        if self.cam:
-            if self.imgtypeVariable.get() == 'Dark':
-                self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='dark')
-                img = self.cam.take_photo()  
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
-            else:
-                self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
-                img = self.cam.take_photo()  
-
-            telemDict = WG.get_telemetry(self.telSock)
-            hduhdr = self.makeHeader(telemDict)
-            #hdu = fits.PrimaryHDU(header=hduhdr)
-            #hdulist = fits.HDUList([hdu])
-            if self.entryFilepathVariable.get() == "":
-                print "Writing to: "+self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits'
-                fits.writeto(self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits', img, hduhdr,clobber=True)
-                #hdulist.writeto(self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits', clobber=True)
-            else:
-                print "Writing to: "+self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'_'+self.entryFilepathVariable.get()+".fits"
-                fits.writeto(self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'_'+self.entryFilepathVariable.get()+".fits", img, hduhdr,clobber=True)
-                #hdulist.writeto(self.entryFilepathVariable.get(),clobber=True)
-                #self.entryFilepathVariable.set("")
-
-            mpl.close()
-            fig = mpl.figure()
-            ax = fig.add_subplot(1,1,1)
-
-            norm = ImageNormalize(img, interval=PercentileInterval(99.9), stretch=LinearStretch())
-            #norm = ImageNormalize(img,  stretch=LinearStretch())
-            
-            im = ax.imshow(img, interpolation='none', norm= norm, cmap='gray', origin='lower')
-            ax.format_coord = Formatter(im)
-            fig.colorbar(im)
-            mpl.show()
-
-    def takeImage(self):
-        if self.cam and self.foc:
-            if self.imgtypeVariable.get() == 'Dark':
-                self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='dark')
-                img = self.cam.take_photo()  
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
-            else:
-                self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
-                img = self.cam.take_photo()  
-   
-            mpl.close()
-            fig = mpl.figure()
-            ax = fig.add_subplot(1,1,1)
-            
-            norm = ImageNormalize(img, interval=PercentileInterval(99.9), stretch=LinearStretch())
-
-            im = ax.imshow(img, interpolation='none', norm= norm, cmap='gray', origin='lower')
-            ax.format_coord = Formatter(im)
-            fig.colorbar(im)
-            mpl.show()
-        return img
-
-    def makeHeader(self, telemDict):
-
-        hdr = fits.Header()
-        hdr['DATE'] = self.todaydate 
-        hdr['SCOPE'] = 'Bok Telescope, Steward Observatory'
-        hdr['ObsTime'] = time.strftime('%H:%M"%S')
-        hdr['ExpTime'] = self.entryExpVariable.get()
-        hdr['RA'] = telemDict['RA']
-        hdr['DEC'] = telemDict['DEC']
-        hdr['IIS'] = telemDict['IIS']
-        hdr['EL'] = telemDict['EL']
-        hdr['AZ'] = telemDict['AZ']
-        hdr['Filter'] = self.getFilterType()
-        hdr['FocPos'] = self.foc.get_stepper_position()
-        hdr['AM'] = telemDict['SECZ']
-
-        return hdr
-
-    def setTemperature(self):
-        if self.cam:
-            self.cam.set_temperature(int(self.entryCamTempVariable.get()))    
-
-    def getCCDTemp(self):
-        if self.cam:
-            self.ccdTempText.set(str(self.cam.get_temperature()))
-            self.after(1000,self.getCCDTemp)        
+def calcOffset(telSock, xOffsetVar, yOffsetVar):
+    '''Takes a x,y position on the image and calculates the necessary offset to put that target 
+    in the center. Returns the RA, and DEC needed to center the target. Useful when trying to 
+    center diffuse sources.'''
     
+    #Get rotation solution
+    offsets,x_rot,y_rot = WG.get_rotation_solution(telSock)
+    yc = float(xOffsetVar)
+    xc = float(yOffsetVar)
 
-    def checkCentroids(self, auto=False):
-        if self.cam and self.foc:
-            if self.imgtypeVariable.get() == 'Dark':
-                self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='dark')
-                img = self.cam.take_photo()  
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
-            else:
-                self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
-                img = self.cam.take_photo()  
-            
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
-            
-            centroids = WA.centroid_finder(img)
-            #for i in centroids:
-            #    print i
+    offsetx = xc - 512
+    offsety = yc - 512
+    dx = offsetx*x_rot
+    dy = offsety*y_rot
+    radec = dx + dy
 
-            barr = np.argsort(centroids[2])[::-1]
-            b = np.argmax(centroids[2])
-      
-            print "X pixelscale: %f, %f" % (x_rot[0], x_rot[1])
-            print "Y pixelscale: %f, %f" % (y_rot[0], y_rot[1])
+    print "### MOVE ###\nRA:\t%f\nDEC:\t%f\n" % (-1*radec[1], -1*radec[0])
 
-            d = -1
-            for i,b in enumerate(barr):  
-                if i > 5:
-                    break
-                offsetx = centroids[0][b] - 512
-                offsety = centroids[1][b] - 512
-                dx = offsetx * x_rot
-                dy = offsety * y_rot
-                radec = dx + dy
+    return -1*radec[1], -1*radec[0]
 
-                print "Y, Y Offset, RA Move: %f, %f" % (centroids[1][b], offsety)
-                print "X, X Offset, DEC Move: %f, %f" % (centroids[0][b], offsetx)
-		print "RA Move: %f" % (d*radec[1])
-		print "DEC Move: %f" % (d*radec[0])
-                print '\n'
+def printTelemetry(telSock):
+    if telSock:
+        telemDict = WG.get_telemetry(telSock, verbose=False)
+        WG.clean_telem(telemDict)
 
-            if not auto:
-                mpl.close()
-                fig = mpl.figure()
-                ax = fig.add_subplot(1,1,1)
-                im = ax.imshow(np.log10(img), interpolation='none', cmap='gray', origin='lower')
-                ax.format_coord = Formatter(im)
-                fig.colorbar(im)
-                mpl.show()
+def moveTelescope(telSock, raAdjVariable, decAdjVariable):
+    if telSock:
+        WG.move_telescope(telSock,float(raAdjVariable), float(decAdjVariable))
 
-            b = np.argmax(centroids[2])
+def offsetToGuider(telSock):
+    if telSock:
+        print "###### OFFSETTING TO GUIDER FIELD ######"
+        offsets, x_rot, y_rot = WG.get_rotation_solution(telSock)
+        WG.move_telescope(telSock, offsets[0], offsets[1]) 
+        #time.sleep(3)
+
+def offsetToWIFIS(telSock):
+    if telSock:
+        print "###### OFFSETTING TO WIFIS FIELD ######"
+        offsets, x_rot, y_rot = WG.get_rotation_solution(telSock)
+        WG.move_telescope(telSock, -1.0*offsets[0], -1.0*offsets[1])
+        #time.sleep(3)
+
+## Filter Wheel Functions
+
+def gotoFilterPos(flt, fltText):
+    if flt:
+        if fltText == 'Z':
+            flt.set_filter_pos(0)
+        if fltText == 'I':
+            flt.set_filter_pos(1)
+        if fltText == 'R':
+            flt.set_filter_pos(2)
+        if fltText == 'G':
+            flt.set_filter_pos(3)
+        if fltText == 'H-Alpha':
+            flt.set_filter_pos(4)
+
+#def gotoFilter1(flt):
+#    if flt:
+#        flt.set_filter_pos(0)
+#
+#def gotoFilter2(flt):
+#    if flt:
+#        flt.set_filter_pos(1)
+
+#def gotoFilter3(flt):
+#    if flt:
+#        flt.set_filter_pos(2)
+
+#def gotoFilter4(flt):
+#    if flt:
+#        flt.set_filter_pos(3)
+
+#def gotoFilter5():
+#    if .flt:
+#        .flt.set_filter_pos(4)
+
+def getFilterType(flt):
+    if flt:
+        filterpos = (flt.get_filter_pos() + 1)
+        if filterpos == 1:
+            flttype = 'Z'
+        if filterpos == 2:
+            flttype = 'I'
+        if filterpos == 3:
+            flttype = 'R'
+        if filterpos == 4:
+            flttype = 'G'
+        if filterpos == 5:
+            flttype = 'H-Alpha'
+
+        return flttype
+
+def writeFilterNum(flt, filterNumText):
+    if flt:
+        flttype = getFilterType(flt)
+        filterNumText.setText(flttype)        
+
+## Focuser Functions
+def homeFocuser(foc):
+    if foc:
+        foc.home_focuser()
+
+def stepForward(foc, entryfocVariable):
+    if foc:
+        foc.step_motor(int(entryfocVariable.toPlainText()))
+
+def stepBackward(foc, entryfocVariable):
+    if foc:
+        foc.step_motor(-1*int(entryfocVariable.toPlainText()))    
+
+def writeStepNum(foc, stepNumText):
+    if foc:
+        stepNumText.setText(str(foc.get_stepper_position()))
+
+## Camera Functions
+def saveImage(cam, telSock, imgtypeVariable, entryExpVariable, entryFilepathVariable, direc, todaydate):
+    if cam:
+        if imgtypeVariable == 'Dark':
+            cam.end_exposure()
+            cam.set_exposure(int(entryExpVariable), frametype='dark')
+            img = cam.take_photo()  
+            cam.set_exposure(int(entryExpVariable), frametype='normal')
+        else:
+            cam.end_exposure()
+            cam.set_exposure(int(entryExpVariable), frametype='normal')
+            img = cam.take_photo()  
+
+        telemDict = WG.get_telemetry(telSock)
+        hduhdr = makeHeader(telemDict, todaydate, entryExpVariable, foc)
+
+        if entryFilepathVariable == "":
+            print "Writing to: "+direc+todaydate+'T'+time.strftime('%H%M%S')+'.fits'
+            fits.writeto(direc+todaydate+'T'+time.strftime('%H%M%S')+'.fits', img, hduhdr,clobber=True)
+        else:
+            print "Writing to: "+direc+todaydate+'T'+time.strftime('%H%M%S')+'_'+entryFilepathVariable+".fits"
+            fits.writeto(direc+todaydate+'T'+time.strftime('%H%M%S')+'_'+entryFilepathVariable+".fits", img, hduhdr,clobber=True)
+
+        mpl.close()
+        fig = mpl.figure()
+        ax = fig.add_subplot(1,1,1)
+
+        norm = ImageNormalize(img, interval=PercentileInterval(99.9), stretch=LinearStretch())
+        #norm = ImageNormalize(img,  stretch=LinearStretch())
+        
+        im = ax.imshow(img, interpolation='none', norm= norm, cmap='gray', origin='lower')
+        ax.format_coord = Formatter(im)
+        fig.colorbar(im)
+        mpl.show()
+
+def takeImage(cam, telSock, imgtypeVariable, entryExpVariable, entryFilepathVariable, direc, todaydate):
+    if cam:
+        if imgtypeVariable == 'Dark':
+            cam.end_exposure()
+            cam.set_exposure(int(entryExpVariable), frametype='dark')
+            img = cam.take_photo()  
+            cam.set_exposure(int(entryExpVariable), frametype='normal')
+        else:
+            cam.end_exposure()
+            cam.set_exposure(int(entryExpVariable), frametype='normal')
+            img = cam.take_photo()  
+
+        mpl.close()
+        fig = mpl.figure()
+        ax = fig.add_subplot(1,1,1)
+        
+        norm = ImageNormalize(img, interval=PercentileInterval(99.9), stretch=LinearStretch())
+
+        im = ax.imshow(img, interpolation='none', norm= norm, cmap='gray', origin='lower')
+        ax.format_coord = Formatter(im)
+        fig.colorbar(im)
+        mpl.show()
+
+    return img
+
+def makeHeader(telemDict, todaydate, entryExpVariable, foc):
+
+    hdr = fits.Header()
+    hdr['DATE'] = todaydate 
+    hdr['SCOPE'] = 'Bok Telescope, Steward Observatory'
+    hdr['ObsTime'] = time.strftime('%H:%M"%S')
+    hdr['ExpTime'] = entryExpVariable
+    hdr['RA'] = telemDict['RA']
+    hdr['DEC'] = telemDict['DEC']
+    hdr['IIS'] = telemDict['IIS']
+    hdr['EL'] = telemDict['EL']
+    hdr['AZ'] = telemDict['AZ']
+    hdr['Filter'] = getFilterType()
+    hdr['FocPos'] = foc.get_stepper_position()
+    hdr['AM'] = telemDict['SECZ']
+
+    return hdr
+
+def setTemperature(cam, entryCamTempVariable):
+    if cam:
+        cam.set_temperature(int(entryCamTempVariable))    
+
+def getCCDTemp(cam, ccdTempText):
+    if cam:
+        ccdTempText.setText(str(cam.get_temperature()))
+
+def checkCentroids(cam, telSock, imgtypeVariable, entryExpVariable, auto=False):
+    if cam:
+
+        cam.end_exposure()
+        cam.set_exposure(int(entryExpVariable), frametype='normal')
+        img = cam.take_photo()  
+        
+        offsets, x_rot, y_rot = WG.get_rotation_solution(telSock)
+        
+        centroids = WA.centroid_finder(img)
+
+        barr = np.argsort(centroids[2])[::-1]
+        b = np.argmax(centroids[2])
+  
+        print "X pixelscale: %f, %f" % (x_rot[0], x_rot[1])
+        print "Y pixelscale: %f, %f" % (y_rot[0], y_rot[1])
+
+        d = -1
+        for i,b in enumerate(barr):  
+            if i > 5:
+                break
             offsetx = centroids[0][b] - 512
             offsety = centroids[1][b] - 512
             dx = offsetx * x_rot
             dy = offsety * y_rot
             radec = dx + dy
 
-        return img, d*radec[1], d*radec[0]
+            print "Y, Y Offset, RA Move: %f, %f" % (centroids[1][b], offsety)
+            print "X, X Offset, DEC Move: %f, %f" % (centroids[0][b], offsetx)
+            print "RA Move: %f" % (d*radec[1])
+            print "DEC Move: %f" % (d*radec[0])
+            print '\n'
 
-    def focusCamera(self):
+        if not auto:
+            mpl.close()
+            fig = mpl.figure()
+            ax = fig.add_subplot(1,1,1)
+            im = ax.imshow(np.log10(img), interpolation='none', cmap='gray', origin='lower')
+            ax.format_coord = Formatter(im)
+            fig.colorbar(im)
+            mpl.show()
 
-        current_focus = self.foc.get_stepper_position() 
-        step = 200
+        b = np.argmax(centroids[2])
+        offsetx = centroids[0][b] - 512
+        offsety = centroids[1][b] - 512
+        dx = offsetx * x_rot
+        dy = offsety * y_rot
+        radec = dx + dy
 
-        self.cam.set_exposure(3000)
-        #self.cam.set_exposure(int(self.entryExpVariable.get()))
-        img = self.cam.take_photo()
-        focus_check1, bx, by = measure_focus(img)
-        direc = 1 #forward
+    return img, d*radec[1], d*radec[0]
+
+def focusCamera(cam, foc):
+
+    current_focus = foc.get_stepper_position() 
+    step = 200
+
+    cam.set_exposure(3000)
+    img = cam.take_photo()
+    focus_check1, bx, by = measure_focus(img)
+    direc = 1 #forward
+
+    #plotting
+    mpl.ion()
+    fig, ax = mpl.subplots(1,1)
+   
+    bx = int(bx)
+    by = int(by)
+    imgplot = ax.imshow(img[bx-20:bx+20,by-20:by+20], interpolation = 'none', origin='lower')
+    fig.canvas.draw()
+
+    while step > 5:
+        foc.step_motor(direc*step)
+        img = cam.take_photo()
 
         #plotting
-        mpl.ion()
-        fig, ax = mpl.subplots(1,1)
-       
-        bx = int(bx)
-        by = int(by)
-        imgplot = ax.imshow(img[bx-20:bx+20,by-20:by+20], interpolation = 'none', origin='lower')
+        ax.clear()
+        imgplot = ax.imshow(img[bx-20:bx+20, by-20:by+20], interpolation = 'none', \
+            origin='lower')
         fig.canvas.draw()
+        #fig.canvas.restore_region(background)
+        #ax.draw_artist(imgplot)
+        #fig.canvas.blit(ax.bbox)
 
-        while step > 5:
-            self.foc.step_motor(direc*step)
-            img = self.cam.take_photo()
-
-
-            #plotting
-            ax.clear()
-            imgplot = ax.imshow(img[bx-20:bx+20, by-20:by+20], interpolation = 'none', \
-                origin='lower')
-            fig.canvas.draw()
-            #fig.canvas.restore_region(background)
-            #ax.draw_artist(imgplot)
-            #fig.canvas.blit(ax.bbox)
-
-            focus_check2,bx2,by2 = measure_focus(img)
-            
-            print "STEP IS: %i\nPOS IS: %i" % (step,current_focus)
-            print "Old Focus: %f, New Focus: %f" % (focus_check1, focus_check2)
-
-            #if focus gets go back to beginning, change direction and reduce step
-            if focus_check2 > focus_check1:
-                direc = direc*-1
-                self.foc.step_motor(direc*step)
-                step = int(step / 2)
-                print "Focus is worse: changing direction!\n"
-            
-            focus_check1 = focus_check2
-            current_focus = self.foc.get_stepper_position() 
+        focus_check2,bx2,by2 = measure_focus(img)
         
-        print "### FINISHED FOCUSING ####"
+        print "STEP IS: %i\nPOS IS: %i" % (step,current_focus)
+        print "Old Focus: %f, New Focus: %f" % (focus_check1, focus_check2)
+
+        #if focus gets go back to beginning, change direction and reduce step
+        if focus_check2 > focus_check1:
+            direc = direc*-1
+            foc.step_motor(direc*step)
+            step = int(step / 2)
+            print "Focus is worse: changing direction!\n"
+        
+        focus_check1 = focus_check2
+        current_focus = foc.get_stepper_position() 
+    
+    print "### FINISHED FOCUSING ####"
         
 class RunGuiding(QThread):
 
