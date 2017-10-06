@@ -15,9 +15,8 @@ def grabUNSOfield(ra, dec):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
     
-    ra_offset = '000000.00'
-    dec_offset = '000000.00'
-
+    ra_offset = '000000.00' 
+    dec_offset = '000000.00' 
     ra_deg = ra_conv(ra)
     dec_deg = dec_conv(dec)
 
@@ -33,7 +32,7 @@ def centroid_finder(img, plot = False, verbose=False):
     #find bright pixels
     imgmean = np.mean(img)
     imgstd = np.std(img)
-    nstd = 5
+    nstd = 4.
 
     if verbose:
         print "IMG MEAN: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmean, imgstd,imgmean+nstd*imgstd)
@@ -89,8 +88,8 @@ def centroid_finder(img, plot = False, verbose=False):
         if centroidy[-1] > imgsize[1]-11:
             gy1 = imgsize[1]-1
         
-        gx = img[gx0:gx1,centroidy[-1]]
-        gy = img[centroidx[-1], gy0:gy1]
+        gx = img[int(gx0):int(gx1),int(centroidy[-1])]
+        gy = img[int(centroidx[-1]), int(gy0):int(gy1)]
         xs = range(len(gx))
         ys = range(len(gy))
 

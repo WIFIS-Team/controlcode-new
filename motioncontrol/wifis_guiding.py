@@ -12,10 +12,12 @@ import WIFISastrometry as WA
 from glob import glob
 from astropy.io import fits
 from sys import exit
+from PyQt5.QtCore import QThread
 
 plate_scale = 0.29125
-guideroffsets = np.array([-4.15,365.88])
+guideroffsets = np.array([-8.84,361.37])
 
+#Aug/Sept guideroffsets = np.array([-5.54,361.37])
 #June 2017 -4.0,414.1
 #May 2017 -6.0, 424.1
 
@@ -173,10 +175,10 @@ def write_telemetry(telemDict):
 
 def move_telescope(telSock,ra_adj, dec_adj, verbose=True):
    
-    if ra_adj > 1000:
+    if ra_adj > 2500:
         print "Too large a move in RA. NOT MOVING"
         return
-    if dec_adj > 1000:
+    if dec_adj > 2500:
         print "Too large a move in DEC. NOT MOVING"
         return
 
@@ -198,7 +200,7 @@ def get_rotation_solution(telSock, forcerot=90):
     if forcerot == True:
         rotangle = 90
     else:
-        rotangle = float(query_telescope(telSock, 'BOK TCS 123 REQUEST IIS')[-1]) - 90 - 0.26
+        rotangle = float(query_telescope(telSock, 'BOK TCS 123 REQUEST IIS', verbose=False)[-1]) - 90 - 0.26
 
     rotangle_rad = rotangle*np.pi/180.0
     rotation_matrix = np.array([[np.cos(rotangle_rad),1*np.sin(rotangle_rad)],\
@@ -369,10 +371,9 @@ def wifis_simple_guiding_setup(telSock, cam, exptime, gfls):
         starx1, stary1 = findguidestar(img1,gfls)
     
     #Make sure were guiding on an actual star. If not maybe change the exptime for guiding.
-    check_guidestar = True
+    check_guidestar = False
     if check_guidestar:
         img2 = cam.take_photo()
-        mpl.ion()
         starybox = int(stary1)
         starxbox = int(starx1)
         imgbox = img2[starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize]
@@ -389,7 +390,8 @@ def findguidestar(img1, gfls):
     #check positions of stars    
     centroidx, centroidy, Iarr, Isat, width = WA.centroid_finder(img1, plot=False)
     bright_stars = np.argsort(Iarr)[::-1]
-
+    print Iarr
+    print Isat
     #Choose the brightest non-saturated star for guiding
     guiding_star = bright_stars[0]
     for star in bright_stars:
@@ -462,13 +464,13 @@ def checkstarinbox(imgbox, boxsize, telSock):
 
     return True
 
-def run_guiding(inputguiding, parent, cam, telSock):
+def run_guiding(inputguiding,  cam, telSock):
    
     #Get all the parameters from the guiding input
     offsets, x_rot, y_rot, stary1, starx1, boxsize, img1  = inputguiding
 
     #Start an updating guideplot DOESN'T WORK RIGHT NOW BECAUSE OF THE GUI IMPLEMENTATION
-    #guideplot=False
+    #guideplot=True
     #if guideplot:
     #    mpl.ion()
     #    fig, ax = mpl.subplots(1,1)
@@ -511,7 +513,7 @@ def run_guiding(inputguiding, parent, cam, telSock):
        % (dx,dy,radec[1],radec[0],width[0], width[0]*plate_scale)
 
     ##### IMPORTANT GUIDING PARAMETERS #####
-    lim = 0.35 #Changes the absolute limit at which point the guider moves the telescope
+    lim = 0.55 #Changes the absolute limit at which point the guider moves the telescope
     d = -0.8 #Affects how much the guider corrects by. I was playing around with -0.8 but the default is -1. Keep this negative.
     #######################################
 
