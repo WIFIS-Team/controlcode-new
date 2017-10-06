@@ -82,6 +82,9 @@
            <property name="text">
             <string>TextLabel</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
           </widget>
          </item>
          <item row="0" column="0" colspan="2">
@@ -110,7 +113,7 @@
             </size>
            </property>
            <property name="text">
-            <string>EL</string>
+            <string>EL:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -122,12 +125,18 @@
            <property name="text">
             <string>TextLabel</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
           </widget>
          </item>
          <item row="7" column="1">
           <widget class="QLabel" name="HALabel">
            <property name="text">
             <string>TextLabel</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -140,7 +149,7 @@
             </size>
            </property>
            <property name="text">
-            <string>IIS</string>
+            <string>IIS:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -152,6 +161,9 @@
            <property name="text">
             <string>TextLabel</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
           </widget>
          </item>
          <item row="5" column="1">
@@ -159,12 +171,18 @@
            <property name="text">
             <string>TextLabel</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
           </widget>
          </item>
          <item row="2" column="1">
           <widget class="QLabel" name="RALabel">
            <property name="text">
             <string>TextLabel</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -177,7 +195,7 @@
             </size>
            </property>
            <property name="text">
-            <string>RA</string>
+            <string>RA:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -193,7 +211,7 @@
             </size>
            </property>
            <property name="text">
-            <string>HA</string>
+            <string>HA:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -209,7 +227,7 @@
             </size>
            </property>
            <property name="text">
-            <string>AZ</string>
+            <string>AZ:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -225,7 +243,7 @@
             </size>
            </property>
            <property name="text">
-            <string>DEC</string>
+            <string>DEC:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -391,6 +409,12 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="3" column="7">
         <widget class="QTextEdit" name="NNods_2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="html">
           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -470,7 +494,7 @@ p, li { white-space: pre-wrap; }
        <item row="3" column="1">
         <widget class="QTextEdit" name="DECObj">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -756,6 +780,19 @@ p, li { white-space: pre-wrap; }
         <widget class="QProgressBar" name="ExpProgressBar">
          <property name="value">
           <number>24</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QPushButton" name="TakeCalibButton">
+         <property name="font">
+          <font>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Take Calib</string>
          </property>
         </widget>
        </item>
