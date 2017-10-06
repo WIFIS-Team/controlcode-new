@@ -38,6 +38,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.actionDisconnect.triggered.connect(self.scidet.disconnect)
         
         #Defining actions for Guider Control
+        self.GuiderMoveButton.triggered.connect(gf.offsetToGuider(self.telSock))
+        self.WIFISMoveButton.triggered.connect(gf.offsetToWIFIS(self.telSock))
+        self.moveTelescopeButton.triggered.connect(gf.moveTelescope(self.telSock,\
+                self.RAMoveBot.toPlainText(), self.DECMoveBox.toPlainText()))
+        self.BKWButton.triggred.connect(gf.stepBackward(self.foc, self.focStep))
+        self.FWDButton.triggered.connect(gf.stepForward(self.foc, self.focStep))
+        
 
 class UpdateLabels(QThread):
 

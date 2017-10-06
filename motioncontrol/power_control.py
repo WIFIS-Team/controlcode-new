@@ -22,6 +22,7 @@ class MainApplication(Frame):
         self.switch2 = switch2
         self.create_widgets()
         self.update()
+        #self.update_labels()
 
     def create_widgets(self): 
         
@@ -238,7 +239,7 @@ class MainApplication(Frame):
             self.status16['fg']=c[7]
 
         self.update() #update gui
-        self.after(100,self.update_labels) 
+        self.after(1000, self.update_labels) 
 
 #These are the toggle plug buttons. each is the same turns the right plug 
 #on or off and changes the status to reflect this change
@@ -487,9 +488,9 @@ def power_edit():
 
     return switch1, switch2
 
-def run_power_gui(mainloop = False):
+def connect_to_power():
 
-    #connect to power bars
+
     print('Connecting to a DLI PowerSwitch at http://192.168.0.120 and '+\
         'another at http://192.168.0.110 ')  
     switch2 = PowerSwitch(hostname="192.168.0.120", userid="admin",\
@@ -497,6 +498,13 @@ def run_power_gui(mainloop = False):
     switch1 = PowerSwitch(hostname="192.168.0.110", userid="admin",\
         password='9876',timeout=5)
     
+    return switch1, switch2
+
+def run_power_gui(mainloop = False):
+
+    #connect to power bars
+    switch1, switch2 = connect_to_power()
+
     if (not switch1.verify()) and (not switch2.verify()):
         print("The powerswitches are not connected. Please connect them before running this software.")
         return None, None, None
@@ -516,12 +524,7 @@ def run_power_gui(mainloop = False):
 def run_power_gui_standalone():
 
     #connect to power bars
-    print('Connecting to a DLI PowerSwitch at http://192.168.0.120 and '+\
-        'another at http://192.168.0.110 ')  
-    switch2 = PowerSwitch(hostname="192.168.0.120", userid="admin",\
-        password='9876',timeout=5)
-    switch1 = PowerSwitch(hostname="192.168.0.110", userid="admin",\
-        password='9876',timeout=5)
+    switch1, switch2 = connect_to_power()
 
     if (not switch1.verify()) and (not switch2.verify()):
         print("The powerswitches are not connected. Please connect them before running this software.")

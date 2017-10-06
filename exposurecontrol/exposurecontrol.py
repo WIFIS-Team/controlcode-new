@@ -435,7 +435,7 @@ class MainApplication(Frame):
         self.sourcename.set(sourcetemp)
 
     def arcramp(self):
-        self.nreads.set(3)
+        self.nreads.set(5)
         sourcetemp = self.sourcename.get()
         self.sourcename.set('CalArc '+self.sourcename.get()) 
         self.exposeRamp()
