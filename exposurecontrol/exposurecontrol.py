@@ -18,6 +18,7 @@ import wifisIO
 import numpy as np
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
+from get_src_pos import do_get_src_pos
 
 class Formatter(object):
     def __init__(self, im):
@@ -227,6 +228,8 @@ class MainApplication(Frame):
 
         self.b4 = Button(self, text="Arc Ramp", command=self.arcramp).grid(row=1, column=6)
         self.b5 = Button(self, text="Flat Ramp", command=self.flatramp).grid(row=2, column=6)
+        self.b6 = Button(self, text="Centering", command=self.checkcenter).grid(row=4, column=6)
+        self.b7 = Button(self, text="Sky Ramp", command=self.skyramp).grid(row=3, column=6) 
         
 
     def connect(self):
@@ -363,6 +366,7 @@ class MainApplication(Frame):
             pointing(watchpath+"/"+added[0]+'/Result/CDSResult.fits')
 
         hdu.close()
+
     def exposeRamp(self):
         commandstring = "SETRAMPPARAM(1,%d,1,1.5,%d)" % (self.nreads.get(),self.nramps.get())
         self.s.send(commandstring)
@@ -385,6 +389,10 @@ class MainApplication(Frame):
         self.status["bg"] = "green"
 
         print("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+self.sourcename.get())
+
+        fl1 = open('obs.lst','w')
+        fl1.write(str(added[0]))
+        fl1.close()
 
         self.writeObsdata(watchpath+'/'+added[0])
 
@@ -427,19 +435,42 @@ class MainApplication(Frame):
             plt.title("Mean = %f5, Std = %f5" % (mean, std))
             plt.show()
 
-    def flatramp(self):
-        self.nreads.set(5)
+        return added
+
+    def skyramp(self):
         sourcetemp = self.sourcename.get()
-        self.sourcename.set('CalFlat '+self.sourcename.get()) 
-        self.exposeRamp()
+        self.sourcename.set(sourcetemp+'Sky')
+        added = self.exposeRamp()
         self.sourcename.set(sourcetemp)
 
-    def arcramp(self):
+    def flatramp(self):
+        nreadstemp = self.nreads.get()
         self.nreads.set(5)
+        self.nramps.set(1)
+        sourcetemp = self.sourcename.get()
+        self.sourcename.set('CalFlat '+self.sourcename.get()) 
+        added = self.exposeRamp()
+        f1 = open('flat.lst','w')
+        f1.write(str(added[0]))
+        f1.close()
+        self.sourcename.set(sourcetemp)
+        self.nreads.set(nreadstemp)
+
+    def arcramp(self):
+        nreadstemp = self.nreads.get()
+        self.nreads.set(5)
+        self.nramps.set(1)
         sourcetemp = self.sourcename.get()
         self.sourcename.set('CalArc '+self.sourcename.get()) 
-        self.exposeRamp()
+        added = self.exposeRamp()
+        f1 = open('wave.lst','w')
+        f1.write(str(added[0]))
+        f1.close()
         self.sourcename.set(sourcetemp)
+        self.nreads.set(nreadstemp)
+
+    def checkcenter(self):
+        do_get_src_pos('wave.lst','flat.lst','obs.lst')
 
 def run_exposure_gui_standalone():
     """Standalone version of this script for use in case launch_controls fails
