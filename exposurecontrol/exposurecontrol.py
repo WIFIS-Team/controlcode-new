@@ -19,6 +19,7 @@ import numpy as np
 from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
 from get_src_pos import do_get_src_pos
+from calibration_functions import CalibrationControl
 
 class Formatter(object):
     def __init__(self, im):
@@ -171,7 +172,8 @@ class MainApplication(Frame):
         self.nramps = IntVar(value=1)
         self.obstype = StringVar(self)
         self.sourcename = StringVar(self)
- 
+        self.calibrationcontrol = CalibrationControl() 
+
         self.create_widgets()
 
     def create_widgets(self): #create all the buttons and labels and stuff
@@ -228,8 +230,9 @@ class MainApplication(Frame):
 
         self.b4 = Button(self, text="Arc Ramp", command=self.arcramp).grid(row=1, column=6)
         self.b5 = Button(self, text="Flat Ramp", command=self.flatramp).grid(row=2, column=6)
-        self.b6 = Button(self, text="Centering", command=self.checkcenter).grid(row=4, column=6)
-        self.b7 = Button(self, text="Sky Ramp", command=self.skyramp).grid(row=3, column=6) 
+        self.b6 = Button(self, text="Sky Ramp", command=self.skyramp).grid(row=3, column=6) 
+        self.b7 = Button(self, text="Centering", command=self.checkcenter).grid(row=4, column=6)
+        self.b8 = Button(self, text="Calibrations", command=self.takecalibrations).grid(row=5, column=6) 
         
 
     def connect(self):
@@ -468,6 +471,16 @@ class MainApplication(Frame):
         f1.close()
         self.sourcename.set(sourcetemp)
         self.nreads.set(nreadstemp)
+
+    def takecalibrations(self):
+        self.calibrationcontrol.arcsetup()
+        sleep(3)
+        self.arcramp()
+        self.calibrationcontrol.flatsetup()
+        sleep(7)
+        self.flatramp()
+        self.calibrationcontrol.sourcesetup()
+        sleep(3)
 
     def checkcenter(self):
         do_get_src_pos('wave.lst','flat.lst','obs.lst')
