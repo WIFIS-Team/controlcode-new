@@ -123,7 +123,7 @@ class WIFISGuider():
     def __init__(self, guidevariables):
         '''Initialize the GUI and load the Devices into memory'''
 
-        self.RaMoveBot, self.DECMoveBot,self.focStep,self.expType,self.expTime,\
+        self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText = guidevariables
         self.deltRA = 0
         self.deltDEC = 0
@@ -448,8 +448,8 @@ class WIFISGuider():
             if self.guidingOnVariable.get():
                 self.guidingOnVariable.set(0)
                 time.sleep(4)
-            WG.move_telescope(self.telSock,float(self.RAMoveBot.toPlainText()), \
-                    float(self.DECMoveBot.toPlainText()))
+            WG.move_telescope(self.telSock,float(self.RAMoveBox.toPlainText()), \
+                    float(self.DECMoveBox.toPlainText()))
 
     def skyMove(self):
         if self.telSock:

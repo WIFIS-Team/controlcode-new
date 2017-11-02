@@ -15,7 +15,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
        
         #Defining various control/serial variables
-        guidevariables = [self.RAMoveBot, self.DECMoveBot, self.focStep, self.expType, self.expTime,\
+        guidevariables = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
                 self.ObjText]
 
         try:
@@ -26,10 +26,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             print "Something isn't connecting properly"
             return False 
 
-        self.guidedirec, self.todaydate = gf.initGuideFolder()
-
         #Starting function to update labels. Still need to add guider info.
-        self.labelsThread = UpdateLabels(self.RALabel, self.DECLabel,\
+        self.labelsThread = UpdateLabels(self.guider, self.RALabel, self.DECLabel,\
                 self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel, self.CCDTemp,self.FocPosition)
         self.labelsThread.start()
 
@@ -53,11 +51,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
 class UpdateLabels(QThread):
 
-    def __init__(self, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, \
+    def __init__(self, guider, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, \
             HALabel, ccdTemp, focpos):
         QThread.__init__(self)
 
-        self.telsock = telsock
+        self.guider = guider
         self.RALabel = RALabel
         self.DECLabel = DECLabel
         self.AZLabel = AZLabel
