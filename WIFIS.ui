@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>764</width>
-    <height>783</height>
+    <width>950</width>
+    <height>859</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,8 +31,8 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>757</width>
-      <height>731</height>
+      <width>917</width>
+      <height>801</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -1066,6 +1066,12 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="3" column="2">
         <widget class="QComboBox" name="FilterVal">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="currentText" stdset="0">
           <string>Z</string>
          </property>
@@ -1252,7 +1258,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>764</width>
+     <width>950</width>
      <height>22</height>
     </rect>
    </property>
