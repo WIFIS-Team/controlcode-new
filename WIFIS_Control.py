@@ -21,10 +21,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         try:
             self.switch1, self.switch2 = pc.connect_to_power()
             self.scidet = wd.h2rg()
+            self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,\
+                    nreads=self.NReadsTExt,nramps=self.NRampsText,sourceName=self.ObjText)
             self.guider = gf.WIFISGuider(guidevariables)
-        except:
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText)
+            self.h2rgProgressThread = wd.h2rgProgressThread(self.ExpProgressBar, self.ExpTypeSelect,\
+                    nramps=self.NRampsText, nreads=self.NReadsTExt)
+
+        except Exception as e:
+            print e
             print "Something isn't connecting properly"
-            return False 
+            return
 
         #Starting function to update labels. Still need to add guider info.
         self.labelsThread = UpdateLabels(self.guider, self.RALabel, self.DECLabel,\
@@ -35,9 +42,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.actionConnect.triggered.connect(self.scidet.connect)
         self.actionInitialize.triggered.connect(self.scidet.initialize)
         self.actionDisconnect.triggered.connect(self.scidet.disconnect)
-        
+        self.ExposureButton.clicked.connect(self.scidetexpose.start)
+        self.ExposureButton.clicked.connect(self.h2rgProgressThread.start)
+
         #Defining actions for Guider Control
-        #These aren't working...I think I need to rethink how this works. Maybe create a class?
         self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
         self.WIFISMoveButton.clicked.connect(self.guider.offsetToWIFIS)
         self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
@@ -46,8 +54,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SaveImageButton.clicked.connect(self.guider.saveImage) #Need to thread this
         self.TakeImageButton.clicked.connect(self.guider.takeImage) #Need to thread this
         self.FocusCameraButton.clicked.connect(self.guider.focusCamera) #Need to thread
-        self.StartGuidingButton.clicked.connect(self.guider.startGuiding)
+        self.StartGuidingButton.clicked.connect(self.guideThread.start)
         self.CentroidButton.clicked.connect(self.guider.checkCentroids)
+        self.SetTempButton.clicked.connect(self.guideThread.stop)
 
 class UpdateLabels(QThread):
 
@@ -72,9 +81,11 @@ class UpdateLabels(QThread):
 
         while True:
             telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
+            DECText = telemDict['DEC']
+            RAText = telemDict['RA']
 
-            self.RALabel.setText(telemDict['RA'])
-            self.DECLabel.setText(telemDict['DEC'])
+            self.RALabel.setText(RAText[0:2]+':'+RAText[2:4]+':'+RAText[4:])
+            self.DECLabel.setText(DECText[0:3]+':'+DECText[3:5]+':'+DECText[5:])
             self.AZLabel.setText(telemDict['AZ'])
             self.ELLabel.setText(telemDict['EL'])
             self.IISLabel.setText(telemDict['IIS'])

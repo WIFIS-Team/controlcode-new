@@ -445,9 +445,9 @@ class WIFISGuider():
 
     def moveTelescope(self):
         if self.telSock:
-            if self.guidingOnVariable.get():
-                self.guidingOnVariable.set(0)
-                time.sleep(4)
+            #if self.guidingOnVariable.get():
+            #    self.guidingOnVariable.set(0)
+            #    time.sleep(4)
             WG.move_telescope(self.telSock,float(self.RAMoveBox.toPlainText()), \
                     float(self.DECMoveBox.toPlainText()))
 
@@ -801,12 +801,14 @@ class FocusCamera(QThread):
 
 class RunGuiding(QThread):
 
-    def __init__(self, telsock, cam, guideTargetVar, guideExpVariable):
+    def __init__(self, telsock, cam, guideTargetVar):
         QThread.__init__(self)
         self.telsock = telsock
         #self.guideButtonVar = guideButonVar
         self.guideTargetVar = guideTargetVar
-        self.guideExpVariable = guideExpVariable
+        self.guideTargetText = self.guideTargetVar.toPlainText()
+        #self.guideExpVariable = guideExpVariable
+        self.guideExpVariable = 1500
         self.cam = cam
         self.deltRA = 0
         self.deltDEC = 0
@@ -819,7 +821,12 @@ class RunGuiding(QThread):
         self.stopThread = True
 
     def run(self):
-        print "###### STARTING GUIDING ON %s ######" % (self.guideTargetVar)
+    
+        if self.stopThread: #Re-initializing hack?
+            self.stopThread = False
+            self.guideTargetText = self.guideTargetVar.toPlainText()
+
+        print "###### STARTING GUIDING ON %s ######" % (self.guideTargetText)
         #self.guideButtonVar.set("Stop Guiding")
         gfls = self.checkGuideVariable()
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
@@ -842,9 +849,9 @@ class RunGuiding(QThread):
                     pass
 
     def checkGuideVariable(self):
-        gfl = '/home/utopea/elliot/guidefiles/'+time.strftime('%Y%m%d')+'_'+self.guideTargetVar+'.txt'
+        gfl = '/home/utopea/elliot/guidefiles/'+time.strftime('%Y%m%d')+'_'+self.guideTargetText+'.txt'
         guidefls = glob('/home/utopea/elliot/guidefiles/*.txt')
-        if self.guideTargetVar == '':
+        if self.guideTargetText == '':
             return '', False
         if gfl not in guidefls:
             print "OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR"

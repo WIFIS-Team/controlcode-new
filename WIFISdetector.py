@@ -7,6 +7,7 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 import matplotlib.pyplot as plt
 from astropy.visualization import (PercentileInterval, LinearStretch,
                                    ImageNormalize)
+from time import time
 
 # Define global variables here
 servername = "192.168.0.20"
@@ -77,8 +78,8 @@ class h2rg:
       
     def writeObsData(self,directory,obsType,sourceName):
             f = open(directory+"/obsinfo.dat","w")
-            f.write("Obs Type: "+self.obsType+"\n")
-            f.write("Source: "+self.sourceName.g+"\n")
+            f.write("Obs Type: "+obsType+"\n")
+            f.write("Source: "+sourceName+"\n")
 
             telemf = open("/home/utopea/WIFIS-Team/controlcode/BokTelemetry.txt","r")
 
@@ -102,6 +103,7 @@ class h2rg:
         return(finalPath)
         
     def exposeRamp(self,nreads,nramps,obsType,sourceName):
+        print "ACQUIRING RAMP for "+sourceName
         commandstring = "SETRAMPPARAM(1,%d,1,1.5,%d)" % (nreads,nramps)
         self.s.send(commandstring)
         response = self.s.recv(buffersize)
@@ -116,8 +118,8 @@ class h2rg:
         added = [f for f in after if not f in before]
         
         finalPath = watchpath+"/"+added[0]
-        self.writeObs(self,finalPath,obsType,sourceName)
-        
+        self.writeObsData(finalPath,obsType,sourceName)
+        print "FINISHED ACQUIRING RAMP"        
         return(finalPath)
     
     @pyqtSlot(str,str,str)    
@@ -140,32 +142,72 @@ class h2rgExposeThread(QThread):
 
     finished = pyqtSignal(str,str,str)
 
-    def __init__(self,detector,exposureType,nreads=2,nramps=1,obsType="None",sourceName="None"):
+    def __init__(self,detector,exposureType,nreads=2,nramps=1,sourceName="None"):
         QThread.__init__(self)
         self.detector = detector
         self.exposureType = exposureType
+        self.exposureTypeText = self.exposureType.currentText()
         self.nreads = nreads
+        self.nreadsText = int(self.nreads.toPlainText())
         self.nramps = nramps
-        self.obsType = obsType
+        self.nrampsText = int(self.nramps.toPlainText())
         self.sourceName = sourceName
+        self.sourceNameText = self.sourceName.toPlainText()
         
     def __del__(self):
         self.wait()
         
     def run(self):
-        if(self.exposureType == "SF"):
+        self.exposureTypeText = self.exposureType.currentText()
+        self.nreadsText = int(self.nreads.toPlainText())
+        self.nrampsText = int(self.nramps.toPlainText())
+        self.sourceNameText = self.sourceName.toPlainText()
+        if(self.exposureTypeText == "Single Frame"):
             output = self.detector.exposeSF()
             print(output)
             self.finished.emit("SF",output,"None")
-        elif(self.exposureType == "CDS"):
+        elif(self.exposureTypeText == "CDS"):
             output = self.detector.exposeCDS()
-        elif(self.exposureType == "Ramp"):
-            output = self.detector.exposeRamp()
-            
-            
+        elif(self.exposureTypeText == "Ramp"):
+            output = self.detector.exposeRamp(self.nreadsText, self.nrampsText, "Ramp", \
+                    self.sourceNameText)
+
+class h2rgProgressThread(QThread):
+
+    finished = pyqtSignal(str,str,str)
+
+    def __init__(self,progressbar, exposureType, nreads=2,nramps=1):
+        QThread.__init__(self)
+
+        self.progressbar = progressbar
+        self.nreads = nreads
+        self.nreadsText = int(self.nreads.toPlainText())
+        self.nramps = nramps
+        self.nrampsText = int(self.nramps.toPlainText())
+        self.exposureType = exposureType
+        self.exposureTypeText = self.exposureType.currentText()
         
-            
-            
-            
-                
-                
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(100)
+        self.progressbar.setValue(0)
+
+    def __del__(self):
+        self.wait()
+        
+    def run(self):
+        self.exposureTypeText = self.exposureType.currentText()
+
+        if self.exposureTypeText != 'Ramp':
+            return
+       
+        self.sleep(4)
+        self.nreadsText = int(self.nreads.toPlainText())
+        self.nrampsText = int(self.nramps.toPlainText())
+        t1 = time()
+        n_seconds = self.nreadsText * self.nrampsText * 1.5
+        while (time() - t1) < n_seconds:
+            self.progressbar.setValue(int((time() - t1)/n_seconds * 100))
+        self.progressbar.setValue(0)
+
+
+
