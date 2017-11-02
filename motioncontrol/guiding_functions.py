@@ -120,11 +120,11 @@ class WIFISGuider():
     functions for controlling the Filter Wheel, Focuser, and
     Camera.'''
 
-    def __init__(self,parent):
+    def __init__(self, guidevariables):
         '''Initialize the GUI and load the Devices into memory'''
 
-        #_tk.Frame.__init__(self,parent)
-        self.parent = parent
+        self.RaMoveBot, self.DECMoveBot,self.focStep,self.expType,self.expTime,\
+                self.ObjText = guidevariables
         self.deltRA = 0
         self.deltDEC = 0
 
@@ -143,11 +143,11 @@ class WIFISGuider():
         if not os.path.exists(self.direc):
             os.makedirs(self.direc)
 
-        self.guideButtonVar = _tk.StringVar()
-        self.guideButtonVar.set('Start Guiding')
+        #self.guideButtonVar = _tk.StringVar()
+        #self.guideButtonVar.set('Start Guiding')
 
-        self.skyMoveVar = _tk.StringVar()
-        self.skyMoveVar.set('Move to Sky')
+        #self.skyMoveVar = _tk.StringVar()
+        #self.skyMoveVar.set('Move to Sky')
 
     def initialize(self):
         '''Creates the actual GUI elements as well as run the various
@@ -448,45 +448,8 @@ class WIFISGuider():
             if self.guidingOnVariable.get():
                 self.guidingOnVariable.set(0)
                 time.sleep(4)
-            WG.move_telescope(self.telSock,float(self.raAdjVariable.get()), \
-                float(self.decAdjVariable.get()))
-
-    def initGuiding(self):
-        if self.telSock:
-            self.deltRA = 0
-            self.deltDEC = 0
-            if self.guidingOnVariable.get():
-                self.guidingOnVariable.set(0)
-                return
-            elif not self.guidingOnVariable.get():
-                self.guidingOnVariable.set(1)
-                print "###### STARTING GUIDING ON %s ######" % (self.guideTargetVariable.get())
-                self.guideButtonVar.set("Stop Guiding")
-                gfls = self.checkGuideVariable()
-                guidingstuff = WG.wifis_simple_guiding_setup(self.telSock, self.cam, \
-                    int(self.guideExpVariable.get()),gfls)
-                self.startGuiding(guidingstuff)
-                #print "Guiding not enabled. Please check the box."
-
-    def startGuiding(self, guidingstuff):
-        if self.telSock:
-            if not self.guidingOnVariable.get():
-                print "###### STOPPING GUIDING ######"
-                self.cam.end_exposure()
-                self.guideButtonVar.set("Start Guiding")
-                print "###### FINISHED GUIDING ######"
-                return
-            else:
-                try:
-                    dRA, dDEC = WG.run_guiding(guidingstuff, self.cam, self.telSock)
-                    self.deltRA += dRA
-                    self.deltDEC += dDEC
-                    print "DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC)
-                except Exception as e:
-                    print e
-                    print "SOMETHING WENT WRONG... CONTINUING"
-                    pass
-                self.parent.after(3000, lambda: self.startGuiding(guidingstuff))
+            WG.move_telescope(self.telSock,float(self.RAMoveBot.toPlainText()), \
+                    float(self.DECMoveBot.toPlainText()))
 
     def skyMove(self):
         if self.telSock:
@@ -509,18 +472,6 @@ class WIFISGuider():
                 self.initGuiding()
             else:
                 return
-
-    def checkGuideVariable(self):
-        gfl = '/home/utopea/elliot/guidefiles/'+time.strftime('%Y%m%d')+'_'+self.guideTargetVariable.get()+'.txt'
-        guidefls = glob('/home/utopea/elliot/guidefiles/*.txt')
-        if self.guideTargetVariable.get() == '':
-            return '', False
-        if gfl not in guidefls:
-            print "OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR"
-            return gfl, False
-        else:
-            print "OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR"
-            return gfl, True
                 
     def offsetToGuider(self):
         if self.telSock:
@@ -611,43 +562,42 @@ class WIFISGuider():
 
     def stepForward(self):
         if self.foc:
-            self.foc.step_motor(int(self.entryfocVariable.get()))
+            self.foc.step_motor(int(self.focStep.toPlainText()))
 
     def stepBackward(self):
         if self.foc:
-            self.foc.step_motor(-1*int(self.entryfocVariable.get()))    
-
-    def writeStepNum(self):
-        if self.foc:
-            self.stepNumText.set(str(self.foc.get_stepper_position()))
-            self.after(2000, self.writeStepNum)
+            self.foc.step_motor(-1*int(self.focStep.toPlainText()))    
 
     ## Camera Functions
     def saveImage(self):
+
         if self.cam:
-            if self.imgtypeVariable.get() == 'Dark':
+
+            exptime = int(self.expTime.toPlainText())
+            objtextval = self.ObjText.toPlainText()
+            if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='dark')
+                self.cam.set_exposure(exptime, frametype='dark')
                 img = self.cam.take_photo()  
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
+                self.cam.set_exposure(exptime, frametype='normal')
             else:
                 self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
+                self.cam.set_exposure(exptime, frametype='normal')
                 img = self.cam.take_photo()  
 
             telemDict = WG.get_telemetry(self.telSock)
             hduhdr = self.makeHeader(telemDict)
-            #hdu = fits.PrimaryHDU(header=hduhdr)
-            #hdulist = fits.HDUList([hdu])
-            if self.entryFilepathVariable.get() == "":
+
+            if objtextval == "":
                 print "Writing to: "+self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits'
-                fits.writeto(self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits', img, hduhdr,clobber=True)
-                #hdulist.writeto(self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits', clobber=True)
+                fits.writeto(self.direc+self.todaydate+'T'+\
+                        time.strftime('%H%M%S')+'.fits', img, hduhdr,clobber=True)
             else:
-                print "Writing to: "+self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'_'+self.entryFilepathVariable.get()+".fits"
-                fits.writeto(self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'_'+self.entryFilepathVariable.get()+".fits", img, hduhdr,clobber=True)
-                #hdulist.writeto(self.entryFilepathVariable.get(),clobber=True)
-                #self.entryFilepathVariable.set("")
+                print "Writing to: "+self.direc+self.todaydate+'T'+\
+                        time.strftime('%H%M%S')+'_'+objtextval+".fits"
+                fits.writeto(self.direc+self.todaydate+'T'+\
+                        time.strftime('%H%M%S')+'_'+objtextval+".fits",\
+                        img, hduhdr,clobber=True)
 
             mpl.close()
             fig = mpl.figure()
@@ -663,14 +613,15 @@ class WIFISGuider():
 
     def takeImage(self):
         if self.cam and self.foc:
-            if self.imgtypeVariable.get() == 'Dark':
+            exptime = int(self.expTime.toPlainText())
+            if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='dark')
+                self.cam.set_exposure(exptime, frametype='dark')
                 img = self.cam.take_photo()  
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
+                self.cam.set_exposure(exptime, frametype='normal')
             else:
                 self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
+                self.cam.set_exposure(exptime, frametype='normal')
                 img = self.cam.take_photo()  
    
             mpl.close()
@@ -714,15 +665,17 @@ class WIFISGuider():
     
 
     def checkCentroids(self, auto=False):
+
         if self.cam and self.foc:
-            if self.imgtypeVariable.get() == 'Dark':
+            exptime = int(self.expTime.toPlainText())
+            if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='dark')
+                self.cam.set_exposure(exptime, frametype='dark')
                 img = self.cam.take_photo()  
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
+                self.cam.set_exposure(exptime, frametype='normal')
             else:
                 self.cam.end_exposure()
-                self.cam.set_exposure(int(self.entryExpVariable.get()), frametype='normal')
+                self.cam.set_exposure(exptime, frametype='normal')
                 img = self.cam.take_photo()  
             
             offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
@@ -773,6 +726,29 @@ class WIFISGuider():
 
     def focusCamera(self):
 
+        focusthread = FocusCamera(self.cam, self.foc)
+        focusthread.start()
+
+    def startGuiding(self):
+
+        guidinginstance = RunGuiding(self.telSock, self.cam, self.ObjText)
+        guidinginstance.start()
+
+class FocusCamera(QThread):
+
+    def __init__(self, cam, foc):
+        QThread.__init__(self)
+        self.cam = cam
+        self.foc = foc
+        self.stopThread = False
+
+    def __del__(self):
+        self.wait()
+
+    def stop(self):
+        self.stopThread = True
+
+    def run(self):
         current_focus = self.foc.get_stepper_position() 
         step = 200
 
@@ -821,7 +797,8 @@ class WIFISGuider():
             current_focus = self.foc.get_stepper_position() 
         
         print "### FINISHED FOCUSING ####"
-        
+
+
 class RunGuiding(QThread):
 
     def __init__(self, telsock, cam, guideTargetVar, guideExpVariable):
@@ -876,14 +853,4 @@ class RunGuiding(QThread):
             print "OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR"
             return gfl, True
     
-def run_fli_gui_standalone():
 
-    root = _tk.Tk()
-    root.title("WIFIS Guider Control")
-    
-    app = FLIApplication(root)
-
-    root.mainloop()
-
-if __name__ == "__main__":
-    run_fli_gui_standalone()

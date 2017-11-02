@@ -15,11 +15,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
        
         #Defining various control/serial variables
+        guidevariables = [self.RAMoveBot, self.DECMoveBot, self.focStep, self.expType, self.expTime,\
+                self.ObjText]
+
         try:
-            self.telSock = wg.connect_to_telescope()
             self.switch1, self.switch2 = pc.connect_to_power()
             self.scidet = wd.h2rg()
-            self.cam, self.foc, self.flt = gf.load_FLIDevices()
+            self.guider = gf.WIFISGuider(guidevariables)
         except:
             print "Something isn't connecting properly"
             return False 
@@ -27,9 +29,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guidedirec, self.todaydate = gf.initGuideFolder()
 
         #Starting function to update labels. Still need to add guider info.
-        self.labelsThread = UpdateLabels(self.telSock, self.RALabel, self.DECLabel,\
-                self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel, self.cam, \
-                self.foc, self.CCDTemp,self.FocPosition)
+        self.labelsThread = UpdateLabels(self.RALabel, self.DECLabel,\
+                self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel, self.CCDTemp,self.FocPosition)
         self.labelsThread.start()
 
         #Defining actions for Exposure Control
@@ -39,18 +40,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         
         #Defining actions for Guider Control
         #These aren't working...I think I need to rethink how this works. Maybe create a class?
-        #self.GuiderMoveButton.clicked.connect(gf.offsetToGuider(self.telSock))
-        #self.WIFISMoveButton.clicked.connect(gf.offsetToWIFIS(self.telSock))
-        #self.moveTelescopeButton.clicked.connect(gf.moveTelescope(self.telSock,\
-        #        self.RAMoveBot.toPlainText(), self.DECMoveBox.toPlainText()))
-        #self.BKWButton.clicked.connect(gf.stepBackward(self.foc, self.focStep))
-        #self.FWDButton.clicked.connect(gf.stepForward(self.foc, self.focStep))
-        
+        self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
+        self.WIFISMoveButton.clicked.connect(self.guider.offsetToWIFIS)
+        self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
+        self.BKWButton.clicked.connect(self.guider.stepBackward)
+        self.FWDButton.clicked.connect(self.guider.stepForward)
+        self.SaveImageButton.clicked.connect(self.guider.saveImage) #Need to thread this
+        self.TakeImageButton.clicked.connect(self.guider.takeImage) #Need to thread this
+        self.FocusCameraButton.clicked.connect(self.guider.focusCamera) #Need to thread
+        self.StartGuidingButton.clicked.connect(self.guider.startGuiding)
+        self.CentroidButton.clicked.connect(self.guider.checkCentroids)
 
 class UpdateLabels(QThread):
 
-    def __init__(self, telsock, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, \
-            HALabel, cam, foc, ccdTemp, focpos):
+    def __init__(self, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, \
+            HALabel, ccdTemp, focpos):
         QThread.__init__(self)
 
         self.telsock = telsock
@@ -60,8 +64,6 @@ class UpdateLabels(QThread):
         self.ELLabel = ELLabel
         self.IISLabel = IISLabel
         self.HALabel = HALabel
-        self.cam = cam
-        self.foc = foc
         self.ccdTemp = ccdTemp
         self.focpos = focpos
 
@@ -71,7 +73,7 @@ class UpdateLabels(QThread):
     def run(self):
 
         while True:
-            telemDict = wg.get_telemetry(self.telsock, verbose=False)
+            telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
 
             self.RALabel.setText(telemDict['RA'])
             self.DECLabel.setText(telemDict['DEC'])
@@ -79,8 +81,8 @@ class UpdateLabels(QThread):
             self.ELLabel.setText(telemDict['EL'])
             self.IISLabel.setText(telemDict['IIS'])
             self.HALabel.setText(telemDict['HA'])
-            gf.getCCDTemp(self.cam, self.ccdTemp)            
-            gf.writeStepNum(self.foc, self.focpos)
+            self.focpos.setText(str(self.guider.foc.get_stepper_position()))
+            self.ccdTemp.setText(str(self.guider.cam.get_temperature()))
 
             self.sleep(3)
 
