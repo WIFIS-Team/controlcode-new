@@ -445,11 +445,12 @@ class WIFISGuider():
 
     def moveTelescope(self):
         if self.telSock:
-            #if self.guidingOnVariable.get():
-            #    self.guidingOnVariable.set(0)
-            #    time.sleep(4)
             WG.move_telescope(self.telSock,float(self.RAMoveBox.toPlainText()), \
                     float(self.DECMoveBox.toPlainText()))
+
+    def moveTelescopeNod(self, ra, dec):
+        if self.telSock:
+            WG.move_telescope(self.telSock,ra, dec)
 
     def skyMove(self):
         if self.telSock:
@@ -813,6 +814,7 @@ class RunGuiding(QThread):
         self.deltRA = 0
         self.deltDEC = 0
         self.stopThread = False
+        self.sky = False
 
     def __del__(self):
         self.wait()
@@ -824,7 +826,8 @@ class RunGuiding(QThread):
     
         if self.stopThread: #Re-initializing hack?
             self.stopThread = False
-            self.guideTargetText = self.guideTargetVar.toPlainText()
+
+        self.guideTargetText = self.guideTargetVar.toPlainText()
 
         print "###### STARTING GUIDING ON %s ######" % (self.guideTargetText)
         #self.guideButtonVar.set("Stop Guiding")
@@ -847,6 +850,15 @@ class RunGuiding(QThread):
                     print e
                     print "SOMETHING WENT WRONG... CONTINUING"
                     pass
+
+    def setSky(self):
+        self.sky = True
+        self.guidetargettext = self.guideTargetVar.toPlainText() + 'Sky'
+
+    def setObj(self):
+        if self.sky:
+            self.guidetargettext = self.guideTargetVar.toPlainText()[:-3]
+            self.sky=False
 
     def checkGuideVariable(self):
         gfl = '/home/utopea/elliot/guidefiles/'+time.strftime('%Y%m%d')+'_'+self.guideTargetText+'.txt'
