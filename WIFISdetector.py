@@ -2,11 +2,12 @@ import numpy as np
 import astropy.io.fits as fits
 import socket
 import os
-import sys from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+import sys 
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 import matplotlib.pyplot as plt
 from astropy.visualization import (PercentileInterval, LinearStretch,
                                    ImageNormalize)
-from time import time
+from time import time, sleep
 from calibration_functions import CalibrationControl
 
 # Define global variables here
@@ -154,7 +155,7 @@ class h2rg:
         
         finalPath = watchpath+"/"+added[0]
         self.writeObsData(finalPath,obsType,sourceName)
-        self.h2rgstatus.setSyleSheet('color: green')
+        self.h2rgstatus.setStyleSheet('color: green')
 
         print "Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName
 
@@ -187,92 +188,98 @@ class h2rg:
         ax = fig.add_subplot(1, 1, 1)
         im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
         ax.format_coord = Formatter(im)
-        ax.set_title(fileName1)
+        ax.set_title(fileName1.split('/')[-1])
         fig.colorbar(im)
 
         plt.show()
 
-    def flatramp(self):
+    def flatramp(self,sourcename):
         self.calibrationcontrol.flatsetup()
         sleep(7)
-        nreadstemp = self.nreads.get()
-        self.nreads.set(5)
-        self.nramps.set(1)
-        sourcetemp = self.sourcename.get()
-        self.sourcename.set('CalFlat '+self.sourcename.get()) 
-        added = self.exposeRamp()
+        sourcename = 'CalFlat ' + sourcename
+        added = self.exposeRamp(5, 1, 'Ramp',sourcename)
+
         f1 = open('flat.lst','w')
         f1.write(str(added[0]))
         f1.close()
-        self.sourcename.set(sourcetemp)
-        self.nreads.set(nreadstemp)
+
         self.calibrationcontrol.sourcesetup()
 
-    def arcramp(self):
+    def arcramp(self,sourcename, flat=False):
         self.calibrationcontrol.arcsetup()
         sleep(3)
-        nreadstemp = self.nreads.get()
-        self.nreads.set(5)
-        self.nramps.set(1)
-        sourcetemp = self.sourcename.get()
-        self.sourcename.set('CalArc '+self.sourcename.get()) 
-        added = self.exposeRamp()
+        sourcename = 'CalArc ' + sourcename
+        added = self.exposeRamp(5, 1, 'Ramp', sourcename)
+        
         f1 = open('wave.lst','w')
         f1.write(str(added[0]))
         f1.close()
-        self.sourcename.set(sourcetemp)
-        self.nreads.set(nreadstemp)
-        self.calibrationcontrol.sourcesetup()
 
-    def takecalibrations(self):
-        self.calibrationcontrol.arcsetup()
-        sleep(3)
-        self.arcramp()
+        if not flat:
+            self.calibrationcontrol.sourcesetup()
+
+    def takecalibrations(self, sourcename):
+        self.arcramp(sourcename,flat=True)
         self.calibrationcontrol.flatsetup()
         sleep(7)
-        self.flatramp()
-        self.calibrationcontrol.sourcesetup()
+        self.flatramp(sourcename)
+        print "FINISHED CALIBRATIONS"
 	
 class h2rgExposeThread(QThread):
 
     finished = pyqtSignal(str,str,str)
 
-    def __init__(self,detector,exposureType,h2rgstatus, nreads=2,nramps=1,sourceName="None"):
+    def __init__(self,detector,exposureType, progressbar,nreads=2,nramps=1,sourceName="None"):
         QThread.__init__(self)
         self.detector = detector
         self.exposureType = exposureType
-        self.exposureTypeText = self.exposureType.currentText()
+        if exposureType == "Calibrations":
+            self.exposureTypeText = "Calibrations"
+        else:
+            self.exposureTypeText = self.exposureType.currentText()
         self.nreads = nreads
         self.nreadsText = int(self.nreads.toPlainText())
         self.nramps = nramps
         self.nrampsText = int(self.nramps.toPlainText())
         self.sourceName = sourceName
         self.sourceNameText = self.sourceName.toPlainText()
-        self.h2rgstatus = h2rgstatus
+        self.progressbar = progressbar
         
     def __del__(self):
         self.wait()
         
     def run(self):
 
-        if self.h2rgstatus == False:
+        if self.detector.connected == False:
             print "Please connect the detector and initialize if not done already"
             return
 
         print "####### STARTING EXPOSURE #######"
-        self.exposureTypeText = self.exposureType.currentText()
+        if self.exposureTypeText != "Calibrations":
+            self.exposureTypeText = self.exposureType.currentText()
         self.nreadsText = int(self.nreads.toPlainText())
         self.nrampsText = int(self.nramps.toPlainText())
         self.sourceNameText = self.sourceName.toPlainText()
+
+        progressbar = h2rgProgressThread(self.progressbar, self.exposureType, nreads=self.nreads,\
+                nramps=self.nramps)
+        progressbar.start()
+
         if(self.exposureTypeText == "Single Frame"):
             output = self.detector.exposeSF()
-            print(output)
             self.finished.emit("SF",output,"None")
         elif(self.exposureTypeText == "CDS"):
-            output = self.detector.exposeCDS()
+            output = self.detector.exposeCDS(self.sourceNameText)
         elif(self.exposureTypeText == "Ramp"):
             output = self.detector.exposeRamp(self.nreadsText, self.nrampsText, "Ramp", \
                     self.sourceNameText)
+        elif(self.exposureTypeText == "Flat Ramp"):
+            output = self.detector.flatramp(self.sourceNameText)
+        elif(self.exposureTypeText == "Arc Ramp"):
+            output = self.detector.arcramp(self.sourceNameText)
+        elif(self.exposureTypeText == "Calibrations"):
+            output = self.detector.takecalibrations(self.sourceNameText)
+        progressbar.reset()
         print "####### FINISHED EXPOSURE #######"
 
 class h2rgProgressThread(QThread):
@@ -288,7 +295,8 @@ class h2rgProgressThread(QThread):
         self.nramps = nramps
         self.nrampsText = int(self.nramps.toPlainText())
         self.exposureType = exposureType
-        self.exposureTypeText = self.exposureType.currentText()
+        if self.exposureType != "Calibrations":
+            self.exposureTypeText = self.exposureType.currentText()
         
         self.progressbar.setMinimum(0)
         self.progressbar.setMaximum(100)
@@ -298,9 +306,9 @@ class h2rgProgressThread(QThread):
         self.wait()
         
     def run(self):
-        self.exposureTypeText = self.exposureType.currentText()
-
-        if self.exposureTypeText != 'Ramp':
+        if self.exposureType != "Calibrations":
+            self.exposureTypeText = self.exposureType.currentText()
+        else:
             return
        
         self.sleep(4)
@@ -310,6 +318,8 @@ class h2rgProgressThread(QThread):
         n_seconds = self.nreadsText * self.nrampsText * 1.5
         while (time() - t1) < n_seconds:
             self.progressbar.setValue(int((time() - t1)/n_seconds * 100))
+
+    def reset(self):
         self.progressbar.setValue(0)
 
 

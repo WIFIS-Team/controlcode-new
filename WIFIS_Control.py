@@ -21,33 +21,36 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         try:
             self.switch1, self.switch2 = pc.connect_to_power()
             self.scidet = wd.h2rg(self.DetectorStatusLabel)
-            self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,self.scidet.connected,\
+            self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,self.ExpProgressBar,\
+                    nreads=self.NReadsTExt,nramps=self.NRampsText,sourceName=self.ObjText)
+            self.calibexpose = wd.h2rgExposeThread(self.scidet,"Calibrations",self.ExpProgressBar,\
                     nreads=self.NReadsTExt,nramps=self.NRampsText,sourceName=self.ObjText)
             self.guider = gf.WIFISGuider(guidevariables)
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText)
-            self.h2rgProgressThread = wd.h2rgProgressThread(self.ExpProgressBar, self.ExpTypeSelect,\
-                    nramps=self.NRampsText, nreads=self.NReadsTExt)
+            #self.h2rgProgressThread = wd.h2rgProgressThread(self.ExpProgressBar, self.ExpTypeSelect,\
+            #        nramps=self.NRampsText, nreads=self.NReadsTExt)
 
         except Exception as e:
             print e
             print "Something isn't connecting properly"
             self.quit()
             
-
+        self.ExpProgressBar.setValue(0)
         #Starting function to update labels. Still need to add guider info.
         self.labelsThread = UpdateLabels(self.guider, self.RALabel, self.DECLabel,\
                 self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel, self.CCDTemp,self.FocPosition)
         self.labelsThread.start()
 
         #Defining actions for Exposure Control
-        if self.h2rg.connected == False:
+        if self.scidet.connected == False:
             self.DetectorStatusLabel.setStyleSheet('color: red')
             
         self.actionConnect.triggered.connect(self.scidet.connect)
         self.actionInitialize.triggered.connect(self.scidet.initialize)
         self.actionDisconnect.triggered.connect(self.scidet.disconnect)
         self.ExposureButton.clicked.connect(self.scidetexpose.start)
-        self.ExposureButton.clicked.connect(self.h2rgProgressThread.start)
+        self.TakeCalibButton.clicked.connect(self.calibexpose.start)
+        #self.ExposureButton.clicked.connect(self.h2rgProgressThread.start)
 
         #Defining actions for Guider Control
         self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
@@ -61,7 +64,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.StartGuidingButton.clicked.connect(self.guideThread.start)
         self.CentroidButton.clicked.connect(self.guider.checkCentroids)
         self.StopGuidingButton.clicked.connect(self.guideThread.stop)
-        self.SetTempButton.clicked.connect
+        self.SetTempButton.clicked.connect(self.guider.setTemperature)
+
+    #def takeCalibrations(self):
+
 
 class UpdateLabels(QThread):
 
@@ -98,7 +104,7 @@ class UpdateLabels(QThread):
             self.focpos.setText(str(self.guider.foc.get_stepper_position()))
             self.ccdTemp.setText(str(self.guider.cam.get_temperature()))
 
-            self.sleep(3)
+            self.sleep(1)
 
 
 def main():

@@ -656,7 +656,7 @@ class WIFISGuider():
 
     def setTemperature(self):
         if self.cam:
-            self.cam.set_temperature(int(self.SetTempValue.toPlainText())    
+            self.cam.set_temperature(int(self.SetTempValue.toPlainText()))
 
     def getCCDTemp(self):
         if self.cam:
