@@ -602,7 +602,7 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item row="3" column="7">
-        <widget class="QTextEdit" name="NNods_2">
+        <widget class="QTextEdit" name="NodsPerCal">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
            <horstretch>0</horstretch>
@@ -723,7 +723,7 @@ p, li { white-space: pre-wrap; }
      <item>
       <layout class="QGridLayout" name="gridLayout_5">
        <item row="2" column="1">
-        <widget class="QTextEdit" name="NReadsTExt">
+        <widget class="QTextEdit" name="NReadsText">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
            <horstretch>0</horstretch>
