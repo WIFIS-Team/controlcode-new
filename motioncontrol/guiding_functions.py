@@ -124,7 +124,7 @@ class WIFISGuider():
         '''Initialize the GUI and load the Devices into memory'''
 
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
-                self.ObjText = guidevariables
+                self.ObjText,self.SetTempValue = guidevariables
         self.deltRA = 0
         self.deltDEC = 0
 
@@ -656,7 +656,7 @@ class WIFISGuider():
 
     def setTemperature(self):
         if self.cam:
-            self.cam.set_temperature(int(self.entryCamTempVariable.get()))    
+            self.cam.set_temperature(int(self.SetTempValue.toPlainText())    
 
     def getCCDTemp(self):
         if self.cam:

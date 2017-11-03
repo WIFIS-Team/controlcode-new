@@ -447,6 +447,8 @@ class MainApplication(Frame):
         self.sourcename.set(sourcetemp)
 
     def flatramp(self):
+        self.calibrationcontrol.flatsetup()
+        sleep(7)
         nreadstemp = self.nreads.get()
         self.nreads.set(5)
         self.nramps.set(1)
@@ -458,8 +460,11 @@ class MainApplication(Frame):
         f1.close()
         self.sourcename.set(sourcetemp)
         self.nreads.set(nreadstemp)
+        self.calibrationcontrol.sourcesetup()
 
     def arcramp(self):
+        self.calibrationcontrol.arcsetup()
+        sleep(3)
         nreadstemp = self.nreads.get()
         self.nreads.set(5)
         self.nramps.set(1)
@@ -471,6 +476,7 @@ class MainApplication(Frame):
         f1.close()
         self.sourcename.set(sourcetemp)
         self.nreads.set(nreadstemp)
+        self.calibrationcontrol.sourcesetup()
 
     def takecalibrations(self):
         self.calibrationcontrol.arcsetup()
@@ -480,7 +486,6 @@ class MainApplication(Frame):
         sleep(7)
         self.flatramp()
         self.calibrationcontrol.sourcesetup()
-        sleep(3)
 
     def checkcenter(self):
         do_get_src_pos('wave.lst','flat.lst','obs.lst')

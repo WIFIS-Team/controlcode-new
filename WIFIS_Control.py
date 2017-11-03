@@ -4,7 +4,7 @@ from wifis import Ui_MainWindow
 import wifis_guiding as wg
 import WIFISdetector as wd
 import power_control as pc
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, QCoreApplication
 import guiding_functions as gf
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
@@ -16,12 +16,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
        
         #Defining various control/serial variables
         guidevariables = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
-                self.ObjText]
+                self.ObjText, self.SetTempValue]
 
         try:
             self.switch1, self.switch2 = pc.connect_to_power()
-            self.scidet = wd.h2rg()
-            self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,\
+            self.scidet = wd.h2rg(self.DetectorStatusLabel)
+            self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,self.scidet.connected,\
                     nreads=self.NReadsTExt,nramps=self.NRampsText,sourceName=self.ObjText)
             self.guider = gf.WIFISGuider(guidevariables)
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText)
@@ -31,7 +31,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         except Exception as e:
             print e
             print "Something isn't connecting properly"
-            return
+            self.quit()
+            
 
         #Starting function to update labels. Still need to add guider info.
         self.labelsThread = UpdateLabels(self.guider, self.RALabel, self.DECLabel,\
@@ -39,6 +40,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.labelsThread.start()
 
         #Defining actions for Exposure Control
+        if self.h2rg.connected == False:
+            self.DetectorStatusLabel.setStyleSheet('color: red')
+            
         self.actionConnect.triggered.connect(self.scidet.connect)
         self.actionInitialize.triggered.connect(self.scidet.initialize)
         self.actionDisconnect.triggered.connect(self.scidet.disconnect)
@@ -56,7 +60,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.FocusCameraButton.clicked.connect(self.guider.focusCamera) #Need to thread
         self.StartGuidingButton.clicked.connect(self.guideThread.start)
         self.CentroidButton.clicked.connect(self.guider.checkCentroids)
-        self.SetTempButton.clicked.connect(self.guideThread.stop)
+        self.StopGuidingButton.clicked.connect(self.guideThread.stop)
+        self.SetTempButton.clicked.connect
 
 class UpdateLabels(QThread):
 
