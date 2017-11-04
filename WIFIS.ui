@@ -32,22 +32,28 @@
       <x>0</x>
       <y>0</y>
       <width>917</width>
-      <height>798</height>
+      <height>747</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
       <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>0</width>
-         <height>40</height>
+         <height>0</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>40</height>
+         <height>30</height>
         </size>
        </property>
        <property name="font">
@@ -402,6 +408,18 @@ p, li { white-space: pre-wrap; }
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0" colspan="8">
         <widget class="QLabel" name="label_12">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>15</pointsize>
@@ -428,7 +446,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
         </widget>
@@ -444,7 +462,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
         </widget>
@@ -470,7 +488,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -499,7 +517,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
         </widget>
@@ -532,7 +550,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -612,7 +630,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -677,7 +695,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -732,7 +750,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -761,7 +779,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -903,6 +921,18 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="0" column="1" colspan="3">
         <widget class="QLabel" name="label_13">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>15</pointsize>
@@ -925,6 +955,18 @@ p, li { white-space: pre-wrap; }
         <widget class="QLabel" name="DetectorStatusLabel">
          <property name="enabled">
           <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
          </property>
          <property name="autoFillBackground">
           <bool>false</bool>
@@ -1064,7 +1106,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -1121,7 +1163,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>30</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -1278,7 +1320,7 @@ p, li { white-space: pre-wrap; }
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>25</height>
+           <height>20</height>
           </size>
          </property>
          <property name="html">
@@ -1307,6 +1349,18 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="2" column="1" colspan="7">
         <widget class="QLabel" name="label_29">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>15</pointsize>
