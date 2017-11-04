@@ -41,6 +41,7 @@ class h2rg:
         self.s.connect((self.servername,self.port))
         self.connected = True
         self.h2rgstatus.setStyleSheet('color: blue')
+        self.h2rgstatus.setText("H2RG Connected")
 
         return(True)
     
@@ -106,8 +107,9 @@ class h2rg:
         added = [f for f in after if not f in before]
 
         finalPath = watchpath+"/"+added[0]
-        self.h2rgstatus.setSyleSheet('color: green')
         self.plotImage("Single Frame",1,finalPath, None)
+        self.h2rgstatus.setStyleSheet('color: green')
+        self.h2rgstatus.setText('H2RG Initialized')
         print "Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName
 
         return(finalPath)
@@ -126,12 +128,12 @@ class h2rg:
        
         after = dict ([(f, None) for f in os.listdir (watchpath)])
         added = [f for f in after if not f in before]
-        self.status["text"] = "READY"
-        self.status["bg"] = "green"
 
         print "Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName 
 
         self.writeObsData(finalPath,'CDS',sourceName)
+        self.h2rgstatus.setStyleSheet('color: green')
+        self.h2rgstatus.setText('H2RG Initialized')
 
         self.plotImage("CDS",1,finalPath+"/Result/CDSResult.fits", None)
 

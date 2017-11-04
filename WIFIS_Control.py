@@ -22,18 +22,19 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.switch1, self.switch2 = pc.connect_to_power()
             self.scidet = wd.h2rg(self.DetectorStatusLabel)
             self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,self.ExpProgressBar,\
-                    nreads=self.NReadsTExt,nramps=self.NRampsText,sourceName=self.ObjText)
+                    nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
             self.calibexpose = wd.h2rgExposeThread(self.scidet,"Calibrations",self.ExpProgressBar,\
-                    nreads=self.NReadsTExt,nramps=self.NRampsText,sourceName=self.ObjText)
+                    nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
             self.guider = gf.WIFISGuider(guidevariables)
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText)
-            #self.h2rgProgressThread = wd.h2rgProgressThread(self.ExpProgressBar, self.ExpTypeSelect,\
-            #        nramps=self.NRampsText, nreads=self.NReadsTExt)
+            self.noddingexposure=NoddingExposure(self.scidet, self.guider, self.NodSelection, \
+                    self.NNods,self.NodsPerCal,\
+                    self.guideThread, self.NRampsText, self.NReadsText, \
+                    self.ObjText, self.NodRAText, self.NodDecText)
 
         except Exception as e:
             print e
             print "Something isn't connecting properly"
-            self.quit()
             
         self.ExpProgressBar.setValue(0)
         #Starting function to update labels. Still need to add guider info.
@@ -51,6 +52,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExposureButton.clicked.connect(self.scidetexpose.start)
         self.TakeCalibButton.clicked.connect(self.calibexpose.start)
         #self.ExposureButton.clicked.connect(self.h2rgProgressThread.start)
+        self.NodBeginButton.clicked.connect(self.noddingexposure.start)
+        self.StopExpButton.clicked.connect(self.noddingexposure.stop)
 
         #Defining actions for Guider Control
         self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
@@ -66,8 +69,69 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.StopGuidingButton.clicked.connect(self.guideThread.stop)
         self.SetTempButton.clicked.connect(self.guider.setTemperature)
 
-    #def takeCalibrations(self):
 
+class NoddingExposure(QThread):
+
+    def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, guideThread, nramps, nreads,\
+            objname, nodra, noddec):
+
+        QThread.__init__(self)
+
+        self.scidet = scidet
+        self.guider = guider
+        self.NodSelection = NodSelection
+        self.NNods = NNods
+        self.NodsPerCal = NodsPerCal
+        self.nramps = nramps
+        self.nreads = nreads
+        self.objname = objname
+        self.nodra = nodra
+        self.noddec = noddec
+
+        self.guideThread = guideThread
+
+        self.stopthread = False
+
+    def __del__(self):
+        self.wait()
+
+    def stop(self):
+        self.stopthread = True
+
+    def run(self):
+        self.NodSelectionVal = self.NodSelection.currentText()
+        self.NNodsVal = int(self.NNods.toPlainText())
+        self.NodsPerCalVal = int(self.NodsPerCal.toPlainText())
+        self.nrampsval = int(self.nramps.toPlainText())
+        self.nreadsval = int(self.nreads.toPlainText())
+        self.objnameval = self.objname.toPlainText()
+        self.nodraval = float(self.nodra.toPlainText())
+        self.noddecval = float(self.noddec.toPlainText())
+        if self.stopthread:
+            self.stopthread = False
+
+        while not self.stopthread:
+            print "Doing initial calibrations"
+            self.scidet.takecalibrations(self.objnameval)
+
+            for i in range(self.NNodsVal):
+                for obstype in self.NodSelectionVal:
+                    if obstype == 'A':
+                        self.guideThread.setObj()
+                        self.guideThread.start()
+                        self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval)
+                    elif obstype == 'B':
+                        self.guideThread.setSky()
+                        self.guider.moveTelescopeNod(self.nodraval, self.noddecval)
+                        self.guideThread.start()
+                        self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky')
+                        self.guideThread.setObj()
+                        self.guider.moveTelescopeNod(-1.*self.nodraval, -1.*self.noddecval)
+                    self.guideThread.stop()
+                if (i + 1) % self.NodsPerValVal == 0:
+                    self.scidet.takecalibrations(self.objnameval)
+
+        
 
 class UpdateLabels(QThread):
 

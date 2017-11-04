@@ -274,15 +274,15 @@ class Ui_MainWindow(object):
         self.label_19 = QtWidgets.QLabel(self.verticalLayoutWidget_6)
         self.label_19.setObjectName("label_19")
         self.gridLayout_3.addWidget(self.label_19, 3, 3, 1, 1)
-        self.NNods_2 = QtWidgets.QTextEdit(self.verticalLayoutWidget_6)
+        self.NodsPerCal = QtWidgets.QTextEdit(self.verticalLayoutWidget_6)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.NNods_2.sizePolicy().hasHeightForWidth())
-        self.NNods_2.setSizePolicy(sizePolicy)
-        self.NNods_2.setMaximumSize(QtCore.QSize(16777215, 30))
-        self.NNods_2.setObjectName("NNods_2")
-        self.gridLayout_3.addWidget(self.NNods_2, 3, 7, 1, 1)
+        sizePolicy.setHeightForWidth(self.NodsPerCal.sizePolicy().hasHeightForWidth())
+        self.NodsPerCal.setSizePolicy(sizePolicy)
+        self.NodsPerCal.setMaximumSize(QtCore.QSize(16777215, 30))
+        self.NodsPerCal.setObjectName("NodsPerCal")
+        self.gridLayout_3.addWidget(self.NodsPerCal, 3, 7, 1, 1)
         self.NodSelection = QtWidgets.QComboBox(self.verticalLayoutWidget_6)
         self.NodSelection.setObjectName("NodSelection")
         self.NodSelection.addItem("")
@@ -327,15 +327,15 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addWidget(self.line_2)
         self.gridLayout_5 = QtWidgets.QGridLayout()
         self.gridLayout_5.setObjectName("gridLayout_5")
-        self.NReadsTExt = QtWidgets.QTextEdit(self.verticalLayoutWidget_6)
+        self.NReadsText = QtWidgets.QTextEdit(self.verticalLayoutWidget_6)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.NReadsTExt.sizePolicy().hasHeightForWidth())
-        self.NReadsTExt.setSizePolicy(sizePolicy)
-        self.NReadsTExt.setMaximumSize(QtCore.QSize(16777215, 30))
-        self.NReadsTExt.setObjectName("NReadsTExt")
-        self.gridLayout_5.addWidget(self.NReadsTExt, 2, 1, 1, 1)
+        sizePolicy.setHeightForWidth(self.NReadsText.sizePolicy().hasHeightForWidth())
+        self.NReadsText.setSizePolicy(sizePolicy)
+        self.NReadsText.setMaximumSize(QtCore.QSize(16777215, 30))
+        self.NReadsText.setObjectName("NReadsText")
+        self.gridLayout_5.addWidget(self.NReadsText, 2, 1, 1, 1)
         self.NRampsText = QtWidgets.QTextEdit(self.verticalLayoutWidget_6)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -695,7 +695,7 @@ class Ui_MainWindow(object):
         self.SetNextButton.setText(_translate("MainWindow", "Set Object as Next"))
         self.label_14.setText(_translate("MainWindow", "Object:"))
         self.label_19.setText(_translate("MainWindow", "Nod Type:"))
-        self.NNods_2.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        self.NodsPerCal.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'.SF NS Text\'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
@@ -714,7 +714,7 @@ class Ui_MainWindow(object):
         self.label_18.setText(_translate("MainWindow", "Nod DEC:"))
         self.label_25.setText(_translate("MainWindow", "Nod Pattern"))
         self.checkBox.setText(_translate("MainWindow", "Sky"))
-        self.NReadsTExt.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        self.NReadsText.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'.SF NS Text\'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
