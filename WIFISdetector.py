@@ -25,13 +25,15 @@ class Formatter(object):
 	return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
 class h2rg:
-    def __init__(self, h2rgstatus):
+    def __init__(self, h2rgstatus, switch1, switch2):
         self.servername = servername
         self.port = serverport
         self.buffersize = buffersize
         self.path = path_to_watch
         self.h2rgstatus = h2rgstatus
-        self.calibrationcontrol = CalibrationControl() 
+        self.switch1 = switch1
+        self.switch2 = switch2
+        self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2) 
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
@@ -194,6 +196,7 @@ class h2rg:
         fig.colorbar(im)
 
         plt.show()
+        plt.pause(0.0001)
 
     def flatramp(self,sourcename):
         self.calibrationcontrol.flatsetup()
@@ -253,7 +256,7 @@ class h2rgExposeThread(QThread):
     def run(self):
 
         if self.detector.connected == False:
-            print "Please connect the detector and initialize if not done already"
+            print "####### Please connect the detector and initialize if not done already #######"
             return
 
         print "####### STARTING EXPOSURE #######"

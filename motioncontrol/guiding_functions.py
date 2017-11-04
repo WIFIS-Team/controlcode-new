@@ -100,6 +100,7 @@ def measure_focus(img, sideregions = 3, fitwidth = 10, plot=False, verbose=False
                     mpl.imshow(imgregion, origin='lower')
                     mpl.plot(cy,cx, 'rx')
                     mpl.show()
+                    mpl.pause(0.0001)
 
                 try:
 
@@ -124,7 +125,7 @@ class WIFISGuider():
         '''Initialize the GUI and load the Devices into memory'''
 
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
-                self.ObjText,self.SetTempValue = guidevariables
+                self.ObjText,self.SetTempValue,self.FilterVal = guidevariables
         self.deltRA = 0
         self.deltDEC = 0
 
@@ -142,282 +143,6 @@ class WIFISGuider():
         self.direc = u'/Data/WIFISGuider/'+self.todaydate+'/'
         if not os.path.exists(self.direc):
             os.makedirs(self.direc)
-
-        #self.guideButtonVar = _tk.StringVar()
-        #self.guideButtonVar.set('Start Guiding')
-
-        #self.skyMoveVar = _tk.StringVar()
-        #self.skyMoveVar.set('Move to Sky')
-
-    def initialize(self):
-        '''Creates the actual GUI elements as well as run the various
-        tasks'''
-
-        self.grid()
-
-        ##### Filter Wheel Settings #####
-         
-        # Check if FW is connected & colour label appropriately
-        if self.flt == None:
-            fltbg = 'red3'
-        else:
-            fltbg = 'green3'
-         
-        label = _tk.Label(self, text='Filter Settings', relief='ridge',\
-            anchor="center", fg = "black", bg=fltbg,font=("Helvetica", 20))
-        label.grid(column=0,row=0,columnspan=2, sticky='EW')
-    
-        # Filter position report label
-        label = _tk.Label(self, text='Filter Position', \
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=0,row=1, sticky='EW')
-
-        self.filterNumText = _tk.StringVar()        
-        self.filterNumText.set(self.getFilterType())
-        label = _tk.Label(self, textvariable=self.filterNumText, \
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=0,row=2, sticky='EW')
-        
-        # Change filter buttons
-        _tk.Button(self, text=u"Z",\
-            command=self.gotoFilter1).grid(column = 1,row = 1, sticky='EW')
-        _tk.Button(self, text=u"I",\
-            command=self.gotoFilter2).grid(column = 1,row = 2, sticky='EW')
-        _tk.Button(self, text=u"R",\
-            command=self.gotoFilter3).grid(column = 1,row = 3, sticky='EW')
-        _tk.Button(self, text=u"G",\
-            command=self.gotoFilter4).grid(column = 1,row = 4, sticky='EW')
-        _tk.Button(self, text=u"H-Alpha",\
-            command=self.gotoFilter5).grid(column = 1,row = 5, sticky='EW')
-
-        ##### Focuser Settings #####
-
-        #Check to see if Focuser is connected & colour label appropriately
-        if self.foc == None:
-            focbg = 'red3'
-        else:
-            focbg = 'green3'
-
-        label = _tk.Label(self, text='Focuser Settings', relief='ridge',\
-            anchor="center", fg = "black", bg=focbg,font=("Helvetica", 20))
-        label.grid(column=2,row=0,columnspan=2, sticky='EW')
-
-        # Focuser step value setting entry field
-        label = _tk.Label(self, text='Step Value', \
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=2,row=1, sticky='EW')
-
-        self.entryfocVariable = _tk.StringVar()
-        self.entryfoc = _tk.Entry(self, width = 10,\
-            textvariable=self.entryfocVariable)
-        self.entryfoc.grid(column=2, row=2, sticky='EW')
-        self.entryfocVariable.set(u"100")
-
-        # Focuser step position report label
-        label = _tk.Label(self, text='Step Position', \
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=2,row=3, sticky='EW')
-
-        self.stepNumText = _tk.StringVar()        
-        label = _tk.Label(self, textvariable=self.stepNumText, \
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=2,row=4, sticky='EW')
-        self.writeStepNum()
-
-        # Buttons for focuser
-        _tk.Button(self, text=u"Home Focuser",\
-            command=self.homeFocuser).grid(column = 3, row = 1, sticky='EW')
-        _tk.Button(self, text=u"Step Forward",\
-            command=self.stepForward).grid(column = 3, row = 2, sticky='EW')
-        _tk.Button(self, text=u"Step Backward",\
-            command=self.stepBackward).grid(column = 3, row = 3, sticky='EW')
-
-        ##### Camera Settings #####
-
-        # Check to see if Camera is connected & colour label appropriately
-        if self.cam == None:
-            cambg = 'red3'
-        else:
-            cambg = 'green3'
-
-        label = _tk.Label(self, text='Camera Settings', relief='ridge',\
-            anchor="center", fg = "black", bg=cambg,font=("Helvetica", 20))
-        label.grid(column=1,row=6,columnspan=2, sticky='EW')
-
-        self.imgtypeVariable = _tk.StringVar()
-        self.imgtypeVariable.set("Normal")
-        imgtypeOption = _tk.OptionMenu(self, self.imgtypeVariable, "Normal", "Dark")
-        imgtypeOption.grid(column=2, row=7, sticky='EW')
-
-        # Exposure time set entry field
-        label = _tk.Label(self, text='Exposure Time', relief='ridge',\
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=1,row=7, sticky='EW')
-
-        self.entryExpVariable = _tk.StringVar()
-        self.entryExp = _tk.Entry(self, width=10,\
-            textvariable=self.entryExpVariable)
-        self.entryExp.grid(column=1, row=8, sticky='EW')
-        self.entryExpVariable.set(u"3000")
-
-        # CCD temperature set entry field
-        label = _tk.Label(self, text='Set Temperature',  relief='ridge',\
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=1,row=9, sticky='EW')
-
-        self.entryCamTempVariable = _tk.StringVar()
-        self.entryCamTemp = _tk.Entry(self, width=10,\
-            textvariable=self.entryCamTempVariable)
-        self.entryCamTemp.grid(column=1, row=10, sticky='EW')
-        self.entryCamTempVariable.set(u"-20")
-
-        # CCD Temp reporting label
-        label = _tk.Label(self, text='CCD Temperature',  relief='ridge',\
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=0,row=9, sticky='EW')
-
-        self.ccdTempText = _tk.StringVar()        
-        label = _tk.Label(self, textvariable=self.ccdTempText, relief='ridge',\
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=0,row=10, sticky='EW')
-
-        # Image filepath set entry field
-        label = _tk.Label(self, text='Force Filename',  relief='ridge',\
-            anchor="center", fg = "black", bg="white",font=("Helvetica", 12))
-        label.grid(column=0,row=7, sticky='EW')
-
-        self.entryFilepathVariable = _tk.StringVar()
-        self.entryFilepath = _tk.Entry(self, width=20, \
-            textvariable=self.entryFilepathVariable)
-        self.entryFilepath.grid(column=0, row=8, sticky='EW')
-        self.entryFilepathVariable.set("")
-
-        # Camera buttons
-        _tk.Button(self, text=u"Save Image",\
-            command=self.saveImage).grid(column = 2, row = 8, sticky='EW')
-        _tk.Button(self, text=u"Set Temperature",\
-            command=self.setTemperature).grid(column = 2, row = 10,\
-            sticky='EW')
-        _tk.Button(self, text=u"Take Image",\
-            command=self.takeImage).grid(column = 3, row = 7, sticky='EW')
-        _tk.Button(self, text=u"Focus Camera",\
-            command=self.focusCamera).grid(column = 3, row = 8, sticky='EW')
-        _tk.Button(self, text=u"Centroids",\
-            command=self.checkCentroids).grid(column=3, row=9, sticky='EW')
-
-
-        self.grid_columnconfigure(0,weight=1)
-        self.grid_columnconfigure(1,weight=1)
-        self.grid_columnconfigure(2,weight=1)
-        self.grid_columnconfigure(3,weight=1)
-        #self.resizable(True, False)
-
-        ##### Telescope Settings #####
-        # Check to see if Camera is connected & colour label appropriately
-        if self.telSock == None:
-            telbg = 'red3'
-        else:
-            telbg = 'green3'
-
-        label = _tk.Label(self, text='Telescope', relief='ridge',\
-            anchor="center", fg = "black", bg=cambg,font=("Helvetica", 20))
-        label.grid(column=4,row=0,columnspan=3, sticky='EW')
-        
-        #self.raGuideVariable = _tk.StringVar()
-        #self.raGuideBox = _tk.Entry(self, \
-        #    textvariable=self.raGuideVariable)
-        #self.raGuideBox.grid(column=6, row=4, sticky='EW')
-        #self.raGuideVariable.set("")
-
-        #self.decGuideVariable = _tk.StringVar()
-        #self.decGuideBox = _tk.Entry(self, \
-        #    textvariable=self.decGuideVariable)
-        #self.decGuideBox.grid(column=6, row=5, sticky='EW')
-        #self.decGuideVariable.set("")
-
-        _tk.Button(self, text=u'Move Telescope',\
-            command=self.moveTelescope).grid(column=4, row=1, sticky='EW')
-
-        _tk.Button(self, text=u'Print Telemetry',\
-            command=self.printTelemetry).grid(column=4, row=4, sticky='EW')    
-
-        self.guideButton = _tk.Button(self, textvariable=self.guideButtonVar,\
-            command=self.initGuiding).grid(column=5, row=3, sticky='EW')
-
-        self.skyMoveButton = _tk.Button(self, text=u'Sky Move',\
-                command=self.skyMove).grid(column=6, row=3, sticky='EW')
-
-        self.guidingOnVariable = _tk.IntVar()
-        self.guidingOnVariable.set(0)
-
-        label = _tk.Label(self, text='RA Adj (\"):',\
-            anchor="center", fg = "black", font=("Helvetica", 12))
-        label.grid(column=5,row=1, sticky='EW')
-        
-        label = _tk.Label(self, text='DEC Adj (\"):',\
-            anchor="center", fg = "black",font=("Helvetica", 12))
-        label.grid(column=5,row=2, sticky='EW')
-
-        label = _tk.Label(self, text='Guide Target:',\
-            anchor="center", fg = "black",font=("Helvetica", 12))
-        label.grid(column=5,row=4, sticky='EW')
-        self.guideTargetVariable = _tk.StringVar()
-        self.guideTarget = _tk.Entry(self, width=15, \
-            textvariable=self.guideTargetVariable)
-        self.guideTarget.grid(column=6, row=4, sticky='EW')
-        self.guideTargetVariable.set("")
-
-        label = _tk.Label(self, text='Guide Exp:',\
-            anchor="center", fg = "black",font=("Helvetica", 12))
-        label.grid(column=5,row=5, sticky='EW')
-        self.guideExpVariable = _tk.StringVar()
-        self.guideExp = _tk.Entry(self, width=15, \
-            textvariable=self.guideExpVariable)
-        self.guideExp.grid(column=6, row=5, sticky='EW')
-        self.guideExpVariable.set("1500")
-
-        self.raAdjVariable = _tk.StringVar()
-        self.raAdj = _tk.Entry(self, width=15, \
-            textvariable=self.raAdjVariable)
-        self.raAdj.grid(column=6, row=1, sticky='EW')
-        self.raAdjVariable.set("0.00")
-    
-        self.decAdjVariable = _tk.StringVar()
-        self.decAdj = _tk.Entry(self, width=15, \
-            textvariable=self.decAdjVariable)
-        self.decAdj.grid(column=6, row=2, sticky='EW')
-        self.decAdjVariable.set("0.00")
-
-        self.offsetButton = _tk.Button(self, text=u'Move to Guider',\
-            command=self.offsetToGuider)
-        self.offsetButton.grid(column=4, row=2, sticky='EW')
-
-        self.offsetButton = _tk.Button(self, text=u'Move to WIFIS',\
-            command=self.offsetToWIFIS)
-        self.offsetButton.grid(column=4, row=3, sticky='EW')
-
-        self.offsetAutoButton = _tk.Button(self, text=u'Corr Offset',\
-            command=self.brightStarCorrect).grid(column=4, row=5, sticky='EW')
-
-        label = _tk.Label(self, text='X Offset:',\
-            anchor="center", fg = "black",font=("Helvetica", 12)).grid(column=5,row=6, sticky='EW')
-        self.xOffsetVar = _tk.StringVar()
-        self.xOffsetVar.set("0")
-        self.xOffset = _tk.Entry(self, width=15, \
-            textvariable=self.xOffsetVar).grid(column=6, row=6, sticky='EW')
-
-        label = _tk.Label(self, text='Y Offset:',\
-            anchor="center", fg = "black",font=("Helvetica", 12)).grid(column=5,row=7, sticky='EW')
-        self.yOffsetVar = _tk.StringVar()
-        self.yOffsetVar.set("0")
-        self.yOffset = _tk.Entry(self, width=15, \
-            textvariable=self.yOffsetVar).grid(column=6, row=7, sticky='EW')
-
-        self.calcmov = _tk.Button(self, text=u'Calc Offset',\
-            command=self.calcOffset).grid(column=4, row=6, sticky='EW')
-
-        
-    ## Functions to perform the above actions ##
 
     ## Telescope Functions
 
@@ -437,12 +162,6 @@ class WIFISGuider():
 
         return
 
-    def printTelemetry(self):
-        if self.telSock:
-            telemDict = WG.get_telemetry(self.telSock)
-            WG.clean_telem(telemDict)
-            #WG.write_telemetry(telemDict)
-
     def moveTelescope(self):
         if self.telSock:
             WG.move_telescope(self.telSock,float(self.RAMoveBox.toPlainText()), \
@@ -452,28 +171,6 @@ class WIFISGuider():
         if self.telSock:
             WG.move_telescope(self.telSock,ra, dec)
 
-    def skyMove(self):
-        if self.telSock:
-            if self.guidingOnVariable.get():
-                self.guidingOnVariable.set(0)
-                time.sleep(4)
-                gtv = self.guideTargetVariable.get()
-                if gtv[-3:] != 'Sky':
-                    self.moveTelescope()
-                    time.sleep(3)
-                    self.guideTargetVariable.set(gtv+'Sky')
-                elif gtv[-3:] == 'Sky':
-                    ra = self.raAdjVariable.get()
-                    dec = self.decAdjVariable.get()
-                    self.raAdjVariable.set(-1.0*float(ra))
-                    self.decAdjVariable.set(-1.0*float(dec))
-                    self.moveTelescope()
-                    time.sleep(3)
-                    self.guideTargetVariable.set(gtv[:-3])
-                self.initGuiding()
-            else:
-                return
-                
     def offsetToGuider(self):
         if self.telSock:
             print "### OFFSETTING TO GUIDER FIELD ###"
@@ -492,39 +189,7 @@ class WIFISGuider():
             #    command=self.offsetToGuider)
             time.sleep(3)
 
-    def brightStarCorrect(self):
-        if self.telSock:
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
-            WG.move_telescope(self.telSock, offsets[0], offsets[1])
-            time.sleep(5)
-            img, dra, ddec = self.checkCentroids(auto=True)
-            time.sleep(3)
-            WG.move_telescope(self.telSock, dra, ddec)
-            time.sleep(3)
-            WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
-            time.sleep(5)
-
     ## Filter Wheel Functions
-    def gotoFilter1(self):
-        if self.flt:
-            self.flt.set_filter_pos(0)
-
-    def gotoFilter2(self):
-        if self.flt:
-            self.flt.set_filter_pos(1)
-
-    def gotoFilter3(self):
-        if self.flt:
-            self.flt.set_filter_pos(2)
-
-    def gotoFilter4(self):
-        if self.flt:
-            self.flt.set_filter_pos(3)
-
-    def gotoFilter5(self):
-        if self.flt:
-            self.flt.set_filter_pos(4)
-
     def getFilterType(self):
         if self.flt:
             filterpos = (self.flt.get_filter_pos() + 1)
@@ -555,6 +220,21 @@ class WIFISGuider():
             if filterpos == 5:
                 self.filterNumText.set("H-Alpha")
             self.after(500,self.writeFilterNum)
+
+    def goToFilter(self):
+        if self.flt:
+            flttype = self.FilterVal.currentText()
+             
+            if flttype == 'Z':
+                self.flt.set_filter_pos(0)
+            elif flttype == 'I':
+                self.flt.set_filter_pos(1)
+            elif flttype == 'R':
+                self.flt.set_filter_pos(2)
+            elif flttype == 'G':
+                self.flt.set_filter_pos(3)
+            elif flttype == 'H-Alpha':
+                self.flt.set_filter_pos(4)
 
     ## Focuser Functions
     def homeFocuser(self):
@@ -611,6 +291,7 @@ class WIFISGuider():
             ax.format_coord = Formatter(im)
             fig.colorbar(im)
             mpl.show()
+            mpl.pause(0.0001)
 
     def takeImage(self):
         if self.cam and self.foc:
@@ -635,6 +316,7 @@ class WIFISGuider():
             ax.format_coord = Formatter(im)
             fig.colorbar(im)
             mpl.show()
+            mpl.pause(0.0001)
         return img
 
     def makeHeader(self, telemDict):
@@ -715,6 +397,7 @@ class WIFISGuider():
                 ax.format_coord = Formatter(im)
                 fig.colorbar(im)
                 mpl.show()
+                mpl.pause(0.0001)
 
             b = np.argmax(centroids[2])
             offsetx = centroids[0][b] - 512

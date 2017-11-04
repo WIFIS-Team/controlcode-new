@@ -10,7 +10,6 @@ from Tkinter import *
 import ttk
 import sys
 import signal
-from power_control import connect_to_power
 
 ###################################################
 def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
@@ -111,7 +110,7 @@ def setup_arduinos(fport,sport):
 class CalibrationControl(): 
     """Defines the GUI including the buttons as well as the button functions."""
     
-    def __init__(self):#,switch1,switch2): #setup basic gui stuff
+    def __init__(self, switch1, switch2):#,switch1,switch2): #setup basic gui stuff
         
         #port for flipper arduino
         fport='/dev/flipper_arduino'
@@ -127,7 +126,8 @@ class CalibrationControl():
 
         self.ser = ser
         self.ser2 = ser2
-        self.switch1, self.switch2 = connect_to_power()
+        self.switch1 = switch1
+        self.switch2 = switch2
 
     #Flipper Controls#  
     ######################################################

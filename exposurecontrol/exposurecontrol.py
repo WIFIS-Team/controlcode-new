@@ -20,6 +20,7 @@ from scipy.interpolate import griddata
 from scipy.interpolate import interp1d
 from get_src_pos import do_get_src_pos
 from calibration_functions import CalibrationControl
+import power_control as pc
 
 class Formatter(object):
     def __init__(self, im):
@@ -172,8 +173,8 @@ class MainApplication(Frame):
         self.nramps = IntVar(value=1)
         self.obstype = StringVar(self)
         self.sourcename = StringVar(self)
-        self.calibrationcontrol = CalibrationControl() 
-
+        self.switch1,self.switch2 = pc.connect_to_power()
+        self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2)
         self.create_widgets()
 
     def create_widgets(self): #create all the buttons and labels and stuff
