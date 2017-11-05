@@ -243,11 +243,11 @@ class h2rgExposeThread(QThread):
         else:
             self.exposureTypeText = self.exposureType.currentText()
         self.nreads = nreads
-        self.nreadsText = int(self.nreads.toPlainText())
+        self.nreadsText = int(self.nreads.text())
         self.nramps = nramps
-        self.nrampsText = int(self.nramps.toPlainText())
+        self.nrampsText = int(self.nramps.text())
         self.sourceName = sourceName
-        self.sourceNameText = self.sourceName.toPlainText()
+        self.sourceNameText = self.sourceName.text()
         self.progressbar = progressbar
         
     def __del__(self):
@@ -262,9 +262,9 @@ class h2rgExposeThread(QThread):
         print "####### STARTING EXPOSURE #######"
         if self.exposureTypeText != "Calibrations":
             self.exposureTypeText = self.exposureType.currentText()
-        self.nreadsText = int(self.nreads.toPlainText())
-        self.nrampsText = int(self.nramps.toPlainText())
-        self.sourceNameText = self.sourceName.toPlainText()
+        self.nreadsText = int(self.nreads.text())
+        self.nrampsText = int(self.nramps.text())
+        self.sourceNameText = self.sourceName.text()
 
         progressbar = h2rgProgressThread(self.progressbar, self.exposureType, nreads=self.nreads,\
                 nramps=self.nramps)
@@ -296,9 +296,9 @@ class h2rgProgressThread(QThread):
 
         self.progressbar = progressbar
         self.nreads = nreads
-        self.nreadsText = int(self.nreads.toPlainText())
+        self.nreadsText = int(self.nreads.text())
         self.nramps = nramps
-        self.nrampsText = int(self.nramps.toPlainText())
+        self.nrampsText = int(self.nramps.text())
         self.exposureType = exposureType
         if self.exposureType != "Calibrations":
             self.exposureTypeText = self.exposureType.currentText()
@@ -317,8 +317,8 @@ class h2rgProgressThread(QThread):
             return
        
         self.sleep(4)
-        self.nreadsText = int(self.nreads.toPlainText())
-        self.nrampsText = int(self.nramps.toPlainText())
+        self.nreadsText = int(self.nreads.text())
+        self.nrampsText = int(self.nramps.text())
         t1 = time()
         n_seconds = self.nreadsText * self.nrampsText * 1.5
         while (time() - t1) < n_seconds:
