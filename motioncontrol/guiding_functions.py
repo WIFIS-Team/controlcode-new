@@ -125,7 +125,8 @@ class WIFISGuider():
         '''Initialize the GUI and load the Devices into memory'''
 
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
-                self.ObjText,self.SetTempValue,self.FilterVal = guidevariables
+                self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
+                self.YPos = guidevariables
         self.deltRA = 0
         self.deltDEC = 0
 
@@ -149,8 +150,8 @@ class WIFISGuider():
     def calcOffset(self):
         #Get rotation solution
         offsets,x_rot,y_rot = WG.get_rotation_solution(self.telSock)
-        yc = float(self.xOffsetVar.get())
-        xc = float(self.yOffsetVar.get())
+        yc = float(self.XPos.text())
+        xc = float(self.YPos.text())
 
         offsetx = xc - 512
         offsety = yc - 512
@@ -164,8 +165,8 @@ class WIFISGuider():
 
     def moveTelescope(self):
         if self.telSock:
-            WG.move_telescope(self.telSock,float(self.RAMoveBox.toPlainText()), \
-                    float(self.DECMoveBox.toPlainText()))
+            WG.move_telescope(self.telSock,float(self.RAMoveBox.text()), \
+                    float(self.DECMoveBox.text()))
 
     def moveTelescopeNod(self, ra, dec):
         if self.telSock:
@@ -243,19 +244,19 @@ class WIFISGuider():
 
     def stepForward(self):
         if self.foc:
-            self.foc.step_motor(int(self.focStep.toPlainText()))
+            self.foc.step_motor(int(self.focStep.text()))
 
     def stepBackward(self):
         if self.foc:
-            self.foc.step_motor(-1*int(self.focStep.toPlainText()))    
+            self.foc.step_motor(-1*int(self.focStep.text()))    
 
     ## Camera Functions
     def saveImage(self):
 
         if self.cam:
 
-            exptime = int(self.expTime.toPlainText())
-            objtextval = self.ObjText.toPlainText()
+            exptime = int(self.expTime.text())
+            objtextval = self.ObjText.text()
             if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='dark')
@@ -295,7 +296,7 @@ class WIFISGuider():
 
     def takeImage(self):
         if self.cam and self.foc:
-            exptime = int(self.expTime.toPlainText())
+            exptime = int(self.expTime.text())
             if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='dark')
@@ -339,7 +340,7 @@ class WIFISGuider():
 
     def setTemperature(self):
         if self.cam:
-            self.cam.set_temperature(int(self.SetTempValue.toPlainText()))
+            self.cam.set_temperature(int(self.SetTempValue.text()))
 
     def getCCDTemp(self):
         if self.cam:
@@ -350,7 +351,7 @@ class WIFISGuider():
     def checkCentroids(self, auto=False):
 
         if self.cam and self.foc:
-            exptime = int(self.expTime.toPlainText())
+            exptime = int(self.expTime.text())
             if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='dark')
@@ -375,7 +376,7 @@ class WIFISGuider():
 
             d = -1
             for i,b in enumerate(barr):  
-                if i > 5:
+                if i > 3:
                     break
                 offsetx = centroids[0][b] - 512
                 offsety = centroids[1][b] - 512
@@ -490,7 +491,7 @@ class RunGuiding(QThread):
         self.telsock = telsock
         #self.guideButtonVar = guideButonVar
         self.guideTargetVar = guideTargetVar
-        self.guideTargetText = self.guideTargetVar.toPlainText()
+        self.guideTargetText = self.guideTargetVar.text()
         #self.guideExpVariable = guideExpVariable
         self.guideExpVariable = 1500
         self.cam = cam
@@ -510,7 +511,7 @@ class RunGuiding(QThread):
         if self.stopThread: #Re-initializing hack?
             self.stopThread = False
 
-        self.guideTargetText = self.guideTargetVar.toPlainText()
+        self.guideTargetText = self.guideTargetVar.text()
 
         print "###### STARTING GUIDING ON %s ######" % (self.guideTargetText)
         #self.guideButtonVar.set("Stop Guiding")
@@ -536,11 +537,11 @@ class RunGuiding(QThread):
 
     def setSky(self):
         self.sky = True
-        self.guidetargettext = self.guideTargetVar.toPlainText() + 'Sky'
+        self.guidetargettext = self.guideTargetVar.text() + 'Sky'
 
     def setObj(self):
         if self.sky:
-            self.guidetargettext = self.guideTargetVar.toPlainText()[:-3]
+            self.guidetargettext = self.guideTargetVar.text()[:-3]
             self.sky=False
 
     def checkGuideVariable(self):

@@ -4,7 +4,12 @@ import socket
 import os
 import sys 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+
+from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
+
 from astropy.visualization import (PercentileInterval, LinearStretch,
                                    ImageNormalize)
 from time import time, sleep
@@ -25,7 +30,7 @@ class Formatter(object):
 	return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
 class h2rg:
-    def __init__(self, h2rgstatus, switch1, switch2):
+    def __init__(self, h2rgstatus, switch1, switch2, plotwindow):
         self.servername = servername
         self.port = serverport
         self.buffersize = buffersize
@@ -34,6 +39,7 @@ class h2rg:
         self.switch1 = switch1
         self.switch2 = switch2
         self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2) 
+        self.plotwindow = plotwindow
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
@@ -187,16 +193,16 @@ class h2rg:
 
         norm = ImageNormalize(image, interval=PercentileInterval(99.5),
                       stretch=LinearStretch())
+        
+        self.plotwindow.figure.clear()
 
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
+        ax = self.plotwindow.figure.add_subplot(1, 1, 1)
         im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
         ax.format_coord = Formatter(im)
         ax.set_title(fileName1.split('/')[-1])
-        fig.colorbar(im)
+        self.plotwindow.figure.colorbar(im)
 
-        plt.show()
-        plt.pause(0.0001)
+        self.plotwindow.canvas.draw()
 
     def flatramp(self,sourcename):
         self.calibrationcontrol.flatsetup()
@@ -243,11 +249,11 @@ class h2rgExposeThread(QThread):
         else:
             self.exposureTypeText = self.exposureType.currentText()
         self.nreads = nreads
-        self.nreadsText = int(self.nreads.toPlainText())
+        self.nreadsText = int(self.nreads.text())
         self.nramps = nramps
-        self.nrampsText = int(self.nramps.toPlainText())
+        self.nrampsText = int(self.nramps.text())
         self.sourceName = sourceName
-        self.sourceNameText = self.sourceName.toPlainText()
+        self.sourceNameText = self.sourceName.text()
         self.progressbar = progressbar
         
     def __del__(self):
@@ -262,9 +268,9 @@ class h2rgExposeThread(QThread):
         print "####### STARTING EXPOSURE #######"
         if self.exposureTypeText != "Calibrations":
             self.exposureTypeText = self.exposureType.currentText()
-        self.nreadsText = int(self.nreads.toPlainText())
-        self.nrampsText = int(self.nramps.toPlainText())
-        self.sourceNameText = self.sourceName.toPlainText()
+        self.nreadsText = int(self.nreads.text())
+        self.nrampsText = int(self.nramps.text())
+        self.sourceNameText = self.sourceName.text()
 
         progressbar = h2rgProgressThread(self.progressbar, self.exposureType, nreads=self.nreads,\
                 nramps=self.nramps)
@@ -296,9 +302,9 @@ class h2rgProgressThread(QThread):
 
         self.progressbar = progressbar
         self.nreads = nreads
-        self.nreadsText = int(self.nreads.toPlainText())
+        self.nreadsText = int(self.nreads.text())
         self.nramps = nramps
-        self.nrampsText = int(self.nramps.toPlainText())
+        self.nrampsText = int(self.nramps.text())
         self.exposureType = exposureType
         if self.exposureType != "Calibrations":
             self.exposureTypeText = self.exposureType.currentText()
@@ -317,8 +323,8 @@ class h2rgProgressThread(QThread):
             return
        
         self.sleep(4)
-        self.nreadsText = int(self.nreads.toPlainText())
-        self.nrampsText = int(self.nramps.toPlainText())
+        self.nreadsText = int(self.nreads.text())
+        self.nrampsText = int(self.nramps.text())
         t1 = time()
         n_seconds = self.nreadsText * self.nrampsText * 1.5
         while (time() - t1) < n_seconds:
