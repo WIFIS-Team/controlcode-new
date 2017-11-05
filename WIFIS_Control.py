@@ -32,8 +32,8 @@ class PlotWindow(QDialog):
         self.layout.addWidget(self.canvas)
         self.setLayout(self.layout)
 
-        self.btnExit.clicked.connect(self.close)
-        self.actionExit.triggered.connect(self.close)
+        #self.layout.btnExit.clicked.connect(self.close)
+        #self.layout.actionExit.triggered.connect(self.close)
 
     def closeEvent(self, event):
         
@@ -59,7 +59,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
       
         #Defining GUI Variables to feed into the guider functions
         guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
-                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos]
+                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.GuidingText]
         power_widgets = [self.Power11, self.Power12, self.Power13, self.Power14, self.Power15,\
                         self.Power16, self.Power17, self.Power18, self.Power21, self.Power22,\
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
@@ -67,6 +67,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         motor_modules = self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusPosition,\
                 self.FilterPosition, self.GratingPosition, self.FocusStep,\
                 self.FilterStep, self.GratingStep
+
         #Defining various control/serial variables
 
         try:
@@ -124,6 +125,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
         self.WIFISMoveButton.clicked.connect(self.guider.offsetToWIFIS)
         self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
+        self.MoveBackButton.clicked.connect(self.guider.moveTelescopeBack)
         self.CalOffsetButton.clicked.connect(self.guider.calcOffset)
 
         #Defining actions for Guider Control
@@ -208,7 +210,7 @@ class NoddingExposure(QThread):
         self.wait()
 
     def stop(self):
-        if self.stopthread = True:
+        if self.stopthread == True:
             print "Waiting for exposure to finish then stopping!"
         print "####### STOPPING NODDING WHEN CURRENT EXPOSURE FINISHES #######"
         self.stopthread = True
@@ -236,16 +238,26 @@ class NoddingExposure(QThread):
         for i in range(self.NNodsVal):
             for obstype in self.NodSelectionVal:
                 if obstype == 'A':
-                    #self.guideThread.setObj()
-                    #self.guideThread.start()
+                    self.guideThread.setObj()
+                    self.guideThread.start()
+                    self.sleep(2)
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval)
+                    self.guideThread.stop()
+                    self.sleep(2)
                 elif obstype == 'B':
-                    #self.guideThread.setSky()
-                    #self.guider.moveTelescopeNod(self.nodraval, self.noddecval)
-                    #self.guideThread.start()
+                    self.guideThread.setSky()
+                    self.guider.moveTelescopeNod(self.nodraval, self.noddecval)
+                    self.sleep(2)
+                    self.guideThread.start()
+                    self.sleep(2)
+
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky')
-                    #self.guideThread.setObj()
-                    #self.guider.moveTelescopeNod(-1.*self.nodraval, -1.*self.noddecval)
+                    
+                    self.guideThread.stop()
+                    self.sleep(2)
+                    self.guideThread.setObj()
+                    self.guider.moveTelescopeNod(-1.*self.nodraval, -1.*self.noddecval)
+                    self.sleep(2)
                 if self.stopthread:
                     break
                 #self.guideThread.stop()
@@ -286,6 +298,7 @@ class UpdateLabels(QThread):
         while not self.stopthread:
             try:
                 telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
+                
                 DECText = telemDict['DEC']
                 RAText = telemDict['RA']
 
@@ -297,17 +310,19 @@ class UpdateLabels(QThread):
                 self.HALabel.setText(telemDict['HA'])
                 self.focpos.setText(str(self.guider.foc.get_stepper_position()))
                 self.ccdTemp.setText(str(self.guider.cam.get_temperature()))
-                self.motorcontrol.update_status()
-                self.motorcontrol.get_position()
+                #self.motorcontrol.update_status()
+                #self.motorcontrol.get_position()
                 #self.powercontrol.checkOn()
-                self.sleep(2)
+                self.sleep(3)
 
             except Exception as e:
                 print "############################"
                 print "ERROR IN LABEL UPDATE THREAD"
+                print traceback.print_exc()
                 print e
                 print "############################"
-            
+
+
 
 
 def main():

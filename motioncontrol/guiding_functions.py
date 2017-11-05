@@ -126,7 +126,7 @@ class WIFISGuider():
 
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
-                self.YPos = guidevariables
+                self.YPos, self.GuidingText = guidevariables
         self.deltRA = 0
         self.deltDEC = 0
 
@@ -167,6 +167,11 @@ class WIFISGuider():
         if self.telSock:
             WG.move_telescope(self.telSock,float(self.RAMoveBox.text()), \
                     float(self.DECMoveBox.text()))
+
+    def moveTelescopeBack(self):
+        if self.telSock:
+            WG.move_telescope(self.telSock,-1.*float(self.RAMoveBox.text()), \
+                    -1.*float(self.DECMoveBox.text()))
 
     def moveTelescopeNod(self, ra, dec):
         if self.telSock:
@@ -326,7 +331,7 @@ class WIFISGuider():
         hdr['DATE'] = self.todaydate 
         hdr['SCOPE'] = 'Bok Telescope, Steward Observatory'
         hdr['ObsTime'] = time.strftime('%H:%M"%S')
-        hdr['ExpTime'] = self.entryExpVariable.get()
+        hdr['ExpTime'] = self.expTime.text()
         hdr['RA'] = telemDict['RA']
         hdr['DEC'] = telemDict['DEC']
         hdr['IIS'] = telemDict['IIS']
@@ -486,7 +491,7 @@ class FocusCamera(QThread):
 
 class RunGuiding(QThread):
 
-    def __init__(self, telsock, cam, guideTargetVar):
+    def __init__(self, telsock, cam, guideTargetVar, GuidingText):
         QThread.__init__(self)
         self.telsock = telsock
         #self.guideButtonVar = guideButonVar
@@ -499,6 +504,7 @@ class RunGuiding(QThread):
         self.deltDEC = 0
         self.stopThread = False
         self.sky = False
+        self.GuidingText = GuidingText 
 
     def __del__(self):
         self.wait()
@@ -532,7 +538,7 @@ class RunGuiding(QThread):
                     print "DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC)
                 except Exception as e:
                     print e
-                    print "SOMETHING WENT WRONG... CONTINUING"
+                    print "SOMETHING WENT WRONG WITH GUIDING... CONTINUING"
                     pass
 
     def setSky(self):
