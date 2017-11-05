@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>899</width>
-    <height>892</height>
+    <width>963</width>
+    <height>976</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+   <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -26,6 +26,12 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <layout class="QGridLayout" name="gridLayout_4">
     <item row="0" column="1">
      <layout class="QGridLayout" name="gridLayout_10">
@@ -39,7 +45,7 @@
           <item row="6" column="1">
            <widget class="QLabel" name="IISLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -94,7 +100,7 @@
           <item row="3" column="1">
            <widget class="QLabel" name="DECLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -116,7 +122,7 @@
           <item row="7" column="1">
            <widget class="QLabel" name="HALabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -154,7 +160,7 @@
           <item row="4" column="1">
            <widget class="QLabel" name="ELLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -176,7 +182,7 @@
           <item row="5" column="1">
            <widget class="QLabel" name="AZLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -198,7 +204,7 @@
           <item row="2" column="1">
            <widget class="QLabel" name="RALabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -293,7 +299,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -386,7 +392,7 @@
               <item row="2" column="5">
                <widget class="QPushButton" name="CalOffsetButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -399,7 +405,7 @@
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>100</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -432,14 +438,14 @@
               <item row="2" column="1">
                <widget class="QPushButton" name="moveTelescopeButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>150</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -492,6 +498,12 @@
              <layout class="QGridLayout" name="gridLayout_8">
               <item row="1" column="1">
                <widget class="QPushButton" name="Power15">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -499,6 +511,12 @@
               </item>
               <item row="3" column="2">
                <widget class="QPushButton" name="Power23">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -506,6 +524,12 @@
               </item>
               <item row="4" column="2">
                <widget class="QPushButton" name="Power24">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -513,6 +537,12 @@
               </item>
               <item row="3" column="3">
                <widget class="QPushButton" name="Power27">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -520,6 +550,12 @@
               </item>
               <item row="1" column="0">
                <widget class="QPushButton" name="Power11">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -527,6 +563,12 @@
               </item>
               <item row="3" column="0">
                <widget class="QPushButton" name="Power13">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -534,6 +576,12 @@
               </item>
               <item row="2" column="0">
                <widget class="QPushButton" name="Power12">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -541,6 +589,12 @@
               </item>
               <item row="3" column="1">
                <widget class="QPushButton" name="Power17">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -548,6 +602,12 @@
               </item>
               <item row="1" column="3">
                <widget class="QPushButton" name="Power25">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -555,6 +615,12 @@
               </item>
               <item row="2" column="2">
                <widget class="QPushButton" name="Power22">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -562,6 +628,12 @@
               </item>
               <item row="2" column="3">
                <widget class="QPushButton" name="Power26">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -569,6 +641,12 @@
               </item>
               <item row="4" column="3">
                <widget class="QPushButton" name="Power28">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -576,6 +654,12 @@
               </item>
               <item row="1" column="2">
                <widget class="QPushButton" name="Power21">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -583,6 +667,12 @@
               </item>
               <item row="2" column="1">
                <widget class="QPushButton" name="Power16">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -590,6 +680,12 @@
               </item>
               <item row="4" column="1">
                <widget class="QPushButton" name="Power18">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -597,6 +693,12 @@
               </item>
               <item row="4" column="0">
                <widget class="QPushButton" name="Power14">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>PushButton</string>
                 </property>
@@ -605,7 +707,7 @@
               <item row="0" column="2" colspan="2">
                <widget class="QLabel" name="label_38">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -633,7 +735,7 @@
               <item row="0" column="0" colspan="2">
                <widget class="QLabel" name="label_37">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -674,6 +776,12 @@
              <layout class="QGridLayout" name="gridLayout_11">
               <item row="2" column="0">
                <widget class="QLabel" name="label_42">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="font">
                  <font>
                   <weight>75</weight>
@@ -690,6 +798,12 @@
               </item>
               <item row="1" column="4">
                <widget class="QPushButton" name="TBButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>TB Filter</string>
                 </property>
@@ -698,7 +812,7 @@
               <item row="4" column="1">
                <widget class="QPushButton" name="FocusGoTo">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -716,6 +830,12 @@
               </item>
               <item row="3" column="0">
                <widget class="QLabel" name="label_44">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="font">
                  <font>
                   <weight>75</weight>
@@ -733,7 +853,7 @@
               <item row="0" column="1">
                <widget class="QLabel" name="label_39">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -761,7 +881,7 @@
               <item row="0" column="2">
                <widget class="QLabel" name="label_40">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -788,6 +908,12 @@
               </item>
               <item row="1" column="0">
                <widget class="QLabel" name="label_43">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="font">
                  <font>
                   <weight>75</weight>
@@ -804,6 +930,12 @@
               </item>
               <item row="2" column="4">
                <widget class="QPushButton" name="HButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>H Filter</string>
                 </property>
@@ -811,6 +943,12 @@
               </item>
               <item row="3" column="4">
                <widget class="QPushButton" name="BlankButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Blank Filter</string>
                 </property>
@@ -819,7 +957,7 @@
               <item row="0" column="3">
                <widget class="QLabel" name="label_41">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -847,7 +985,7 @@
               <item row="5" column="1">
                <widget class="QPushButton" name="FocusHome">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -866,7 +1004,7 @@
               <item row="4" column="2">
                <widget class="QPushButton" name="FilterGoTo">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -885,7 +1023,7 @@
               <item row="5" column="2">
                <widget class="QPushButton" name="FilterHome">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -904,7 +1042,7 @@
               <item row="4" column="3">
                <widget class="QPushButton" name="GratingGoTo">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -923,7 +1061,7 @@
               <item row="5" column="3">
                <widget class="QPushButton" name="GratingHome">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -942,7 +1080,7 @@
               <item row="6" column="1">
                <widget class="QPushButton" name="FocusStop">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -961,7 +1099,7 @@
               <item row="6" column="2">
                <widget class="QPushButton" name="FilterStop">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -980,7 +1118,7 @@
               <item row="6" column="3">
                <widget class="QPushButton" name="GratingStop">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -999,7 +1137,7 @@
               <item row="3" column="1">
                <widget class="QLineEdit" name="FocusStep">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -1012,7 +1150,7 @@
               <item row="3" column="2">
                <widget class="QLineEdit" name="FilterStep">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -1025,7 +1163,7 @@
               <item row="3" column="3">
                <widget class="QLineEdit" name="GratingStep">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -1037,6 +1175,12 @@
               </item>
               <item row="1" column="1">
                <widget class="QLabel" name="FocusStatus">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>TextLabel</string>
                 </property>
@@ -1047,6 +1191,12 @@
               </item>
               <item row="2" column="1">
                <widget class="QLabel" name="FocusPosition">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>TextLabel</string>
                 </property>
@@ -1057,6 +1207,12 @@
               </item>
               <item row="1" column="2">
                <widget class="QLabel" name="FilterStatus">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>TextLabel</string>
                 </property>
@@ -1067,6 +1223,12 @@
               </item>
               <item row="2" column="2">
                <widget class="QLabel" name="FilterPosition">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>TextLabel</string>
                 </property>
@@ -1077,6 +1239,12 @@
               </item>
               <item row="1" column="3">
                <widget class="QLabel" name="GratingStatus">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>TextLabel</string>
                 </property>
@@ -1087,6 +1255,12 @@
               </item>
               <item row="2" column="3">
                <widget class="QLabel" name="GratingPosition">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>TextLabel</string>
                 </property>
@@ -1131,7 +1305,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -1169,7 +1343,7 @@
        </widget>
       </item>
       <item row="7" column="0">
-       <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0,0,0,0,0,0,0">
+       <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0,0,0,0,0,0,0,0">
         <item row="3" column="6">
          <widget class="QPushButton" name="SaveImageButton">
           <property name="text">
@@ -1278,8 +1452,21 @@
           </property>
          </widget>
         </item>
+        <item row="4" column="5">
+         <widget class="QLineEdit" name="ExpTime">
+          <property name="text">
+           <string>1500</string>
+          </property>
+         </widget>
+        </item>
         <item row="5" column="2">
          <widget class="QLineEdit" name="FocStep">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>100</string>
           </property>
@@ -1289,15 +1476,51 @@
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QPushButton" name="BKWButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="text">
-             <string>Focus BWD</string>
+             <string>FWD</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="FWDButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="text">
-             <string>Focus FWD</string>
+             <string>FWD</string>
             </property>
            </widget>
           </item>
@@ -1327,7 +1550,7 @@
         <item row="4" column="2">
          <widget class="QLabel" name="FocPosition">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -1340,7 +1563,7 @@
         <item row="3" column="2">
          <widget class="QComboBox" name="FilterVal">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -1468,10 +1691,17 @@
           </property>
          </widget>
         </item>
+        <item row="6" column="5">
+         <widget class="QLineEdit" name="SetTempValue">
+          <property name="text">
+           <string>-20</string>
+          </property>
+         </widget>
+        </item>
         <item row="2" column="1" colspan="7">
          <widget class="QLabel" name="label_29">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -1497,17 +1727,19 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="5">
-         <widget class="QLineEdit" name="ExpTime">
-          <property name="text">
-           <string>1500</string>
+        <item row="2" column="8" rowspan="5">
+         <widget class="QTextEdit" name="GuidingText">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-         </widget>
-        </item>
-        <item row="6" column="5">
-         <widget class="QLineEdit" name="SetTempValue">
-          <property name="text">
-           <string>-20</string>
+          <property name="minimumSize">
+           <size>
+            <width>250</width>
+            <height>0</height>
+           </size>
           </property>
          </widget>
         </item>
@@ -1535,7 +1767,7 @@
         <item row="0" column="0" colspan="8">
          <widget class="QLabel" name="label_12">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -1656,6 +1888,12 @@
         </item>
         <item row="1" column="7">
          <widget class="QComboBox" name="NodSelection">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <item>
            <property name="text">
             <string>ABA</string>
@@ -1918,7 +2156,7 @@
            <bool>false</bool>
           </property>
           <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -2013,7 +2251,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>899</width>
+     <width>963</width>
      <height>22</height>
     </rect>
    </property>
