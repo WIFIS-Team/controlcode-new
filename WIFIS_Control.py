@@ -1,14 +1,51 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
-import sys
+from PyQt5.QtCore import QThread, QCoreApplication
+from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox
+
 from wifis import Ui_MainWindow
 import wifis_guiding as wg
 import WIFISdetector as wd
-from PyQt5.QtCore import QThread, QCoreApplication
 import guiding_functions as gf
+import sys
+
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as mpl
+
 import WIFISpower as pc
 import WIFISmotor as wm
 import traceback
+
+
+class PlotWindow(QDialog):
+    def __init__(self, parent=None):
+        super(PlotWindow, self).__init__(parent)
+        
+        self.figure = mpl.figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+
+        # set the layout
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.toolbar)
+        self.layout.addWidget(self.canvas)
+        self.setLayout(self.layout)
+
+        self.btnExit.clicked.connect(self.close)
+        self.actionExit.triggered.connect(self.close)
+
+    def closeEvent(self, event):
+        
+        reply = QMessageBox.question(self, "Message", "You will no longer see plots if you close this window. Are you sure?", QMessageBox.Close | QMessageBox.Cancel)
+
+        if reply == QMessageBox.Close:
+            event.accept()
+        else:
+            event.ignore()
+
+
+
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
@@ -16,6 +53,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         super(WIFISUI, self).__init__()
 
         self.setupUi(self)
+
+        self.plotwindow = PlotWindow()
+        self.plotwindow.show()
       
         #Defining GUI Variables to feed into the guider functions
         guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
@@ -39,7 +79,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.motorcontrol = wm.MotorControl(motor_modules) 
 
             #Detector Control and Threads
-            self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2)
+            self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2, self.plotwindow)
             self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,self.ExpProgressBar,\
                     nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
             self.calibexpose = wd.h2rgExposeThread(self.scidet,"Calibrations",self.ExpProgressBar,\
@@ -139,7 +179,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.ObjText.setText(objtxt+'Sky')
         else:
             if objtxt[-3:] == 'Sky':
-                self.ObjText.setText(objtxt[-3:])
+                self.ObjText.setText(objtxt[:-3])
 
 
 class NoddingExposure(QThread):
@@ -168,6 +208,8 @@ class NoddingExposure(QThread):
         self.wait()
 
     def stop(self):
+        if self.stopthread = True:
+            print "Waiting for exposure to finish then stopping!"
         print "####### STOPPING NODDING WHEN CURRENT EXPOSURE FINISHES #######"
         self.stopthread = True
 
@@ -208,6 +250,7 @@ class NoddingExposure(QThread):
                     break
                 #self.guideThread.stop()
             if self.stopthread:
+                print "####### STOPPED NODDING SEQUENCE #######"
                 break
             if (i + 1) % self.NodsPerCalVal == 0:
                 self.scidet.takecalibrations(self.objnameval)
