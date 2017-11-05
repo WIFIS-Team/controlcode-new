@@ -519,7 +519,7 @@ class RunGuiding(QThread):
 
         self.guideTargetText = self.guideTargetVar.text()
 
-        print "###### STARTING GUIDING ON %s ######" % (self.guideTargetText)
+        self.GuidingText.setText("###### STARTING GUIDING ON %s ######" % (self.guideTargetText))
         #self.guideButtonVar.set("Stop Guiding")
         gfls = self.checkGuideVariable()
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
@@ -528,17 +528,17 @@ class RunGuiding(QThread):
         while True:
             if self.stopThread:
                 self.cam.end_exposure()
-                print "###### FINISHED GUIDING ######"
+                self.GuidingText.setText("###### FINISHED GUIDING ######")
                 break
             else:
                 try:
-                    dRA, dDEC = WG.run_guiding(guidingstuff,  self.cam, self.telsock)
+                    dRA, dDEC = WG.run_guiding(guidingstuff,  self.cam, self.telsock, self.GuidingText)
                     self.deltRA += dRA
                     self.deltDEC += dDEC
-                    print "DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC)
+                    self.GuidingText.setText("DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
                 except Exception as e:
-                    print e
-                    print "SOMETHING WENT WRONG WITH GUIDING... CONTINUING"
+                    self.GuidingText.setText(e)
+                    self.GuidingText.setText("SOMETHING WENT WRONG WITH GUIDING... CONTINUING")
                     pass
 
     def setSky(self):
@@ -556,10 +556,10 @@ class RunGuiding(QThread):
         if self.guideTargetText == '':
             return '', False
         if gfl not in guidefls:
-            print "OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR"
+            self.GuidingText.setText("OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR")
             return gfl, False
         else:
-            print "OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR"
+            self.GuidingText.setText("OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR")
             return gfl, True
     
 

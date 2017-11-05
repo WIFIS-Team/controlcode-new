@@ -88,7 +88,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             #Guider Control and Threads
             self.guider = gf.WIFISGuider(guide_widgets)
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText)
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText,\
+                    self.GuidingText)
 
             #Nodding
             self.noddingexposure=NoddingExposure(self.scidet, self.guider, self.NodSelection, \
