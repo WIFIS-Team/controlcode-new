@@ -8,7 +8,6 @@ import WIFISdetector as wd
 import guiding_functions as gf
 import sys
 
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as mpl
@@ -45,8 +44,6 @@ class PlotWindow(QDialog):
             event.ignore()
 
 
-
-
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
@@ -80,11 +77,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.motorcontrol = wm.MotorControl(motor_modules) 
 
             #Detector Control and Threads
-            self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2, self.plotwindow)
+            self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2, self.plotwindow,\
+                    self.OutputText)
             self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,self.ExpProgressBar,\
-                    nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
+                    self.OutputText, nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
             self.calibexpose = wd.h2rgExposeThread(self.scidet,"Calibrations",self.ExpProgressBar,\
-                    nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
+                    self.OutputText, nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
 
             #Guider Control and Threads
             self.guider = gf.WIFISGuider(guide_widgets)
@@ -95,7 +93,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.noddingexposure=NoddingExposure(self.scidet, self.guider, self.NodSelection, \
                     self.NNods,self.NodsPerCal,\
                     self.guideThread, self.NRampsText, self.NReadsText, \
-                    self.ObjText, self.NodRAText, self.NodDecText)
+                    self.ObjText, self.NodRAText, self.NodDecText, self.OutputText)
 
         except Exception as e:
             print e
@@ -188,7 +186,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 class NoddingExposure(QThread):
 
     def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, guideThread, nramps, nreads,\
-            objname, nodra, noddec):
+            objname, nodra, noddec, OutputText):
 
         QThread.__init__(self)
 
@@ -202,6 +200,7 @@ class NoddingExposure(QThread):
         self.objname = objname
         self.nodra = nodra
         self.noddec = noddec
+        self.OutputText = OutputText
 
         self.guideThread = guideThread
 

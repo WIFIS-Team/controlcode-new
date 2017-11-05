@@ -14,6 +14,7 @@ from astropy.visualization import (PercentileInterval, LinearStretch,
                                    ImageNormalize)
 from time import time, sleep
 from calibration_functions import CalibrationControl
+import traceback
 
 # Define global variables here
 servername = "192.168.0.20"
@@ -30,7 +31,7 @@ class Formatter(object):
 	return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
 class h2rg:
-    def __init__(self, h2rgstatus, switch1, switch2, plotwindow):
+    def __init__(self, h2rgstatus, switch1, switch2, plotwindow, OutputText):
         self.servername = servername
         self.port = serverport
         self.buffersize = buffersize
@@ -40,24 +41,29 @@ class h2rg:
         self.switch2 = switch2
         self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2) 
         self.plotwindow = plotwindow
+        self.OutputText = OutputText
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
         self.initialized = False
     
     def connect(self):
+        self.OutputText.setText("#### CONNECTING TO DETECTOR ####"
         self.s.connect((self.servername,self.port))
         self.connected = True
         self.h2rgstatus.setStyleSheet('color: blue')
         self.h2rgstatus.setText("H2RG Connected")
+        self.OutputText.setText("#### CONNECTED TO DETECTOR ####"
 
         return(True)
     
     def disconnect(self):
         if(self.connected):
+            self.OutputText.setText("#### DISCONNECTING FROM THE DETECTOR ####")
             self.s.close() 
             self.connected = False
             self.initialized = False 
+            self.OutputText.setText("#### DISCONNECTED ####")
             return(True)
         
         return(False)
@@ -104,12 +110,13 @@ class h2rg:
             f.close()
                 
     def exposeSF(self):
-        print "ACQUIRING SINGLE FRAME"
+        self.OutputText.setText("ACQUIRING SINGLE FRAME")
         watchpath = self.path+"/Reference"
         before = dict ([(f, None) for f in os.listdir (watchpath)])
         
         self.s.send("ACQUIRESINGLEFRAME")
         response = self.s.recv(buffersize)
+        self.OutputText.setText(response)
         
         after = dict ([(f, None) for f in os.listdir (watchpath)])
         added = [f for f in after if not f in before]
@@ -118,26 +125,26 @@ class h2rg:
         self.plotImage("Single Frame",1,finalPath, None)
         self.h2rgstatus.setStyleSheet('color: green')
         self.h2rgstatus.setText('H2RG Initialized')
-        print "Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName
+        self.OutputText.setText("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName)
 
         return(finalPath)
 
     def exposeCDS(self, sourceName):
-        print "ACQUIRING CDS Frame"
+        self.OutputText.setText("ACQUIRING CDS Frame")
 
         watchpath = self.path+"/CDSReference"
         before = dict ([(f, None) for f in os.listdir (watchpath)])
         
         self.s.send("ACQUIRECDS")
         response = self.s.recv(buffersize)
-        print(response)
+        self.OutputText.setText(response)
  
         self.l1["text"] = response
        
         after = dict ([(f, None) for f in os.listdir (watchpath)])
         added = [f for f in after if not f in before]
 
-        print "Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName 
+        self.OutputText.setText("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
 
         self.writeObsData(finalPath,'CDS',sourceName)
         self.h2rgstatus.setStyleSheet('color: green')
@@ -147,9 +154,9 @@ class h2rg:
 
     def exposeRamp(self,nreads,nramps,obsType,sourceName):
         if sourceName != "":
-            print "ACQUIRING RAMP FOR "+sourceName
+            self.OutputText.setText("ACQUIRING RAMP FOR "+sourceName)
         else:
-            print "ACQUIRING RAMP"
+            self.OutputText.setText("ACQUIRING RAMP")
         commandstring = "SETRAMPPARAM(1,%d,1,1.5,%d)" % (nreads,nramps)
         self.s.send(commandstring)
         response = self.s.recv(buffersize)
@@ -159,6 +166,7 @@ class h2rg:
 
         self.s.send("ACQUIRERAMP")
         response = self.s.recv(buffersize)
+        self.OutputText.setText(response)
 
         after = dict ([(f, None) for f in os.listdir (watchpath)])
         added = [f for f in after if not f in before]
@@ -167,7 +175,7 @@ class h2rg:
         self.writeObsData(finalPath,obsType,sourceName)
         self.h2rgstatus.setStyleSheet('color: green')
 
-        print "Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName
+        self.OutputText.setText("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
 
         if nreads < 2:
             self.plotImage("Ramp",nreads,finalPath+"/H2RG_R01_M01_N01.fits", None)
@@ -176,6 +184,7 @@ class h2rg:
                     finalPath+"/H2RG_R01_M01_N%02d.fits" % nreads)
         
         return(finalPath)
+
     
     @pyqtSlot(str,str,str)    
     def plotImage(self,obsType,nreads,fileName1,fileName2):
@@ -193,16 +202,22 @@ class h2rg:
 
         norm = ImageNormalize(image, interval=PercentileInterval(99.5),
                       stretch=LinearStretch())
-        
-        self.plotwindow.figure.clear()
 
-        ax = self.plotwindow.figure.add_subplot(1, 1, 1)
-        im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
-        ax.format_coord = Formatter(im)
-        ax.set_title(fileName1.split('/')[-1])
-        self.plotwindow.figure.colorbar(im)
+        try:
+            self.plotwindow.figure.clear()
 
-        self.plotwindow.canvas.draw()
+            ax = self.plotwindow.figure.add_subplot(1, 1, 1)
+            im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
+            ax.format_coord = Formatter(im)
+            ax.set_title(fileName1.split('/')[-1])
+            self.plotwindow.figure.colorbar(im)
+
+            self.plotwindow.canvas.draw()
+        except Exception as e:
+            self.OutputText.setText(e)
+            self.OutputText.setText(traceback.print_exc())
+            self.OutputText.setText("SOMETHING WENT WRONG WITH THE PLOTTING")
+
 
     def flatramp(self,sourcename):
         self.calibrationcontrol.flatsetup()
@@ -230,17 +245,18 @@ class h2rg:
             self.calibrationcontrol.sourcesetup()
 
     def takecalibrations(self, sourcename):
+        self.OutputText.setText("STARTING CALIBRATIONS")
         self.arcramp(sourcename,flat=True)
         self.calibrationcontrol.flatsetup()
         sleep(7)
         self.flatramp(sourcename)
-        print "FINISHED CALIBRATIONS"
+        self.OutputText.setText("FINISHED CALIBRATIONS")
 	
 class h2rgExposeThread(QThread):
 
     finished = pyqtSignal(str,str,str)
 
-    def __init__(self,detector,exposureType, progressbar,nreads=2,nramps=1,sourceName="None"):
+    def __init__(self,detector,exposureType, progressbar,OutputText,nreads=2,nramps=1,sourceName="None"):
         QThread.__init__(self)
         self.detector = detector
         self.exposureType = exposureType
@@ -255,6 +271,7 @@ class h2rgExposeThread(QThread):
         self.sourceName = sourceName
         self.sourceNameText = self.sourceName.text()
         self.progressbar = progressbar
+        self.OutputText = OutputText
         
     def __del__(self):
         self.wait()
@@ -262,10 +279,11 @@ class h2rgExposeThread(QThread):
     def run(self):
 
         if self.detector.connected == False:
-            print "####### Please connect the detector and initialize if not done already #######"
+            self.OutputText.setText("####### Please connect the detector "+'\n'+\
+                    "and initialize if not done already #######")
             return
 
-        print "####### STARTING EXPOSURE #######"
+        self.OutputText.setText("####### STARTING EXPOSURE #######")
         if self.exposureTypeText != "Calibrations":
             self.exposureTypeText = self.exposureType.currentText()
         self.nreadsText = int(self.nreads.text())
@@ -291,7 +309,7 @@ class h2rgExposeThread(QThread):
         elif(self.exposureTypeText == "Calibrations"):
             output = self.detector.takecalibrations(self.sourceNameText)
         progressbar.reset()
-        print "####### FINISHED EXPOSURE #######"
+        self.OutputText.setText("####### FINISHED EXPOSURE #######")
 
 class h2rgProgressThread(QThread):
 

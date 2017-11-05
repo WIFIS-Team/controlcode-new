@@ -110,6 +110,7 @@ def measure_focus(img, sideregions = 3, fitwidth = 10, plot=False, verbose=False
                     starsy = np.append(starsy,popt[1])
                 except:
                     continue
+
     xavg = np.mean(starsx)
     yavg = np.mean(starsy)
 
@@ -426,11 +427,13 @@ class WIFISGuider():
 
 class FocusCamera(QThread):
 
-    def __init__(self, cam, foc):
+    def __init__(self, cam, foc,plotwindow, GuidingOutput):
         QThread.__init__(self)
         self.cam = cam
         self.foc = foc
         self.stopThread = False
+        self.plotwindow = plotwindow
+        self.GuidingOutput = GuidingOutput
 
     def __del__(self):
         self.wait()
@@ -439,6 +442,7 @@ class FocusCamera(QThread):
         self.stopThread = True
 
     def run(self):
+        self.GuidingOutput.setText("STARTING GUIDE CAMERA FOCUSING...")
         current_focus = self.foc.get_stepper_position() 
         step = 200
 
@@ -449,13 +453,15 @@ class FocusCamera(QThread):
         direc = 1 #forward
 
         #plotting
-        mpl.ion()
+        self.plotwindow.figure.clear()
+
+        ax = self.plotwindow.figure.add_subplot(1, 1, 1)
         fig, ax = mpl.subplots(1,1)
        
         bx = int(bx)
         by = int(by)
         imgplot = ax.imshow(img[bx-20:bx+20,by-20:by+20], interpolation = 'none', origin='lower')
-        fig.canvas.draw()
+        self.plotwindow.figure.canvas.draw()
 
         while step > 5:
             self.foc.step_motor(direc*step)
@@ -463,30 +469,30 @@ class FocusCamera(QThread):
 
 
             #plotting
-            ax.clear()
+            self.plotwindow.figure.clear()
             imgplot = ax.imshow(img[bx-20:bx+20, by-20:by+20], interpolation = 'none', \
                 origin='lower')
-            fig.canvas.draw()
+            self.plotwindow.figure.canvas.draw()
             #fig.canvas.restore_region(background)
             #ax.draw_artist(imgplot)
             #fig.canvas.blit(ax.bbox)
 
             focus_check2,bx2,by2 = measure_focus(img)
             
-            print "STEP IS: %i\nPOS IS: %i" % (step,current_focus)
-            print "Old Focus: %f, New Focus: %f" % (focus_check1, focus_check2)
+            self.GuidingOutput("STEP IS: %i\nPOS IS: %i" % (step,current_focus))
+            self.GuidingOutput("Old Focus: %f, New Focus: %f" % (focus_check1, focus_check2))
 
             #if focus gets go back to beginning, change direction and reduce step
             if focus_check2 > focus_check1:
                 direc = direc*-1
                 self.foc.step_motor(direc*step)
                 step = int(step / 2)
-                print "Focus is worse: changing direction!\n"
+                self.GuidingOutput("Focus is worse: changing direction!\n")
             
             focus_check1 = focus_check2
             current_focus = self.foc.get_stepper_position() 
         
-        print "### FINISHED FOCUSING ####"
+        self.GuidingOutput("### FINISHED FOCUSING ####")
 
 
 class RunGuiding(QThread):
