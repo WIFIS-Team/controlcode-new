@@ -2238,7 +2238,7 @@
          </widget>
         </item>
         <item row="0" column="5" rowspan="4">
-         <widget class="QPlainTextEdit" name="OutputText"/>
+         <widget class="QTextEdit" name="OutputText"/>
         </item>
        </layout>
       </item>
