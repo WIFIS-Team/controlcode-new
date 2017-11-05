@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>898</width>
+    <width>899</width>
     <height>892</height>
    </rect>
   </property>
@@ -299,7 +299,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -377,16 +377,9 @@
                </widget>
               </item>
               <item row="2" column="2">
-               <widget class="QPushButton" name="moveTelescopeButton_2">
+               <widget class="QPushButton" name="MoveBackButton">
                 <property name="text">
                  <string>Move Back</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3" rowspan="3">
-               <widget class="Line" name="line_8">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
                 </property>
                </widget>
               </item>
@@ -415,10 +408,24 @@
                 </property>
                </widget>
               </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="RAMoveBox">
+                <property name="text">
+                 <string>0</string>
+                </property>
+               </widget>
+              </item>
               <item row="0" column="2">
                <widget class="QPushButton" name="GuiderMoveButton">
                 <property name="text">
                  <string>Move To Guider</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="5">
+               <widget class="QLineEdit" name="YPos">
+                <property name="text">
+                 <string>0</string>
                 </property>
                </widget>
               </item>
@@ -441,8 +448,8 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QLineEdit" name="RAMoveBox">
+              <item row="0" column="5">
+               <widget class="QLineEdit" name="XPos">
                 <property name="text">
                  <string>0</string>
                 </property>
@@ -455,17 +462,17 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="5">
-               <widget class="QLineEdit" name="XPos">
+              <item row="3" column="2">
+               <widget class="QPushButton" name="CenteringCheck">
                 <property name="text">
-                 <string>0</string>
+                 <string>Centering Check</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="5">
-               <widget class="QLineEdit" name="YPos">
-                <property name="text">
-                 <string>0</string>
+              <item row="0" column="3" rowspan="4">
+               <widget class="Line" name="line_8">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
                 </property>
                </widget>
               </item>
@@ -1092,6 +1099,31 @@
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Additional Options</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_14">
+            <item row="0" column="0">
+             <layout class="QGridLayout" name="gridLayout_13">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>Guide ExpTime</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="GuiderExpTime">
+                <property name="text">
+                 <string>1500</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
        </layout>
@@ -1605,7 +1637,7 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label_14">
           <property name="text">
-           <string>Object:</string>
+           <string>Target:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1660,8 +1692,19 @@
           </item>
           <item>
            <widget class="QRadioButton" name="RADECNod">
+            <property name="font">
+             <font>
+              <strikeout>true</strikeout>
+             </font>
+            </property>
+            <property name="contextMenuPolicy">
+             <enum>Qt::DefaultContextMenu</enum>
+            </property>
             <property name="text">
              <string>Pos RA/DEC</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -1684,19 +1727,6 @@
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2">
-         <widget class="QCheckBox" name="SkyCheckBox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Sky</string>
           </property>
          </widget>
         </item>
@@ -1734,6 +1764,19 @@
          <widget class="QLineEdit" name="NodsPerCal">
           <property name="text">
            <string>3</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QCheckBox" name="SkyCheckBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Sky</string>
           </property>
          </widget>
         </item>
@@ -1970,7 +2013,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>898</width>
+     <width>899</width>
      <height>22</height>
     </rect>
    </property>
