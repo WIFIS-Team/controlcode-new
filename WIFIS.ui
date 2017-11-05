@@ -1066,7 +1066,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item row="3" column="1">
-               <widget class="QLineEdit" name="lineEdit">
+               <widget class="QLineEdit" name="FocusStep">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1079,7 +1079,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item row="3" column="2">
-               <widget class="QLineEdit" name="lineEdit_2">
+               <widget class="QLineEdit" name="FilterStep">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1092,7 +1092,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item row="3" column="3">
-               <widget class="QLineEdit" name="lineEdit_3">
+               <widget class="QLineEdit" name="GratingStep">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
