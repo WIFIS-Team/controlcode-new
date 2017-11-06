@@ -31,9 +31,6 @@ class PlotWindow(QDialog):
         self.layout.addWidget(self.canvas)
         self.setLayout(self.layout)
 
-        #self.layout.btnExit.clicked.connect(self.close)
-        #self.layout.actionExit.triggered.connect(self.close)
-
     def closeEvent(self, event):
         
         reply = QMessageBox.question(self, "Message", "You will no longer see plots if you close this window. Are you sure?", QMessageBox.Close | QMessageBox.Cancel)
@@ -66,7 +63,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.FilterStep, self.GratingStep
 
         #Defining various control/serial variables
-
         try:
             #Power Control
             self.powercontrol = pc.PowerControl(power_widgets)
@@ -89,8 +85,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             #Guider Control and Threads
             self.guider = gf.WIFISGuider(guide_widgets)
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText,\
-                    self.GuidingText)
+            self.guider.updateText.connect(self._handleGuidingTextUpdate)
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText)
+            self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
 
             #Nodding
             self.noddingexposure=NoddingExposure(self.scidet, self.guider, self.NodSelection, \

@@ -545,9 +545,12 @@ class RunGuiding(QThread):
                 break
             else:
                 try:
-                    dRA, dDEC = WG.run_guiding(guidingstuff,  self.cam, self.telsock, self.GuidingText)
+                    dRA, dDEC,guideinfo,guideresult = WG.run_guiding(guidingstuff,\
+                            self.cam, self.telsock)
                     self.deltRA += dRA
                     self.deltDEC += dDEC
+                    self.updateText.emit(guideinfo)
+                    self.updateText.emit(guideresult)
                     self.updateText.emit("DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
                 except Exception as e:
                     self.updateText.emit(e)

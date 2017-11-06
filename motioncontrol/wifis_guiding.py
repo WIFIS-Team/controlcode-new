@@ -464,7 +464,7 @@ def checkstarinbox(imgbox, boxsize, telSock):
 
     return True
 
-def run_guiding(inputguiding,  cam, telSock,GuidingText):
+def run_guiding(inputguiding,  cam, telSock):
    
     #Get all the parameters from the guiding input
     offsets, x_rot, y_rot, stary1, starx1, boxsize, img1  = inputguiding
@@ -509,12 +509,12 @@ def run_guiding(inputguiding,  cam, telSock,GuidingText):
     #Do the movement
     #print "X Offset:\t%f\nY Offset:\t%f\nRA ADJ:\t\t%f\nDEC ADJ:\t%f\nPix Width:\t%f\nSEEING:\t\t%f\nDELTRA:\t\t%f\nDELTDEC:\t%f" \
     #   % (dx,dy,radec[1],radec[0],width[0], width[0]*plate_scale,deltRA, deltDEC)
-    GuidingText.setText("X Offset:\t%f\nY Offset:\t%f\nRA ADJ:\t\t%f\nDEC ADJ:\t%f\nPix Width:\t%f\nSEEING:\t\t%f" \
-       % (dx,dy,radec[1],radec[0],width[0], width[0]*plate_scale))
+    guideinfo = "X Offset:\t%f\nY Offset:\t%f\nRA ADJ:\t\t%f\nDEC ADJ:\t%f\nPix Width:\t%f\nSEEING:\t\t%f" \
+       % (dx,dy,radec[1],radec[0],width[0], width[0]*plate_scale)
 
     ##### IMPORTANT GUIDING PARAMETERS #####
-    lim = 0.55 #Changes the absolute limit at which point the guider moves the telescope
-    d = -0.8 #Affects how much the guider corrects by. I was playing around with -0.8 but the default is -1. Keep this negative.
+    lim = 0.6 #Changes the absolute limit at which point the guider moves the telescope
+    d = -0.9 #Affects how much the guider corrects by. I was playing around with -0.8 but the default is -1. Keep this negative.
     #######################################
 
     deltRA = 0
@@ -523,28 +523,28 @@ def run_guiding(inputguiding,  cam, telSock,GuidingText):
     guidingon=True
     if guidingon:
         if (abs(radec[1]) < lim) and (abs(radec[0]) < lim):
-            GuidingText.setText("NOT MOVING, TOO SMALL SHIFT\n")
+            guideresult = "NOT MOVING, TOO SMALL SHIFT\n")
             pass
         elif abs(radec[1]) < lim:
-            GuidingText.setText("MOVING DEC ONLY\n")
+            guideresult = "MOVING DEC ONLY\n"
             deltDEC = d*radec[0]
             move_telescope(telSock, 0.0, d*radec[0], verbose=False)
         elif abs(radec[0]) < lim:
-            GuidingText.setText("MOVING RA ONLY\n")
+            guideresult = "MOVING RA ONLY\n"
             deltRA = d*radec[1]
             move_telescope(telSock, d*radec[1], 0.0, verbose=False)
         else:
             deltRA = d*radec[1]
             deltDEC = d*radec[0]
             move_telescope(telSock,d*radec[1],d*radec[0], verbose=False)
-            GuidingText.setText("\n")
+            guideresult = "\n"
 
     #Record for guiding checking later
     f = open('/home/utopea/elliot/guidinglog/'+time.strftime('%Y%m%dT%H')+'.txt', 'a')
     f.write("%f\t%f\n" % (radec[1],radec[0]))
     f.close()
 
-    return deltRA, deltDEC
+    return deltRA, deltDEC, guideinfo, guideresult
 
 if __name__ == '__main__':
 

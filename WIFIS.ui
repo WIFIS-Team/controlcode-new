@@ -2253,6 +2253,9 @@
             <italic>true</italic>
            </font>
           </property>
+          <property name="overwriteMode">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
        </layout>
