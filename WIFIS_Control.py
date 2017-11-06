@@ -18,6 +18,7 @@ import traceback
 
 
 class PlotWindow(QDialog):
+
     def __init__(self, parent=None):
         super(PlotWindow, self).__init__(parent)
         

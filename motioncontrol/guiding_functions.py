@@ -127,7 +127,7 @@ class WIFISGuider(QObject):
     def __init__(self, guidevariables):
         '''Initialize the GUI and load the Devices into memory'''
 
-        super(h2rg, self).__init__()
+        super(WIFISGuider, self).__init__()
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
                 self.YPos = guidevariables
