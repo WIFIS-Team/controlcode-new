@@ -1741,6 +1741,13 @@
             <height>0</height>
            </size>
           </property>
+          <property name="font">
+           <font>
+            <family>Helvetica</family>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
          </widget>
         </item>
        </layout>
@@ -2238,7 +2245,15 @@
          </widget>
         </item>
         <item row="0" column="5" rowspan="4">
-         <widget class="QTextEdit" name="OutputText"/>
+         <widget class="QTextEdit" name="OutputText">
+          <property name="font">
+           <font>
+            <family>Helvetica</family>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
