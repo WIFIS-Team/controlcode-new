@@ -79,10 +79,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #Detector Control and Threads
             self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2, self.plotwindow,\
                     self.OutputText)
+            self.scidet.updateText.connect(self._handleOutputTextUpdate)
             self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect,self.ExpProgressBar,\
                     self.OutputText, nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
+            self.scidetexpose.updateText.connect(self._handleOutputTextUpdate)
             self.calibexpose = wd.h2rgExposeThread(self.scidet,"Calibrations",self.ExpProgressBar,\
                     self.OutputText, nreads=self.NReadsText,nramps=self.NRampsText,sourceName=self.ObjText)
+            self.calibexpose.updateText.connect(self._handleOutputTextUpdate)
 
             #Guider Control and Threads
             self.guider = gf.WIFISGuider(guide_widgets)
@@ -116,7 +119,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.actionDisconnect.triggered.connect(self.scidet.disconnect)
         self.ExposureButton.clicked.connect(self.scidetexpose.start)
         self.TakeCalibButton.clicked.connect(self.calibexpose.start)
-        #self.ExposureButton.clicked.connect(self.h2rgProgressThread.start)
         self.NodBeginButton.clicked.connect(self.noddingexposure.start)
         self.StopExpButton.clicked.connect(self.noddingexposure.stop)
 
@@ -182,6 +184,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             if objtxt[-3:] == 'Sky':
                 self.ObjText.setText(objtxt[:-3])
 
+    def _handleOutputTextUpdate(self, txt):
+        self.OutputText.append(txt)
+
+    def _handleGuidingTextUpdate(self, txt):
+        self.GuidingText.append(txt)
 
 class NoddingExposure(QThread):
 

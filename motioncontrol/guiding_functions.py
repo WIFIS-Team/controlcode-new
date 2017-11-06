@@ -21,7 +21,7 @@ import os, time, threading, Queue
 from glob import glob
 from astropy.visualization import (PercentileInterval,\
                                 LinearStretch, ImageNormalize)
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, QObject, pyqtSignal
 
 try:
     import FLI
@@ -117,17 +117,21 @@ def measure_focus(img, sideregions = 3, fitwidth = 10, plot=False, verbose=False
     return [np.mean([xavg, yavg]), brightestx, brightesty]
 
 ################################################################################
-class WIFISGuider(): 
+class WIFISGuider(QObject): 
     '''Creates the FLI GUI window and also contains a number of 
     functions for controlling the Filter Wheel, Focuser, and
     Camera.'''
 
+    updateText = pyqtSignal(str)
+
     def __init__(self, guidevariables):
         '''Initialize the GUI and load the Devices into memory'''
 
+        super(h2rg, self).__init__()
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
-                self.YPos, self.GuidingText = guidevariables
+                self.YPos = guidevariables
+
         self.deltRA = 0
         self.deltDEC = 0
 
@@ -427,7 +431,9 @@ class WIFISGuider():
 
 class FocusCamera(QThread):
 
-    def __init__(self, cam, foc,plotwindow, GuidingOutput):
+    updateText = pyqtSignal(str)
+
+    def __init__(self, cam, foc,plotwindow):
         QThread.__init__(self)
         self.cam = cam
         self.foc = foc
@@ -497,7 +503,9 @@ class FocusCamera(QThread):
 
 class RunGuiding(QThread):
 
-    def __init__(self, telsock, cam, guideTargetVar, GuidingText):
+    updateText = pyqtSignal(str)
+
+    def __init__(self, telsock, cam, guideTargetVar):
         QThread.__init__(self)
         self.telsock = telsock
         #self.guideButtonVar = guideButonVar
@@ -510,7 +518,6 @@ class RunGuiding(QThread):
         self.deltDEC = 0
         self.stopThread = False
         self.sky = False
-        self.GuidingText = GuidingText 
 
     def __del__(self):
         self.wait()
@@ -525,7 +532,7 @@ class RunGuiding(QThread):
 
         self.guideTargetText = self.guideTargetVar.text()
 
-        self.GuidingText.setText("###### STARTING GUIDING ON %s ######" % (self.guideTargetText))
+        self.updateText.emit("###### STARTING GUIDING ON %s ######" % (self.guideTargetText))
         #self.guideButtonVar.set("Stop Guiding")
         gfls = self.checkGuideVariable()
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
@@ -534,17 +541,17 @@ class RunGuiding(QThread):
         while True:
             if self.stopThread:
                 self.cam.end_exposure()
-                self.GuidingText.setText("###### FINISHED GUIDING ######")
+                self.updateText.emit("###### FINISHED GUIDING ######")
                 break
             else:
                 try:
                     dRA, dDEC = WG.run_guiding(guidingstuff,  self.cam, self.telsock, self.GuidingText)
                     self.deltRA += dRA
                     self.deltDEC += dDEC
-                    self.GuidingText.setText("DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
+                    self.updateText.emit("DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
                 except Exception as e:
-                    self.GuidingText.setText(e)
-                    self.GuidingText.setText("SOMETHING WENT WRONG WITH GUIDING... CONTINUING")
+                    self.updateText.emit(e)
+                    self.updateText.emit("SOMETHING WENT WRONG WITH GUIDING... CONTINUING")
                     pass
 
     def setSky(self):
