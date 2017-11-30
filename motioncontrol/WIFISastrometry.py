@@ -107,10 +107,7 @@ def centroid_finder(img, plot = False, verbose=False):
         im = ax.imshow(img, cmap = 'gray', interpolation='none', origin='lower')
         circ = ax.plot(centroidy, centroidx, 'ro', markeredgecolor = 'r', markerfacecolor='none',\
             markersize = 5)
-        #ax.format_coord = Formatter(im)
-        #fig.colorbar(im)
         mpl.show()
-        mpl.close()
 
     return [centroidx,centroidy,Iarr, Isat, width]
 

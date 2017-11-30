@@ -3,7 +3,7 @@ from PyQt5.QtCore import QThread, QCoreApplication
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox
 
 from wifis import Ui_MainWindow
-import wifis_guiding as wg
+import wifisguidingfunctions as wg
 import WIFISdetector as wd
 import guiding_functions as gf
 import sys
@@ -15,7 +15,7 @@ import matplotlib.pyplot as mpl
 import WIFISpower as pc
 import WIFISmotor as wm
 import traceback
-
+from get_src_pos import do_get_src_pos
 
 class PlotWindow(QDialog):
 
@@ -51,10 +51,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self.plotwindow = PlotWindow()
         self.plotwindow.show()
-      
+
+        self.telsock = wg.connect_to_telescope()
+        telemDict = wg.get_telemetry(self.telsock, verbose=False)
+        self.IISLabel.setText(telemDict['IIS'])
+
         #Defining GUI Variables to feed into the guider functions
         guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
-                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.GuidingText]
+                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel]
         power_widgets = [self.Power11, self.Power12, self.Power13, self.Power14, self.Power15,\
                         self.Power16, self.Power17, self.Power18, self.Power21, self.Power22,\
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
@@ -87,7 +91,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #Guider Control and Threads
             self.guider = gf.WIFISGuider(guide_widgets)
             self.guider.updateText.connect(self._handleGuidingTextUpdate)
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText)
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel)
             self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
 
             #Nodding
@@ -103,10 +107,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             return
             
         self.ExpProgressBar.setValue(0)
+
         #Starting function to update labels. Still need to add guider info.
         self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.RALabel, self.DECLabel,\
                 self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel, self.CCDTemp,self.FocPosition)
         self.labelsThread.start()
+        self.motorcontrol.get_position()
+        self.motorcontrol.update_status()
 
         #Defining actions for Exposure Control
         if self.scidet.connected == False:
@@ -119,6 +126,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.TakeCalibButton.clicked.connect(self.calibexpose.start)
         self.NodBeginButton.clicked.connect(self.noddingexposure.start)
         self.StopExpButton.clicked.connect(self.noddingexposure.stop)
+        self.CenteringCheck.clicked.connect(do_get_src_pos)
 
         #Defining actions for Telescope Control
         self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
@@ -315,10 +323,10 @@ class UpdateLabels(QThread):
                 self.HALabel.setText(telemDict['HA'])
                 self.focpos.setText(str(self.guider.foc.get_stepper_position()))
                 self.ccdTemp.setText(str(self.guider.cam.get_temperature()))
-                #self.motorcontrol.update_status()
-                #self.motorcontrol.get_position()
+                self.motorcontrol.update_status()
+                self.motorcontrol.get_position()
                 #self.powercontrol.checkOn()
-                self.sleep(3)
+                self.sleep(5)
 
             except Exception as e:
                 print "############################"
@@ -326,9 +334,6 @@ class UpdateLabels(QThread):
                 print traceback.print_exc()
                 print e
                 print "############################"
-
-
-
 
 def main():
 

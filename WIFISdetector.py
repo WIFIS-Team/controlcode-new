@@ -52,22 +52,22 @@ class h2rg(QObject):
         self.initialized = False
     
     def connect(self):
-        self.printTxt("#### CONNECTING TO DETECTOR ####")
+        self.printTxt("#### CONNECTING TO DETECTOR")
         self.s.connect((self.servername,self.port))
         self.connected = True
         self.h2rgstatus.setStyleSheet('color: blue')
         self.h2rgstatus.setText("H2RG Connected")
-        self.printTxt("#### CONNECTED TO DETECTOR ####")
+        self.printTxt("#### CONNECTED TO DETECTOR")
 
         return(True)
     
     def disconnect(self):
         if(self.connected):
-            self.printTxt("#### DISCONNECTING FROM THE DETECTOR ####")
+            self.printTxt("#### DISCONNECTING FROM THE DETECTOR")
             self.s.close() 
             self.connected = False
             self.initialized = False 
-            self.printTxt("#### DISCONNECTED ####")
+            self.printTxt("#### DISCONNECTED")
             return(True)
         
         return(False)
@@ -134,7 +134,7 @@ class h2rg(QObject):
         return(finalPath)
 
     def exposeCDS(self, sourceName):
-        self.printTxt("ACQUIRING CDS Frame")
+        self.printTxt("ACQUIRING CDS FRAME")
 
         watchpath = self.path+"/CDSReference"
         before = dict ([(f, None) for f in os.listdir (watchpath)])
@@ -143,12 +143,12 @@ class h2rg(QObject):
         response = self.s.recv(buffersize)
         self.printTxt(response)
  
-        self.l1["text"] = response
-       
         after = dict ([(f, None) for f in os.listdir (watchpath)])
         added = [f for f in after if not f in before]
 
         self.printTxt("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
+
+        finalPath = watchpath+"/"+added[0]
 
         self.writeObsData(finalPath,'CDS',sourceName)
         self.h2rgstatus.setStyleSheet('color: green')
@@ -218,8 +218,8 @@ class h2rg(QObject):
 
             self.plotwindow.canvas.draw()
         except Exception as e:
-            self.printTxt(e)
-            self.printTxt(traceback.print_exc())
+            print e
+            print traceback.print_exc()
             self.printTxt("SOMETHING WENT WRONG WITH THE PLOTTING")
 
 
@@ -290,10 +290,10 @@ class h2rgExposeThread(QThread):
         try:
             if self.detector.connected == False:
                 self.printTxt("####### Please connect the detector "+'\n'+\
-                        "and initialize if not done already #######")
+                        "and initialize if not done already")
                 return
 
-            self.printTxt("####### STARTING EXPOSURE #######")
+            self.printTxt("####### STARTING EXPOSURE")
             if self.exposureTypeText != "Calibrations":
                 self.exposureTypeText = self.exposureType.currentText()
             self.nreadsText = int(self.nreads.text())
@@ -320,11 +320,12 @@ class h2rgExposeThread(QThread):
                 output = self.detector.takecalibrations(self.sourceNameText)
             progressbar.reset()
 
-            self.printTxt("####### FINISHED EXPOSURE #######")
+            self.printTxt("####### FINISHED EXPOSURE")
 
         except Exception as e:
-            self.printTxt(e)
-            self.printTxt(traceback.print_exc())
+            print e
+            print traceback.print_exc()
+            self.printTxt("Something Went Wrong with the Exposure, check terminal")
             return
 
     def printTxt(self, s):

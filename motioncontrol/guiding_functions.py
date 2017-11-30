@@ -16,7 +16,7 @@ import matplotlib.pyplot as mpl
 import Tkinter as _tk
 import WIFISastrometry as WA
 from sys import exit
-import wifis_guiding as WG
+import wifisguidingfunctions as WG
 import os, time, threading, Queue
 from glob import glob
 from astropy.visualization import (PercentileInterval,\
@@ -130,11 +130,11 @@ class WIFISGuider(QObject):
         super(WIFISGuider, self).__init__()
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
-                self.YPos = guidevariables
+                self.YPos, self.rotangle = guidevariables
 
         self.deltRA = 0
         self.deltDEC = 0
-
+    
         #Try to import FLI devices
         try:
             self.cam, self.foc, self.flt = load_FLIDevices()
@@ -154,7 +154,7 @@ class WIFISGuider(QObject):
 
     def calcOffset(self):
         #Get rotation solution
-        offsets,x_rot,y_rot = WG.get_rotation_solution(self.telSock)
+        offsets,x_rot,y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
         yc = float(self.XPos.text())
         xc = float(self.YPos.text())
 
@@ -185,7 +185,7 @@ class WIFISGuider(QObject):
     def offsetToGuider(self):
         if self.telSock:
             print "### OFFSETTING TO GUIDER FIELD ###"
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
+            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
             WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
             #self.offsetButton.configure(text='Move to WIFIS',\
             #    command=self.offsetToWIFIS)
@@ -194,7 +194,7 @@ class WIFISGuider(QObject):
     def offsetToWIFIS(self):
         if self.telSock:
             print "### OFFSETTING TO WIFIS FIELD ###"
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
+            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
             WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
             #self.offsetButton.configure(text='Move to Guider',\
             #    command=self.offsetToGuider)
@@ -372,7 +372,7 @@ class WIFISGuider(QObject):
                 self.cam.set_exposure(exptime, frametype='normal')
                 img = self.cam.take_photo()  
             
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock)
+            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
             
             centroids = WA.centroid_finder(img)
             #for i in centroids:
@@ -505,7 +505,7 @@ class RunGuiding(QThread):
 
     updateText = pyqtSignal(str)
 
-    def __init__(self, telsock, cam, guideTargetVar):
+    def __init__(self, telsock, cam, guideTargetVar, rotangle):
         QThread.__init__(self)
         self.telsock = telsock
         #self.guideButtonVar = guideButonVar
@@ -518,6 +518,7 @@ class RunGuiding(QThread):
         self.deltDEC = 0
         self.stopThread = False
         self.sky = False
+        self.rotangle = float(rotangle.text())
 
     def __del__(self):
         self.wait()
@@ -532,30 +533,29 @@ class RunGuiding(QThread):
 
         self.guideTargetText = self.guideTargetVar.text()
 
-        self.updateText.emit("###### STARTING GUIDING ON %s ######" % (self.guideTargetText))
+        self.updateText.emit("###### STARTING GUIDING ON %s" % (self.guideTargetText))
         #self.guideButtonVar.set("Stop Guiding")
         gfls = self.checkGuideVariable()
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
-            int(self.guideExpVariable),gfls)
-
+            int(self.guideExpVariable),gfls, self.rotangle)
         while True:
             if self.stopThread:
                 self.cam.end_exposure()
-                self.updateText.emit("###### FINISHED GUIDING ######")
+                self.updateText.emit("###### FINISHED GUIDING")
                 break
             else:
+
                 try:
-                    dRA, dDEC,guideinfo,guideresult = WG.run_guiding(guidingstuff,\
-                            self.cam, self.telsock)
+                    dRA, dDEC, guideinfo, guideresult = WG.run_guiding(guidingstuff,\
+                            self.cam, self.telsock,self.rotangle)
                     self.deltRA += dRA
                     self.deltDEC += dDEC
                     self.updateText.emit(guideinfo)
                     self.updateText.emit(guideresult)
-                    self.updateText.emit("DELTRA:\t\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
+                    self.updateText.emit("DELTRA:\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
                 except Exception as e:
-                    self.updateText.emit(e)
-                    self.updateText.emit("SOMETHING WENT WRONG WITH GUIDING... CONTINUING")
-                    pass
+                    print e
+                    self.updateText.emit("SOMETHING WRONG WITH GUIDING...CONTINUING...")
 
     def setSky(self):
         self.sky = True
@@ -572,10 +572,10 @@ class RunGuiding(QThread):
         if self.guideTargetText == '':
             return '', False
         if gfl not in guidefls:
-            self.GuidingText.setText("OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR")
+            self.updateText.emit("OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR")
             return gfl, False
         else:
-            self.GuidingText.setText("OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR")
+            self.updateText.emit("OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR")
             return gfl, True
     
 

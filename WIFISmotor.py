@@ -91,9 +91,11 @@ class MotorControl():
         #    self.client.write_register(0x001E, 0x2001, unit=units[unit-1])
         
         #Homes the motor
+        #self.update_status()
         self.client.write_register(0x001E, 0x2000, unit=unit)
         self.client.write_register(0x001E, 0x2800, unit=unit)
         self.client.write_register(0x001E, 0x2000, unit=unit)
+        #self.update_status()
 
     #Actions
     def gotoTB(self):
@@ -115,26 +117,33 @@ class MotorControl():
         upper = speed >> 16
         lower = speed & 0xFFFF
         self.client.write_registers(0x0502, [upper, lower], unit=0x01)
+        #self.update_status()
 
     def m1_step(self):
         self.stepping_operation(self.FocusStep.text(), unit=0x01)
+        #self.update_status()
 
     def m1_home(self):
         self.homing_operation(0x01)
+        #self.update_status()
 
     def m1_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x01)
         self.client.write_register(0x001E, 0x2201, unit=0x01)
+        #self.update_status()
 
     def m1_reverse(self):
         self.client.write_register(0x001E, 0x2000, unit=0x01)
         self.client.write_register(0x001E, 0x2401, unit=0x01)
+        #self.update_status()
 
     def m1_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x01)
+        #self.update_status()
 
     def m1_off(self):
         self.client.write_register(0x001E, 0x0000, unit=0x01)
+        #self.update_status()
 
     # Motor 2 methods
     def m2_speed(self):
@@ -142,29 +151,36 @@ class MotorControl():
         upper = speed >> 16
         lower = speed & 0xFFFF
         self.client.write_registers(0x0502, [upper, lower], unit=0x02)
+        #self.update_status()
 
     def m2_step(self, action=False):
         if not action:
             self.stepping_operation(self.FilterStep.text(), unit=0x02)
         elif action:
             self.stepping_operation(action, unit=0x02)
+        #self.update_status()
 
     def m2_home(self):
         self.homing_operation(0x02)
+        #self.update_status()
 
     def m2_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x02)
         self.client.write_register(0x001E, 0x2201, unit=0x02)
+        #self.update_status()
 
     def m2_reverse(self):
         self.client.write_register(0x001E, 0x2000, unit=0x02)
         self.client.write_register(0x001E, 0x2401, unit=0x02)
+        #self.update_status()
 
     def m2_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x02)
+        #self.update_status()
 
     def m2_off(self):
         self.client.write_register(0x001E, 0x0000, unit=0x02)
+        #self.update_status()
 
     # Motor 3 methods
     def m3_speed(self):
@@ -172,28 +188,35 @@ class MotorControl():
         upper = speed >> 16
         lower = speed & 0xFFFF
         self.client.write_registers(0x0502, [upper, lower], unit=0x03)
+        #self.update_status()
 
     def m3_step(self, action=False):
         if not action:
             self.stepping_operation(self.GratingStep.text(), unit=0x03)
         elif action:
             self.stepping_operation(action, unit=0x03)
+        #self.update_status()
 
     def m3_home(self):
         self.homing_operation(0x03)
+        #self.update_status()
 
     def m3_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x03)
         self.client.write_register(0x001E, 0x2201, unit=0x03)
+        #self.update_status()
 
     def m3_reverse(self):
         self.client.write_register(0x001E, 0x2000, unit=0x03)
         self.client.write_register(0x001E, 0x2401, unit=0x03)
+        #self.update_status()
 
     def m3_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x03)
+        #self.update_status()
 
     def m3_off(self):
         self.client.write_register(0x001E, 0x0000, unit=0x03)
+        #self.update_status()
 
 
