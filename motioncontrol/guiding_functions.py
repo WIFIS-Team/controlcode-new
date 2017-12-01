@@ -123,6 +123,7 @@ class WIFISGuider(QObject):
     Camera.'''
 
     updateText = pyqtSignal(str)
+    plotSignal = pyqtSignal(np.ndarray,str)
 
     def __init__(self, guidevariables):
         '''Initialize the GUI and load the Devices into memory'''
@@ -217,21 +218,6 @@ class WIFISGuider(QObject):
 
             return flttype
 
-    def writeFilterNum(self):
-        if self.flt:
-            filterpos = (self.flt.get_filter_pos() + 1)
-            if filterpos == 1:
-                self.filterNumText.set("Z")
-            if filterpos == 2:
-                self.filterNumText.set("I")
-            if filterpos == 3:
-                self.filterNumText.set("R")
-            if filterpos == 4:
-                self.filterNumText.set("G")
-            if filterpos == 5:
-                self.filterNumText.set("H-Alpha")
-            self.after(500,self.writeFilterNum)
-
     def goToFilter(self):
         if self.flt:
             flttype = self.FilterVal.currentText()
@@ -291,22 +277,13 @@ class WIFISGuider(QObject):
                         time.strftime('%H%M%S')+'_'+objtextval+".fits",\
                         img, hduhdr,clobber=True)
 
-            mpl.close()
-            fig = mpl.figure()
-            ax = fig.add_subplot(1,1,1)
-
-            norm = ImageNormalize(img, interval=PercentileInterval(99.9), stretch=LinearStretch())
-            #norm = ImageNormalize(img,  stretch=LinearStretch())
-            
-            im = ax.imshow(img, interpolation='none', norm= norm, cmap='gray', origin='lower')
-            ax.format_coord = Formatter(im)
-            fig.colorbar(im)
-            mpl.show()
-            mpl.pause(0.0001)
+            self.plotSignal.emit(img, objtextval)
 
     def takeImage(self):
         if self.cam and self.foc:
             exptime = int(self.expTime.text())
+            objtextval = self.ObjText.text()
+
             if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='dark')
@@ -317,18 +294,7 @@ class WIFISGuider(QObject):
                 self.cam.set_exposure(exptime, frametype='normal')
                 img = self.cam.take_photo()  
    
-            mpl.close()
-            fig = mpl.figure()
-            ax = fig.add_subplot(1,1,1)
-            
-            norm = ImageNormalize(img, interval=PercentileInterval(99.9), stretch=LinearStretch())
-
-            im = ax.imshow(img, interpolation='none', norm= norm, cmap='gray', origin='lower')
-            ax.format_coord = Formatter(im)
-            fig.colorbar(im)
-            mpl.show()
-            mpl.pause(0.0001)
-        return img
+            self.plotSignal.emit(img, objtextval)
 
     def makeHeader(self, telemDict):
 
@@ -352,11 +318,6 @@ class WIFISGuider(QObject):
         if self.cam:
             self.cam.set_temperature(int(self.SetTempValue.text()))
 
-    def getCCDTemp(self):
-        if self.cam:
-            self.ccdTempText.set(str(self.cam.get_temperature()))
-            self.after(1000,self.getCCDTemp)        
-    
 
     def checkCentroids(self, auto=False):
 
@@ -401,14 +362,7 @@ class WIFISGuider(QObject):
                 print '\n'
 
             if not auto:
-                mpl.close()
-                fig = mpl.figure()
-                ax = fig.add_subplot(1,1,1)
-                im = ax.imshow(np.log10(img), interpolation='none', cmap='gray', origin='lower')
-                ax.format_coord = Formatter(im)
-                fig.colorbar(im)
-                mpl.show()
-                mpl.pause(0.0001)
+                self.plotSignal.emit(img, "Centroids")
 
             b = np.argmax(centroids[2])
             offsetx = centroids[0][b] - 512
@@ -428,18 +382,16 @@ class WIFISGuider(QObject):
 
         guidinginstance = RunGuiding(self.telSock, self.cam, self.ObjText)
         guidinginstance.start()
-
-class FocusCamera(QThread):
+        
+class ExposeGuider(QThread):
 
     updateText = pyqtSignal(str)
 
     def __init__(self, cam, foc,plotwindow):
         QThread.__init__(self)
         self.cam = cam
-        self.foc = foc
         self.stopThread = False
         self.plotwindow = plotwindow
-        self.GuidingOutput = GuidingOutput
 
     def __del__(self):
         self.wait()
@@ -448,7 +400,27 @@ class FocusCamera(QThread):
         self.stopThread = True
 
     def run(self):
-        self.GuidingOutput.setText("STARTING GUIDE CAMERA FOCUSING...")
+        pass
+
+class FocusCamera(QThread):
+
+    updateText = pyqtSignal(str)
+    plotSignal = pyqtSignal(np.ndarray, str)
+    
+    def __init__(self, cam, foc):
+        QThread.__init__(self)
+        self.cam = cam
+        self.foc = foc
+        self.stopThread = False
+
+    def __del__(self):
+        self.wait()
+
+    def stop(self):
+        self.stopThread = True
+
+    def run(self):
+        self.updateText.emit("STARTING GUIDE CAMERA FOCUSING...")
         current_focus = self.foc.get_stepper_position() 
         step = 200
 
@@ -459,15 +431,7 @@ class FocusCamera(QThread):
         direc = 1 #forward
 
         #plotting
-        self.plotwindow.figure.clear()
-
-        ax = self.plotwindow.figure.add_subplot(1, 1, 1)
-        fig, ax = mpl.subplots(1,1)
-       
-        bx = int(bx)
-        by = int(by)
-        imgplot = ax.imshow(img[bx-20:bx+20,by-20:by+20], interpolation = 'none', origin='lower')
-        self.plotwindow.figure.canvas.draw()
+        self.plotSignal(img[bx-20:bx+20,by-20:by+20], "Focusing")
 
         while step > 5:
             self.foc.step_motor(direc*step)
@@ -475,42 +439,35 @@ class FocusCamera(QThread):
 
 
             #plotting
-            self.plotwindow.figure.clear()
-            imgplot = ax.imshow(img[bx-20:bx+20, by-20:by+20], interpolation = 'none', \
-                origin='lower')
-            self.plotwindow.figure.canvas.draw()
-            #fig.canvas.restore_region(background)
-            #ax.draw_artist(imgplot)
-            #fig.canvas.blit(ax.bbox)
+            self.plotSignal(img[bx-20:bx+20,by-20:by+20], "Focusing")
 
             focus_check2,bx2,by2 = measure_focus(img)
             
-            self.GuidingOutput("STEP IS: %i\nPOS IS: %i" % (step,current_focus))
-            self.GuidingOutput("Old Focus: %f, New Focus: %f" % (focus_check1, focus_check2))
+            self.updateText.emit("STEP IS: %i\nPOS IS: %i" % (step,current_focus))
+            self.updateText.emit("Old Focus: %f, New Focus: %f" % (focus_check1, focus_check2))
 
             #if focus gets go back to beginning, change direction and reduce step
             if focus_check2 > focus_check1:
                 direc = direc*-1
                 self.foc.step_motor(direc*step)
                 step = int(step / 2)
-                self.GuidingOutput("Focus is worse: changing direction!\n")
+                self.updateText.emit("Focus is worse: changing direction!\n")
             
             focus_check1 = focus_check2
             current_focus = self.foc.get_stepper_position() 
         
-        self.GuidingOutput("### FINISHED FOCUSING ####")
+        self.updateText.emit("### FINISHED FOCUSING ####")
 
 
 class RunGuiding(QThread):
 
     updateText = pyqtSignal(str)
+    setSkySignal = pyqtSignal()
 
     def __init__(self, telsock, cam, guideTargetVar, rotangle):
         QThread.__init__(self)
         self.telsock = telsock
-        #self.guideButtonVar = guideButonVar
         self.guideTargetVar = guideTargetVar
-        self.guideTargetText = self.guideTargetVar.text()
         #self.guideExpVariable = guideExpVariable
         self.guideExpVariable = 1500
         self.cam = cam

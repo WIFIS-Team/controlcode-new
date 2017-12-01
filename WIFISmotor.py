@@ -13,14 +13,15 @@ This is a module used to control the motors for WIFIS
 from __future__ import print_function
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 import time
+from PyQt5.QtCore import QObject, pyqtSignal
 
-class MotorControl():
+class MotorControl(QObject):
 
-    def __init__(self, motor_modules):
+    updateText = pyqtSignal(str, str, int)
 
-        self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusPosition,\
-                self.FilterPosition, self.GratingPosition, self.FocusStep,\
-                self.FilterStep, self.GratingStep = motor_modules
+    def __init__(self):
+        super(MotorControl, self).__init__()
+
         self.motor_speed1 = 10
         self.motor_speed2 = 500
         self.motor_speed3 = 10
@@ -33,8 +34,7 @@ class MotorControl():
 
     def get_position(self):
         
-        position_labels = [self.FocusPosition,self.FilterPosition,self.GratingPosition]
-
+        #Focus, Filter, Grating
         for i in range(3):
             unit = i + 1
             temp = self.client.read_holding_registers(0x0118, 2, unit=unit)
@@ -42,27 +42,27 @@ class MotorControl():
                 self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
                 if self.motor_position >= 2**31:
                     self.motor_position -= 2**32
-                poslabel = position_labels[unit-1]
-                poslabel.setText(str(self.motor_position))
+                self.updateText.emit(str(self.motor_position), 'Position', i)
 
     def update_status(self):
         #Returns 1025 if moving, 43009 if home, 8193 if stopped and not home, 
         #32768 if not operating/communicating (?) 
-        statuses = [self.FocusStatus, self.FilterStatus, self.GratingStatus]
+        #Focus, Filter, Grating
+
         for unit in range(1,4):
             resp = self.client.read_holding_registers(0x0020,1, unit=unit)
             if resp != None:
                 bin_resp = '{0:016b}'.format(resp.registers[0])
                 if bin_resp[5] == '1' and bin_resp[2] == '0':
-                    statuses[unit-1].setText("MOVING")
+                    self.updateText.emit("MOVING",'Status',unit-1)
                 elif bin_resp[4] == '1' and bin_resp[2] == '1':
-                    statuses[unit-1].setText("HOME")
+                    self.updateText.emit("HOME",'Status',unit-1)
                 elif bin_resp[4] == '0' and bin_resp[2] == '1':
-                    statuses[unit-1].setText("READY")
+                    self.updateText.emit("READY",'Status',unit-1)
                 elif bin_resp[0] == '1' and bin_resp[2] == '0':
-                    statuses[unit-1].setText("OFF/ERR")
+                    self.updateText.emit("OFF/ERR",'Status',unit-1)
                 else:
-                    statuses[unit-1].setText("UNKN")
+                    self.updateText.emit("UNKN",'Status',unit-1)
 
     def stepping_operation(self, value, unit):
         step = int(value)
@@ -120,7 +120,7 @@ class MotorControl():
         #self.update_status()
 
     def m1_step(self):
-        self.stepping_operation(self.FocusStep.text(), unit=0x01)
+        self.updateText.emit('','Step',0)
         #self.update_status()
 
     def m1_home(self):
@@ -155,7 +155,7 @@ class MotorControl():
 
     def m2_step(self, action=False):
         if not action:
-            self.stepping_operation(self.FilterStep.text(), unit=0x02)
+            self.updateText.emit('','Step', 1)
         elif action:
             self.stepping_operation(action, unit=0x02)
         #self.update_status()
@@ -192,7 +192,7 @@ class MotorControl():
 
     def m3_step(self, action=False):
         if not action:
-            self.stepping_operation(self.GratingStep.text(), unit=0x03)
+            self.updateText.emit('','Steo',2)
         elif action:
             self.stepping_operation(action, unit=0x03)
         #self.update_status()

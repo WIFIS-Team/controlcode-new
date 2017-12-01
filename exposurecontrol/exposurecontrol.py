@@ -174,7 +174,7 @@ class MainApplication(Frame):
         self.obstype = StringVar(self)
         self.sourcename = StringVar(self)
         self.switch1,self.switch2 = pc.connect_to_power()
-        self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2)
+        self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, [1,1,1,1])
         self.create_widgets()
 
     def create_widgets(self): #create all the buttons and labels and stuff
@@ -394,7 +394,7 @@ class MainApplication(Frame):
 
         print("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+self.sourcename.get())
 
-        fl1 = open('obs.lst','w')
+        fl1 = open('/home/utopea/WIFIS-Team/wifiscontrol/exposurecontrol/obs.lst','w')
         fl1.write(str(added[0]))
         fl1.close()
 

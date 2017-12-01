@@ -110,7 +110,7 @@ def setup_arduinos(fport,sport):
 class CalibrationControl(): 
     """Defines the GUI including the buttons as well as the button functions."""
     
-    def __init__(self, switch1, switch2):#,switch1,switch2): #setup basic gui stuff
+    def __init__(self, switch1, switch2, blabels):#,switch1,switch2): #setup basic gui stuff
         
         #port for flipper arduino
         fport='/dev/flipper_arduino'
@@ -128,6 +128,7 @@ class CalibrationControl():
         self.ser2 = ser2
         self.switch1 = switch1
         self.switch2 = switch2
+        self.obslabel,self.caliblabel,self.arclabel,self.spherelabel = blabels
 
     #Flipper Controls#  
     ######################################################
