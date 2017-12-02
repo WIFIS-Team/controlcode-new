@@ -18,6 +18,7 @@ from astropy.visualization import (PercentileInterval, LinearStretch,
 import WIFISpower as pc
 import WIFISmotor as wm
 import traceback
+import numpy as np
 from get_src_pos import do_get_src_pos
 
 class Formatter(object):
@@ -123,7 +124,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.labelsThread = UpdateLabels(self.guider, self.motorcontrol)
         self.labelsThread.updateText.connect(self._handleUpdateLabels)
         self.labelsThread.start()
-        
+
+        self.motorcontrol.update_status()
+        self.motorcontrol.get_position() 
+
         #Defining actions for Exposure Control
         if self.scidet.connected == False:
             self.DetectorStatusLabel.setStyleSheet('color: red')
@@ -195,6 +199,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Others
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
         self.actionQuit.triggered.connect(self.close)
+        self.FocusTestButton.clicked.connect(self.runFocusTest)
+        self.FocusTestStop.clicked.connect(self.stopFocusTest)
 
     def initGuideExposure(self):
         self.guideexp = gf.ExposeGuider(self.guider, False)
@@ -364,10 +370,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
                 
     def runFocusTest(self):
-        self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus)
+        self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus, self.calibrationcontrol,\
+                self.FocusPosition)
         self.focustest.updateText.connect(self._handleOutputTextUpdate)
         self.focustest.moveMotor.connect(self._handleMoveMotor)
         self.focustest.start()
+
+    def stopFocusTest(self):
+        self.focustest.stop()
 
     def _handleMoveMotor(self, s1, s2, mot):
         self.motorcontrol.stepping_operation(s1, unit=0x01)
@@ -499,8 +509,8 @@ class UpdateLabels(QThread):
 
                 steppos = str(self.guider.foc.get_stepper_position())
                 ccdTemp = str(self.guider.cam.get_temperature())
-                self.motorcontrol.update_status()
-                self.motorcontrol.get_position()
+                #self.motorcontrol.update_status()
+                #self.motorcontrol.get_position()
 
                 self.updateText.emit([telemDict,steppos,ccdTemp])
 
@@ -513,24 +523,28 @@ class UpdateLabels(QThread):
                 print e
                 print "############################"
 
-class TestFocus(QThread):
+class FocusTest(QThread):
 
     updateText = pyqtSignal(str)
     moveMotor = pyqtSignal(str,str,int)
 
-    def __init__(self, motorcontrol, scidet, focusstatus):
+    def __init__(self, motorcontrol, scidet, focusstatus, calibcontrol, focvalue):
         QThread.__init__(self)
 
         self.motorcontrol = motorcontrol
         self.scidet = scidet
         self.stopthread = False
         self.focarray = np.arange(-200,200,10)
+        #self.focarray = np.arange(-20,20,10)
         self.focstatus = focusstatus
+        self.calibcontrol = calibcontrol
+        self.focvalue = focvalue
 
     def __del__(self):
         self.wait()
 
     def stop(self):
+        self.updateText.emit("STOPPING FOCUS THREAD ASAP")
         self.stopthread = True
 
     def run(self):
@@ -542,11 +556,28 @@ class TestFocus(QThread):
             try:                
                 self.updateText.emit("### MOVING TO %i" % (self.focarray[i]))
                 self.moveMotor.emit(str(self.focarray[i]),'Step',0)
-                self.sleep(1)
-                while (self.focstatus.text() != 'Ready') or (self.focstatus.text() != "Home"):
-                    self.sleep(1)
+                self.sleep(3)
+                currentfocstatus = self.focstatus.text()
+                while currentfocstatus == "MOVING":
+                    currentfocstatus = self.focstatus.text()
+                    
+                    if self.stopthread:
+                        break
                     continue
+                    self.sleep(1)
+
+                self.sleep(2)
+
+                currentfocvalue = self.focvalue.text()
+                if currentfocvalue != str(self.focarray[i]):
+                    self.updateText.emit("THE MOTOR ISNT MOVING PROPERLY, EXITING...")
+                    break
+
                 self.scidet.flatramp('FocusTest', notoggle=True)
+
+                if self.stopthread:
+                    self.updateText.emit("EXITING FOCUS THREAD")
+                    break
 
                 i += 1
 
@@ -557,9 +588,8 @@ class TestFocus(QThread):
                 print e
                 print "############################"
 
-    def movemotor(self, val):
-        self.motorcontrol.
-
+        self.calibcontrol.sourcesetup()
+        self.updateText.emit("FOCUS THREAD FINISHED")
 
 def main():
 

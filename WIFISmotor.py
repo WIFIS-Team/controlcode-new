@@ -64,6 +64,7 @@ class MotorControl(QObject):
                 else:
                     self.updateText.emit("UNKN",'Status',unit-1)
 
+
     def stepping_operation(self, value, unit):
         step = int(value)
         if step < 0:
@@ -74,6 +75,29 @@ class MotorControl(QObject):
         self.client.write_registers(0x0402, [upper, lower], unit=unit)
         self.client.write_register(0x001E, 0x2101, unit=unit)
         self.client.write_register(0x001E, 0x2001, unit=unit)
+
+    def updatemoving(self, unit):
+        resp = self.client.read_holding_registers(0x0020,1, unit=unit+1)
+        if resp != None:
+            bin_resp = '{0:016b}'.format(resp.registers[0])
+            if (bin_resp[5] == '1') and (bin_resp[2] == '0'):
+                while (bin_resp[5] == '1') and (bin_resp[2] == '0'):
+                    self.updateText.emit("MOVING",'Status',unit)
+                    
+                    temp = self.client.read_holding_registers(0x0118, 2, unit=unit+1)
+                    if temp != None:
+                        self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
+                        if self.motor_position >= 2**31:
+                            self.motor_position -= 2**32
+                        self.updateText.emit(str(self.motor_position), 'Position', unit)
+                    
+                    time.sleep(0.5)
+
+                    resp = self.client.read_holding_registers(0x0020,1, unit=unit+1)
+                    bin_resp = '{0:016b}'.format(resp.registers[0])
+
+        self.update_status()
+        self.get_positon()        
 
     def homing_operation(self, unit):
         
@@ -117,33 +141,28 @@ class MotorControl(QObject):
         upper = speed >> 16
         lower = speed & 0xFFFF
         self.client.write_registers(0x0502, [upper, lower], unit=0x01)
-        #self.update_status()
 
     def m1_step(self):
         self.updateText.emit('','Step',0)
-        #self.update_status()
+        self.updatemoving(0)
 
     def m1_home(self):
         self.homing_operation(0x01)
-        #self.update_status()
+        self.updatemoving(0)
 
     def m1_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x01)
         self.client.write_register(0x001E, 0x2201, unit=0x01)
-        #self.update_status()
 
     def m1_reverse(self):
         self.client.write_register(0x001E, 0x2000, unit=0x01)
         self.client.write_register(0x001E, 0x2401, unit=0x01)
-        #self.update_status()
 
     def m1_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x01)
-        #self.update_status()
 
     def m1_off(self):
         self.client.write_register(0x001E, 0x0000, unit=0x01)
-        #self.update_status()
 
     # Motor 2 methods
     def m2_speed(self):
@@ -151,36 +170,32 @@ class MotorControl(QObject):
         upper = speed >> 16
         lower = speed & 0xFFFF
         self.client.write_registers(0x0502, [upper, lower], unit=0x02)
-        #self.update_status()
 
     def m2_step(self, action=False):
         if not action:
             self.updateText.emit('','Step', 1)
+            self.updatemoving(1)
         elif action:
             self.stepping_operation(action, unit=0x02)
-        #self.update_status()
+            self.updatemoving(1)
 
     def m2_home(self):
         self.homing_operation(0x02)
-        #self.update_status()
+        self.updatemoving(1)
 
     def m2_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x02)
         self.client.write_register(0x001E, 0x2201, unit=0x02)
-        #self.update_status()
 
     def m2_reverse(self):
         self.client.write_register(0x001E, 0x2000, unit=0x02)
         self.client.write_register(0x001E, 0x2401, unit=0x02)
-        #self.update_status()
 
     def m2_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x02)
-        #self.update_status()
 
     def m2_off(self):
         self.client.write_register(0x001E, 0x0000, unit=0x02)
-        #self.update_status()
 
     # Motor 3 methods
     def m3_speed(self):
@@ -188,35 +203,56 @@ class MotorControl(QObject):
         upper = speed >> 16
         lower = speed & 0xFFFF
         self.client.write_registers(0x0502, [upper, lower], unit=0x03)
-        #self.update_status()
 
     def m3_step(self, action=False):
         if not action:
-            self.updateText.emit('','Steo',2)
+            self.updateText.emit('','Step',2)
+            self.updatemoving(2)
         elif action:
             self.stepping_operation(action, unit=0x03)
-        #self.update_status()
+            self.updatemoving(2)
 
     def m3_home(self):
         self.homing_operation(0x03)
-        #self.update_status()
+        self.updatemoving(2)
 
     def m3_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x03)
         self.client.write_register(0x001E, 0x2201, unit=0x03)
-        #self.update_status()
 
     def m3_reverse(self):
         self.client.write_register(0x001E, 0x2000, unit=0x03)
         self.client.write_register(0x001E, 0x2401, unit=0x03)
-        #self.update_status()
 
     def m3_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x03)
-        #self.update_status()
 
     def m3_off(self):
         self.client.write_register(0x001E, 0x0000, unit=0x03)
-        #self.update_status()
 
+
+class MotorThread(QThread):
+
+    def __init__(self, motorcontrol, unit):
+        QThread.__init__(self)
+
+        self.motorcontrol = motorcontrol
+
+    def __del__(self):
+        self.wait()
+
+    def stop(self):
+        self.stopthread = True
+
+    def run(self):
+
+        try: 
+            self.motorcontrol.stepping
+
+        except Exception as e:
+            print "############################"
+            print "ERROR IN LABEL UPDATE THREAD"
+            print traceback.print_exc()
+            print e
+            print "############################"
 
