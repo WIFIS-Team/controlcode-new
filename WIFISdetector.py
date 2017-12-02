@@ -219,7 +219,7 @@ class h2rg(QObject):
 #            self.printTxt("SOMETHING WENT WRONG WITH THE PLOTTING")
 
 
-    def flatramp(self,sourcename):
+    def flatramp(self,sourcename, notoggle = False):
         self.calibrationcontrol.flatsetup()
         sleep(7)
         sourcename = 'CalFlat ' + sourcename
@@ -229,7 +229,8 @@ class h2rg(QObject):
         f1.write(str(added[0]))
         f1.close()
 
-        self.calibrationcontrol.sourcesetup()
+        if not notoggle:
+            self.calibrationcontrol.sourcesetup()
 
     def arcramp(self,sourcename, flat=False):
         self.calibrationcontrol.arcsetup()

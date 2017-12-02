@@ -47,12 +47,9 @@ class PlotWindow(QDialog):
     def closeEvent(self, event):
         
         if not self.fullclose:
-            reply = QMessageBox.question(self, "Message", "Close the main window to exit the GUI.\nPlotting will break if you close this window. Are you sure?", QMessageBox.Close | QMessageBox.Cancel)
+            reply = QMessageBox.question(self, "Message", "Close the main window to exit the GUI.\nClosing this window will break plotting.", QMessageBox.Cancel)
 
-            if reply == QMessageBox.Close:
-                event.accept()
-            else:
-                event.ignore()
+            event.ignore()
 
         else:
             event.accept()
@@ -65,29 +62,26 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
+        #Create the plotting windows
         self.plotwindow = PlotWindow('WIFIS Plot Window')
         self.plotwindow.show()
         self.guideplotwindow = PlotWindow('Guider Plot Window')
         self.guideplotwindow.show()
 
+        #Connect to telescope
         self.telsock = wg.connect_to_telescope()
         telemDict = wg.get_telemetry(self.telsock, verbose=False)
-        self.IISLabel.setText(telemDict['IIS'])
+        self.IISLabel.setText(telemDict['IIS']) #Set IIS early because certain functions rely on this value
 
-        #Defining GUI Variables to feed into the guider functions
+        #Defining GUI Variables to feed into different control classes
+        #Important that the classes only read the variables and never try to adjust them.
         guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
                 self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel]
         power_widgets = [self.Power11, self.Power12, self.Power13, self.Power14, self.Power15,\
                         self.Power16, self.Power17, self.Power18, self.Power21, self.Power22,\
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
                         self.Power28]
-        
         caliblabels = [self.CalibModeButton,self.ObsModeButton,self.ArclampModeButton,self.ISphereModeButton]
-
-        #self.updatetimer = QTimer(self)
-        #self.updatetimer.setInterval(5000)
-        #self.updatetimer.timeout.connect(self.updateLabels)
-        #self.updatetimer.start()
 
         #Defining various control/serial variables
         try:
@@ -95,7 +89,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.powercontrol = pc.PowerControl(power_widgets)
             self.switch1 = self.powercontrol.switch1
             self.switch2 = self.powercontrol.switch2
-            
+           
+            #Calibration Control
             self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, caliblabels)
 
             #Motor Control
@@ -117,22 +112,18 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             print e
             print traceback.print_exc()
             print "Something isn't connecting properly"
-            return
+            self.close()
         
+        #Defining settings from progress bar
         self.ExpProgressBar.setMinimum(0)
         self.ExpProgressBar.setMaximum(100)
         self.ExpProgressBar.setValue(0)
         
         #Starting function to update labels. Still need to add guider info.
-        #self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.RALabel, self.DECLabel,\
-        #        self.AZLabel, self.ELLabel, self.IISLabel, self.HALabel, self.CCDTemp,self.FocPosition)
-        self.labelsThread = UpdateLabelsNew(self.guider, self.motorcontrol)
+        self.labelsThread = UpdateLabels(self.guider, self.motorcontrol)
         self.labelsThread.updateText.connect(self._handleUpdateLabels)
         self.labelsThread.start()
         
-        #self.motorcontrol.get_position()
-        #self.motorcontrol.update_status()
-
         #Defining actions for Exposure Control
         if self.scidet.connected == False:
             self.DetectorStatusLabel.setStyleSheet('color: red')
@@ -140,8 +131,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.actionConnect.triggered.connect(self.scidet.connect)
         self.actionInitialize.triggered.connect(self.scidet.initialize)
         self.actionDisconnect.triggered.connect(self.scidet.disconnect)
-        #self.ExposureButton.clicked.connect(self.scidetexpose.start)
-        #self.TakeCalibButton.clicked.connect(self.calibexpose.start)
         self.ExposureButton.clicked.connect(self.initExposure)
         self.TakeCalibButton.clicked.connect(self.initCalibExposure)
         self.NodBeginButton.clicked.connect(self.startNodding)
@@ -373,6 +362,16 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.motorcontrol.stepping_operation(self.FilterStep.text(), unit=0x02)
             elif motnum == 2:
                 self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
+                
+    def runFocusTest(self):
+        self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus)
+        self.focustest.updateText.connect(self._handleOutputTextUpdate)
+        self.focustest.moveMotor.connect(self._handleMoveMotor)
+        self.focustest.start()
+
+    def _handleMoveMotor(self, s1, s2, mot):
+        self.motorcontrol.stepping_operation(s1, unit=0x01)
+
 
     def closeEvent(self, event):
         
@@ -387,8 +386,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.guideplotwindow.close()
         else:
             event.ignore()
-
-
 
 class NoddingExposure(QThread):
 
@@ -477,61 +474,7 @@ class NoddingExposure(QThread):
 
         self.updateText.emit("####### FINISHED NODDING SEQUENCE #######")
         
-
 class UpdateLabels(QThread):
-
-    def __init__(self, guider, motorcontrol, RALabel, DECLabel, AZLabel, ELLabel, IISLabel, \
-            HALabel, ccdTemp, focpos):
-        QThread.__init__(self)
-
-        self.guider = guider
-        self.RALabel = RALabel
-        self.DECLabel = DECLabel
-        self.AZLabel = AZLabel
-        self.ELLabel = ELLabel
-        self.IISLabel = IISLabel
-        self.HALabel = HALabel
-        self.ccdTemp = ccdTemp
-        self.focpos = focpos
-        self.motorcontrol = motorcontrol
-        self.stopthread = False
-
-    def __del__(self):
-        self.wait()
-
-    def stop(self):
-        self.stopthread = True
-
-    def run(self):
-
-        while not self.stopthread:
-            try:
-                telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
-                
-                DECText = telemDict['DEC']
-                RAText = telemDict['RA']
-
-                self.RALabel.setText(RAText[0:2]+':'+RAText[2:4]+':'+RAText[4:])
-                self.DECLabel.setText(DECText[0:3]+':'+DECText[3:5]+':'+DECText[5:])
-                self.AZLabel.setText(telemDict['AZ'])
-                self.ELLabel.setText(telemDict['EL'])
-                self.IISLabel.setText(telemDict['IIS'])
-                self.HALabel.setText(telemDict['HA'])
-                self.focpos.setText(str(self.guider.foc.get_stepper_position()))
-                self.ccdTemp.setText(str(self.guider.cam.get_temperature()))
-                #self.motorcontrol.update_status()
-                #self.motorcontrol.get_position()
-                #self.powercontrol.checkOn()
-                self.sleep(5)
-
-            except Exception as e:
-                print "############################"
-                print "ERROR IN LABEL UPDATE THREAD"
-                print traceback.print_exc()
-                print e
-                print "############################"
-
-class UpdateLabelsNew(QThread):
 
     updateText = pyqtSignal(list)
 
@@ -569,6 +512,54 @@ class UpdateLabelsNew(QThread):
                 print traceback.print_exc()
                 print e
                 print "############################"
+
+class TestFocus(QThread):
+
+    updateText = pyqtSignal(str)
+    moveMotor = pyqtSignal(str,str,int)
+
+    def __init__(self, motorcontrol, scidet, focusstatus):
+        QThread.__init__(self)
+
+        self.motorcontrol = motorcontrol
+        self.scidet = scidet
+        self.stopthread = False
+        self.focarray = np.arange(-200,200,10)
+        self.focstatus = focusstatus
+
+    def __del__(self):
+        self.wait()
+
+    def stop(self):
+        self.stopthread = True
+
+    def run(self):
+
+        self.updateText.emit("### STARTING FOCUS TEST")
+        nexp = len(self.focarray)
+        i = 0
+        while (not self.stopthread) and (i < nexp):
+            try:                
+                self.updateText.emit("### MOVING TO %i" % (self.focarray[i]))
+                self.moveMotor.emit(str(self.focarray[i]),'Step',0)
+                self.sleep(1)
+                while (self.focstatus.text() != 'Ready') or (self.focstatus.text() != "Home"):
+                    self.sleep(1)
+                    continue
+                self.scidet.flatramp('FocusTest', notoggle=True)
+
+                i += 1
+
+            except Exception as e:
+                print "############################"
+                print "ERROR IN LABEL UPDATE THREAD"
+                print traceback.print_exc()
+                print e
+                print "############################"
+
+    def movemotor(self, val):
+        self.motorcontrol.
+
 
 def main():
 

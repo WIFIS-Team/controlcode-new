@@ -385,9 +385,6 @@ class WIFISGuider(QObject):
         
 class ExposeGuider(QThread):
 
-    #updateText = pyqtSignal(str)
-    #plotSignal = pyqtSignal(np.ndarray, str)
-
     def __init__(self, guider, save):
         QThread.__init__(self)
         self.stopThread = False
@@ -405,6 +402,7 @@ class ExposeGuider(QThread):
             self.guider.saveImage()
         else:
             self.guider.takeImage()
+
 
 class FocusCamera(QThread):
 
