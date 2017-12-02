@@ -42,15 +42,20 @@ class PlotWindow(QDialog):
         self.layout.addWidget(self.toolbar)
         self.layout.addWidget(self.canvas)
         self.setLayout(self.layout)
+        self.fullclose = False
 
     def closeEvent(self, event):
         
-        reply = QMessageBox.question(self, "Message", "You will no longer see plots if you close this window. Are you sure?", QMessageBox.Close | QMessageBox.Cancel)
+        if not self.fullclose:
+            reply = QMessageBox.question(self, "Message", "Close the main window to exit the GUI.\nPlotting will break if you close this window. Are you sure?", QMessageBox.Close | QMessageBox.Cancel)
 
-        if reply == QMessageBox.Close:
-            event.accept()
+            if reply == QMessageBox.Close:
+                event.accept()
+            else:
+                event.ignore()
+
         else:
-            event.ignore()
+            event.accept()
 
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
@@ -107,14 +112,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.guider = gf.WIFISGuider(guide_widgets)
             self.guider.updateText.connect(self._handleGuidingTextUpdate)
             self.guider.plotSignal.connect(self._handleGuidePlotting)
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel)
-            self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
-
-            #Nodding
-            self.noddingexposure=NoddingExposure(self.scidet, self.guider, self.NodSelection, \
-                    self.NNods,self.NodsPerCal,\
-                    self.guideThread, self.NRampsText, self.NReadsText, \
-                    self.ObjText, self.NodRAText, self.NodDecText, self.OutputText)
 
         except Exception as e:
             print e
@@ -133,8 +130,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.labelsThread.updateText.connect(self._handleUpdateLabels)
         self.labelsThread.start()
         
-        self.motorcontrol.get_position()
-        self.motorcontrol.update_status()
+        #self.motorcontrol.get_position()
+        #self.motorcontrol.update_status()
 
         #Defining actions for Exposure Control
         if self.scidet.connected == False:
@@ -147,8 +144,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #self.TakeCalibButton.clicked.connect(self.calibexpose.start)
         self.ExposureButton.clicked.connect(self.initExposure)
         self.TakeCalibButton.clicked.connect(self.initCalibExposure)
-        self.NodBeginButton.clicked.connect(self.noddingexposure.start)
-        self.StopExpButton.clicked.connect(self.noddingexposure.stop)
+        self.NodBeginButton.clicked.connect(self.startNodding)
         self.CenteringCheck.clicked.connect(do_get_src_pos)
 
         #Defining actions for Telescope Control
@@ -161,12 +157,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Defining actions for Guider Control
         self.BKWButton.clicked.connect(self.guider.stepBackward)
         self.FWDButton.clicked.connect(self.guider.stepForward)
-        self.SaveImageButton.clicked.connect(self.guider.saveImage) #Need to thread this
-        self.TakeImageButton.clicked.connect(self.guider.takeImage) #Need to thread this
-        self.FocusCameraButton.clicked.connect(self.guider.focusCamera) #Need to thread
-        self.StartGuidingButton.clicked.connect(self.guideThread.start)
+        self.SaveImageButton.clicked.connect(self.initGuideExposureSave)
+        self.TakeImageButton.clicked.connect(self.initGuideExposure)
+        self.FocusCameraButton.clicked.connect(self.focusCamera) 
+        self.StartGuidingButton.clicked.connect(self.startGuiding)
         self.CentroidButton.clicked.connect(self.guider.checkCentroids)
-        self.StopGuidingButton.clicked.connect(self.guideThread.stop)
         self.SetTempButton.clicked.connect(self.guider.setTemperature)
         self.FilterVal.currentIndexChanged.connect(self.guider.goToFilter)
 
@@ -210,6 +205,27 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         #Others
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
+        self.actionQuit.triggered.connect(self.close)
+
+    def initGuideExposure(self):
+        self.guideexp = gf.ExposeGuider(self.guider, False)
+        self.guideexp.start()
+
+    def initGuideExposureSave(self):
+        self.guideexp = gf.ExposeGuider(self.guider, True)
+        self.guideexp.start()
+
+    def startGuiding(self):
+        self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel)
+        self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
+        self.guideThread.plotSignal.connect(self._handleGuidePlotting)
+        self.guideThread.setSkySignal.connect(self._handleGuidingSky)
+        self.StopGuidingButton.clicked.connect(self.guideThread.stop)
+
+    def focusCamera(self):
+        self.fcthread = gf.FocusCamera(self.guider.cam, self.guider.foc)
+        self.fcthread.plotSignal.connect(self._handleGuidePlotting)
+        self.fcthread.updateText.connect(self._handleGuidingTextUpdate)
 
     def skybuttonchanged(self):
         objtxt = self.ObjText.text()
@@ -238,6 +254,33 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.calibexpose.updateText.connect(self._handleOutputTextUpdate)
         self.calibexpose.start()
 
+    def startNodding(self):
+        self.noddingexposure = NoddingExposure(self.scidet, self.guider, self.NodSelection, \
+                self.NNods, self.NodsPerCal, self.NRampsText, self.NReadsText, \
+                self.ObjText, self.NodRAText, self.NodDecText)
+        self.noddingexposure.updateText.connect(self._handleGuidingTextUpdate)
+        self.noddingexposure.startGuiding.connect(self._handleNoddingGuide)
+        self.noddingexposure.stopGuiding.connect(self._handleNoddingGuideStop)
+        self.StopExpButton.clicked.connect(self.noddingexposure.stop)
+
+    def _handleNoddingGuide(self, s):
+        if s == 'Sky':
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, sky=True)
+        else:
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, sky=False)
+        self.guideThread.updateText.connect(self._handleOutputTextUpdate)
+        self.guideThread.plotSignal.connect(self._handleGuidePlotting)
+        self.guideThread.setSkySignal.connect(self._handleGuidingSky)
+        self.StopGuidingButton.clicked.connect(self.guideThread.stop)
+
+    def _handleNoddingGuideStop(self):
+        self.guideThread.stop()
+
+    def _handleGuidingSky(self, s):
+        if s == 'True':
+            self.ObjText.setText(self.ObjText.text() + 'Sky')
+        elif s == 'False':
+            self.ObjText.setText(self.ObjText.text()[:-3])
 
     def _handleOutputTextUpdate(self, txt):
         self.OutputText.append(txt)
@@ -296,15 +339,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
-            self.plotwindow.figure.colorbar(im)
+            self.guideplotwindow.figure.colorbar(im)
 
-            self.plotwindow.canvas.draw()
+            self.guideplotwindow.canvas.draw()
 
         except Exception as e:
             print e
             print traceback.print_exc()
             self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
-
 
     def _handleMotorText(self, s, labeltype, motnum):
         
@@ -332,28 +374,30 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             elif motnum == 2:
                 self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
 
+    def closeEvent(self, event):
+        
+        reply = QMessageBox.question(self, "Message", "Are you sure you want to quit?", QMessageBox.Close | QMessageBox.Cancel)
 
-    #@pyqtSlot()
-    #def updateLabels(self):
-    #    telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
-    #    
-    #    DECText = telemDict['DEC']
-    #    RAText = telemDict['RA']
-#
-#        self.RALabel.setText(RAText[0:2]+':'+RAText[2:4]+':'+RAText[4:])
-#        self.DECLabel.setText(DECText[0:3]+':'+DECText[3:5]+':'+DECText[5:])
-#        self.AZLabel.setText(telemDict['AZ'])
-#        self.ELLabel.setText(telemDict['EL'])
-#        self.IISLabel.setText(telemDict['IIS'])
-#        self.HALabel.setText(telemDict['HA'])
-#        self.FocPosition.setText(str(self.guider.foc.get_stepper_position()))
-#        self.CCDTemp.setText(str(self.guider.cam.get_temperature()))
+        if reply == QMessageBox.Close:
+            event.accept()
+            self.plotwindow.fullclose = True
+            self.guideplotwindow.fullclose = True
+
+            self.plotwindow.close()
+            self.guideplotwindow.close()
+        else:
+            event.ignore()
+
 
 
 class NoddingExposure(QThread):
 
-    def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, guideThread, nramps, nreads,\
-            objname, nodra, noddec, OutputText):
+    updateText = pyqtSignal(str)
+    startGuiding = pyqtSignal(str)
+    stopGuiding = pyqtSignal()
+
+    def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, nramps, nreads,\
+            objname, nodra, noddec):
 
         QThread.__init__(self)
 
@@ -367,9 +411,6 @@ class NoddingExposure(QThread):
         self.objname = objname
         self.nodra = nodra
         self.noddec = noddec
-        self.OutputText = OutputText
-
-        self.guideThread = guideThread
 
         self.stopthread = False
 
@@ -378,13 +419,13 @@ class NoddingExposure(QThread):
 
     def stop(self):
         if self.stopthread == True:
-            print "Waiting for exposure to finish then stopping!"
-        print "####### STOPPING NODDING WHEN CURRENT EXPOSURE FINISHES #######"
+            self.updateText.emit("Waiting for exposure to finish then stopping!")
+        self.updateText.emit("####### STOPPING NODDING WHEN CURRENT EXPOSURE FINISHES #######")
         self.stopthread = True
 
     def run(self):
         if self.scidet.connected == False:
-            print "Please connect the detector and initialze if not done already"
+            self.updateText.emit("Please connect the detector and initialze if not done already")
             return
 
         self.NodSelectionVal = self.NodSelection.currentText()
@@ -398,42 +439,43 @@ class NoddingExposure(QThread):
         if self.stopthread:
             self.stopthread = False
 
-        print "####### STARTING NODDING SEQUENCE #######"
-        print "# Doing initial calibrations"
+        self.updateText.emit("####### STARTING NODDING SEQUENCE #######")
+        self.updateText.emit("# Doing initial calibrations")
+
         self.scidet.takecalibrations(self.objnameval)
 
         for i in range(self.NNodsVal):
             for obstype in self.NodSelectionVal:
                 if obstype == 'A':
-                    self.guideThread.setObj()
-                    self.guideThread.start()
-                    self.sleep(2)
+                    self.startGuiding.emit('Obj')
+                    self.sleep(3)
+                     
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval)
-                    self.guideThread.stop()
-                    self.sleep(2)
+
+                    self.stopGuiding.emit()
+                    self.sleep(3)
                 elif obstype == 'B':
-                    self.guideThread.setSky()
                     self.guider.moveTelescopeNod(self.nodraval, self.noddecval)
-                    self.sleep(2)
-                    self.guideThread.start()
-                    self.sleep(2)
+                    self.sleep(3)
+                    self.startGuiding.emit('Sky')
+                    self.sleep(3)
 
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky')
                     
-                    self.guideThread.stop()
-                    self.sleep(2)
-                    self.guideThread.setObj()
+                    self.stopGuiding.emit()
+                    self.sleep(3)
                     self.guider.moveTelescopeNod(-1.*self.nodraval, -1.*self.noddecval)
-                    self.sleep(2)
+                    self.sleep(3)
                 if self.stopthread:
                     break
-                #self.guideThread.stop()
+
             if self.stopthread:
-                print "####### STOPPED NODDING SEQUENCE #######"
+                self.updateText.emit("####### STOPPED NODDING SEQUENCE #######")
                 break
             if (i + 1) % self.NodsPerCalVal == 0:
                 self.scidet.takecalibrations(self.objnameval)
-        print "####### FINISHED NODDING SEQUENCE #######"
+
+        self.updateText.emit("####### FINISHED NODDING SEQUENCE #######")
         
 
 class UpdateLabels(QThread):
@@ -527,8 +569,6 @@ class UpdateLabelsNew(QThread):
                 print traceback.print_exc()
                 print e
                 print "############################"
-
-
 
 def main():
 

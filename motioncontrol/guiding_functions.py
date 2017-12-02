@@ -165,7 +165,7 @@ class WIFISGuider(QObject):
         dy = offsety*y_rot
         radec = dx + dy
 
-        print "### MOVE ###\nRA:\t%f\nDEC:\t%f\n" % (-1*radec[1], -1*radec[0])
+        self.updateText.emit("### MOVE ###\nRA:\t%f\nDEC:\t%f\n" % (-1*radec[1], -1*radec[0]))
 
         return
 
@@ -185,7 +185,7 @@ class WIFISGuider(QObject):
 
     def offsetToGuider(self):
         if self.telSock:
-            print "### OFFSETTING TO GUIDER FIELD ###"
+            self.updateText.emit("### OFFSETTING TO GUIDER FIELD ###")
             offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
             WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
             #self.offsetButton.configure(text='Move to WIFIS',\
@@ -194,7 +194,7 @@ class WIFISGuider(QObject):
 
     def offsetToWIFIS(self):
         if self.telSock:
-            print "### OFFSETTING TO WIFIS FIELD ###"
+            self.updateText.emit("### OFFSETTING TO WIFIS FIELD ###")
             offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
             WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
             #self.offsetButton.configure(text='Move to Guider',\
@@ -267,12 +267,12 @@ class WIFISGuider(QObject):
             hduhdr = self.makeHeader(telemDict)
 
             if objtextval == "":
-                print "Writing to: "+self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits'
+                self.updateText.emit("Writing to: "+self.direc+self.todaydate+'T'+time.strftime('%H%M%S')+'.fits')
                 fits.writeto(self.direc+self.todaydate+'T'+\
                         time.strftime('%H%M%S')+'.fits', img, hduhdr,clobber=True)
             else:
-                print "Writing to: "+self.direc+self.todaydate+'T'+\
-                        time.strftime('%H%M%S')+'_'+objtextval+".fits"
+                self.updateText.emit("Writing to: "+self.direc+self.todaydate+'T'+\
+                        time.strftime('%H%M%S')+'_'+objtextval+".fits")
                 fits.writeto(self.direc+self.todaydate+'T'+\
                         time.strftime('%H%M%S')+'_'+objtextval+".fits",\
                         img, hduhdr,clobber=True)
@@ -342,8 +342,8 @@ class WIFISGuider(QObject):
             barr = np.argsort(centroids[2])[::-1]
             b = np.argmax(centroids[2])
       
-            print "X pixelscale: %f, %f" % (x_rot[0], x_rot[1])
-            print "Y pixelscale: %f, %f" % (y_rot[0], y_rot[1])
+            self.updateText.emit("X pixelscale: %f, %f" % (x_rot[0], x_rot[1]))
+            self.updateText.emit("Y pixelscale: %f, %f" % (y_rot[0], y_rot[1]))
 
             d = -1
             for i,b in enumerate(barr):  
@@ -355,11 +355,11 @@ class WIFISGuider(QObject):
                 dy = offsety * y_rot
                 radec = dx + dy
 
-                print "Y, Y Offset, RA Move: %f, %f" % (centroids[1][b], offsety)
-                print "X, X Offset, DEC Move: %f, %f" % (centroids[0][b], offsetx)
-		print "RA Move: %f" % (d*radec[1])
-		print "DEC Move: %f" % (d*radec[0])
-                print '\n'
+                self.updateText.emit("Y, Y Offset, RA Move: %f, %f" % (centroids[1][b], offsety))
+                self.updateText.emit("X, X Offset, DEC Move: %f, %f" % (centroids[0][b], offsetx))
+		self.updateText.emit("RA Move: %f" % (d*radec[1]))
+		self.updateText.emit("DEC Move: %f" % (d*radec[0]))
+                self.updateText.emit("\n")
 
             if not auto:
                 self.plotSignal.emit(img, "Centroids")
@@ -385,13 +385,14 @@ class WIFISGuider(QObject):
         
 class ExposeGuider(QThread):
 
-    updateText = pyqtSignal(str)
+    #updateText = pyqtSignal(str)
+    #plotSignal = pyqtSignal(np.ndarray, str)
 
-    def __init__(self, cam, foc,plotwindow):
+    def __init__(self, guider, save):
         QThread.__init__(self)
-        self.cam = cam
         self.stopThread = False
-        self.plotwindow = plotwindow
+        self.guider = guider
+        self.save=save
 
     def __del__(self):
         self.wait()
@@ -400,7 +401,10 @@ class ExposeGuider(QThread):
         self.stopThread = True
 
     def run(self):
-        pass
+        if self.save:
+            self.guider.saveImage()
+        else:
+            self.guider.takeImage()
 
 class FocusCamera(QThread):
 
@@ -462,9 +466,10 @@ class FocusCamera(QThread):
 class RunGuiding(QThread):
 
     updateText = pyqtSignal(str)
-    setSkySignal = pyqtSignal()
+    setSkySignal = pyqtSignal(str)
+    plotSignal = pyqtSignal(np.ndarray, str)
 
-    def __init__(self, telsock, cam, guideTargetVar, rotangle):
+    def __init__(self, telsock, cam, guideTargetVar, rotangle, sky=False):
         QThread.__init__(self)
         self.telsock = telsock
         self.guideTargetVar = guideTargetVar
@@ -488,13 +493,23 @@ class RunGuiding(QThread):
         if self.stopThread: #Re-initializing hack?
             self.stopThread = False
 
-        self.guideTargetText = self.guideTargetVar.text()
+        if sky:
+            self.guideTargetText = self.guideTargetVar.text() + 'Sky'
+        else:
+            self.guideTargetText = self.guideTargetVar.text()
 
         self.updateText.emit("###### STARTING GUIDING ON %s" % (self.guideTargetText))
         #self.guideButtonVar.set("Stop Guiding")
         gfls = self.checkGuideVariable()
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
             int(self.guideExpVariable),gfls, self.rotangle)
+
+        #Plot guide star for reference
+        starybox = int(guidingstuff[3])
+        starxbox = int(guidingstuff[4])
+        boxsize = int(guidingstuff[5])
+        self.plotSignal.emit(guidingstuff[-1][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
+                "Guide Star")
         while True:
             if self.stopThread:
                 self.cam.end_exposure()
@@ -503,8 +518,10 @@ class RunGuiding(QThread):
             else:
 
                 try:
-                    dRA, dDEC, guideinfo, guideresult = WG.run_guiding(guidingstuff,\
+                    dRA, dDEC, guideinfo, guideresult, img = WG.run_guiding(guidingstuff,\
                             self.cam, self.telsock,self.rotangle)
+                    self.plotSignal.emit(img[starybox-boxsize:starybox+boxsize,\
+                            starxbox-boxsize:starxbox+boxsize],"Guide Star")
                     self.deltRA += dRA
                     self.deltDEC += dDEC
                     self.updateText.emit(guideinfo)
@@ -515,11 +532,13 @@ class RunGuiding(QThread):
                     self.updateText.emit("SOMETHING WRONG WITH GUIDING...CONTINUING...")
 
     def setSky(self):
+        self.setSkySignal.emit("True")
         self.sky = True
         self.guidetargettext = self.guideTargetVar.text() + 'Sky'
 
     def setObj(self):
         if self.sky:
+            self.setSkySignal.emit("False")
             self.guidetargettext = self.guideTargetVar.text()[:-3]
             self.sky=False
 
