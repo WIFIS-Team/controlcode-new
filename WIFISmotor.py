@@ -231,9 +231,9 @@ class MotorControl(QObject):
         self.client.write_register(0x001E, 0x0000, unit=0x03)
 
 
-class MotorThread(QThread):
+class UpdateMotorThread(QThread):
 
-    def __init__(self, motorcontrol, unit):
+    def __init__(self, motorcontrol, unit, step):
         QThread.__init__(self)
 
         self.motorcontrol = motorcontrol
@@ -247,11 +247,11 @@ class MotorThread(QThread):
     def run(self):
 
         try: 
-            self.motorcontrol.stepping
+            
 
         except Exception as e:
             print "############################"
-            print "ERROR IN LABEL UPDATE THREAD"
+            print "ERROR IN MOTOR UPDATE THREAD"
             print traceback.print_exc()
             print e
             print "############################"
