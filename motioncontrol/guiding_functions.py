@@ -433,7 +433,7 @@ class FocusCamera(QThread):
         direc = 1 #forward
 
         #plotting
-        self.plotSignal(img[bx-20:bx+20,by-20:by+20], "Focusing")
+        self.plotSignal.emit(img[bx-20:bx+20,by-20:by+20], "Focusing")
 
         while step > 5:
             self.foc.step_motor(direc*step)
@@ -441,7 +441,7 @@ class FocusCamera(QThread):
 
 
             #plotting
-            self.plotSignal(img[bx-20:bx+20,by-20:by+20], "Focusing")
+            self.plotSignal.emit(img[bx-20:bx+20,by-20:by+20], "Focusing")
 
             focus_check2,bx2,by2 = measure_focus(img)
             
@@ -477,7 +477,7 @@ class RunGuiding(QThread):
         self.deltRA = 0
         self.deltDEC = 0
         self.stopThread = False
-        self.sky = False
+        self.sky = sky
         self.rotangle = float(rotangle.text())
 
     def __del__(self):
@@ -491,7 +491,7 @@ class RunGuiding(QThread):
         if self.stopThread: #Re-initializing hack?
             self.stopThread = False
 
-        if sky:
+        if self.sky:
             self.guideTargetText = self.guideTargetVar.text() + 'Sky'
         else:
             self.guideTargetText = self.guideTargetVar.text()
@@ -507,7 +507,7 @@ class RunGuiding(QThread):
         starxbox = int(guidingstuff[4])
         boxsize = int(guidingstuff[5])
         self.plotSignal.emit(guidingstuff[-1][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
-                "Guide Star")
+                self.guideTargetText + " GuideStar")
         while True:
             if self.stopThread:
                 self.cam.end_exposure()
@@ -519,7 +519,7 @@ class RunGuiding(QThread):
                     dRA, dDEC, guideinfo, guideresult, img = WG.run_guiding(guidingstuff,\
                             self.cam, self.telsock,self.rotangle)
                     self.plotSignal.emit(img[starybox-boxsize:starybox+boxsize,\
-                            starxbox-boxsize:starxbox+boxsize],"Guide Star")
+                            starxbox-boxsize:starxbox+boxsize],self.guideTargetText + ' GuideStar')
                     self.deltRA += dRA
                     self.deltDEC += dDEC
                     self.updateText.emit(guideinfo)

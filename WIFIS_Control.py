@@ -20,6 +20,7 @@ import WIFISmotor as wm
 import traceback
 import numpy as np
 from get_src_pos import do_get_src_pos
+import time
 
 class Formatter(object):
     def __init__(self, im):
@@ -54,7 +55,6 @@ class PlotWindow(QDialog):
 
         else:
             event.accept()
-
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
@@ -95,8 +95,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, caliblabels)
 
             #Motor Control
-            self.motorcontrol = wm.MotorControl() 
-            self.motorcontrol.updateText.connect(self._handleMotorText)
+            self.motorcontrol = None
+            #self.motorcontrol = wm.MotorControl() 
+            #self.motorcontrol.updateText.connect(self._handleMotorText)
+            self.m1running = 0
+            self.m2running = 0
+            self.m3running = 0
 
             #Detector Control and Threads
             self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2,\
@@ -125,8 +129,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.labelsThread.updateText.connect(self._handleUpdateLabels)
         self.labelsThread.start()
 
-        self.motorcontrol.update_status()
-        self.motorcontrol.get_position() 
+        #self.motorcontrol.update_status()
+        #self.motorcontrol.get_position() 
 
         #Defining actions for Exposure Control
         if self.scidet.connected == False:
@@ -138,7 +142,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExposureButton.clicked.connect(self.initExposure)
         self.TakeCalibButton.clicked.connect(self.initCalibExposure)
         self.NodBeginButton.clicked.connect(self.startNodding)
-        self.CenteringCheck.clicked.connect(do_get_src_pos)
+        self.CenteringCheck.clicked.connect(self.checkcentering)
 
         #Defining actions for Telescope Control
         self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
@@ -177,18 +181,19 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.Power28.clicked.connect(self.powercontrol.toggle_plug8)
 
         #Defining actions for Motor Control
-        self.FocusGoTo.clicked.connect(self.motorcontrol.m1_step)
-        self.FilterGoTo.clicked.connect(self.motorcontrol.m2_step)
-        self.GratingGoTo.clicked.connect(self.motorcontrol.m3_step)
-        self.FocusHome.clicked.connect(self.motorcontrol.m1_home)
-        self.FilterHome.clicked.connect(self.motorcontrol.m2_home)
-        self.GratingHome.clicked.connect(self.motorcontrol.m3_home)
-        self.FocusStop.clicked.connect(self.motorcontrol.m1_stop)
-        self.FilterStop.clicked.connect(self.motorcontrol.m2_stop)
-        self.GratingStop.clicked.connect(self.motorcontrol.m3_stop)
-        self.TBButton.clicked.connect(self.motorcontrol.gotoTB)
-        self.HButton.clicked.connect(self.motorcontrol.gotoH)
-        self.BlankButton.clicked.connect(self.motorcontrol.gotoBlank)
+        if self.motorcontrol:
+            self.FocusGoTo.clicked.connect(self.motorcontrol.m1_step)
+            self.FilterGoTo.clicked.connect(self.motorcontrol.m2_step)
+            self.GratingGoTo.clicked.connect(self.motorcontrol.m3_step)
+            self.FocusHome.clicked.connect(self.motorcontrol.m1_home)
+            self.FilterHome.clicked.connect(self.motorcontrol.m2_home)
+            self.GratingHome.clicked.connect(self.motorcontrol.m3_home)
+            self.FocusStop.clicked.connect(self.motorcontrol.m1_stop)
+            self.FilterStop.clicked.connect(self.motorcontrol.m2_stop)
+            self.GratingStop.clicked.connect(self.motorcontrol.m3_stop)
+            self.TBButton.clicked.connect(self.motorcontrol.gotoTB)
+            self.HButton.clicked.connect(self.motorcontrol.gotoH)
+            self.BlankButton.clicked.connect(self.motorcontrol.gotoBlank)
 
         #CalibrationControl Buttons in Other Tab
         self.CalibModeButton.clicked.connect(self.calibrationcontrol.flip2pos2)
@@ -216,11 +221,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
         self.StopGuidingButton.clicked.connect(self.guideThread.stop)
+        self.guideThread.start()
 
     def focusCamera(self):
         self.fcthread = gf.FocusCamera(self.guider.cam, self.guider.foc)
         self.fcthread.plotSignal.connect(self._handleGuidePlotting)
         self.fcthread.updateText.connect(self._handleGuidingTextUpdate)
+        self.fcthread.start()
 
     def skybuttonchanged(self):
         objtxt = self.ObjText.text()
@@ -240,6 +247,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.progbar = wd.h2rgProgressThread(self.ExpTypeSelect.currentText(),\
                 nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()))
         self.progbar.updateBar.connect(self._handleProgressBar)
+        self.progbar.finished.connect(self._handleExpFinished)
         self.progbar.start()
 
     def initCalibExposure(self):
@@ -247,26 +255,38 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()),\
                 sourceName=self.ObjText.text())
         self.calibexpose.updateText.connect(self._handleOutputTextUpdate)
+        self._handleNoddingProgBar(20,1)
         self.calibexpose.start()
 
     def startNodding(self):
         self.noddingexposure = NoddingExposure(self.scidet, self.guider, self.NodSelection, \
                 self.NNods, self.NodsPerCal, self.NRampsText, self.NReadsText, \
                 self.ObjText, self.NodRAText, self.NodDecText)
-        self.noddingexposure.updateText.connect(self._handleGuidingTextUpdate)
+        self.noddingexposure.updateText.connect(self._handleOutputTextUpdate)
         self.noddingexposure.startGuiding.connect(self._handleNoddingGuide)
         self.noddingexposure.stopGuiding.connect(self._handleNoddingGuideStop)
         self.StopExpButton.clicked.connect(self.noddingexposure.stop)
+        self.noddingexposure.progBar.connect(self._handleNoddingProgBar)
+
+        self.noddingexposure.start()
+
+    def _handleNoddingProgBar(self, nreads, nramps):
+
+        self.progbar = wd.h2rgProgressThread('Ramp',nreads=nreads,nramps=nramps)
+        self.progbar.updateBar.connect(self._handleProgressBar)
+        self.progbar.finished.connect(self._handleExpFinished)
+        self.progbar.start()
 
     def _handleNoddingGuide(self, s):
         if s == 'Sky':
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, sky=True)
         else:
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, sky=False)
-        self.guideThread.updateText.connect(self._handleOutputTextUpdate)
+        self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
         self.StopGuidingButton.clicked.connect(self.guideThread.stop)
+        self.guideThread.start()
 
     def _handleNoddingGuideStop(self):
         self.guideThread.stop()
@@ -303,6 +323,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.HALabel.setText(telemDict['HA'])
         self.FocPosition.setText(str(self.guider.foc.get_stepper_position()))
         self.CCDTemp.setText(str(self.guider.cam.get_temperature()))
+
+    def checkcentering(self):
+        do_get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
+                '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
 
     def _handlePlotting(self, image, flname):
 
@@ -364,10 +388,54 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if labeltype == 'Step':
             if motnum == 0:
                 self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FocusStep.text())
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
             elif motnum == 1:
                 self.motorcontrol.stepping_operation(self.FilterStep.text(), unit=0x02)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FilterStep.text())
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
             elif motnum == 2:
                 self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.GratingStep.text())
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
+
+        if (labeltype == 'Step') and (len(s) != 0):
+            if motnum == 0:
+                self.motorcontrol.stepping_operation(s, unit=0x01)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
+            elif motnum == 1:
+                self.motorcontrol.stepping_operation(s, unit=0x02)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
+            elif motnum == 2:
+                self.motorcontrol.stepping_operation(s, unit=0x03)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
+
+        if labeltype == 'Home':
+            if motnum == 0:
+                self.motorcontrol.homing_operation(0x01)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
+            elif motnum == 1:
+                self.motorcontrol.homing_operation(0x02)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
+            elif motnum == 2:
+                self.motorcontrol.homing_operation(0x03)
+                self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
+                self.motormove.updateText.connect(self._handleMotorText)
+                self.motormove.start()
+
                 
     def runFocusTest(self):
         self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus, self.calibrationcontrol,\
@@ -381,6 +449,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def _handleMoveMotor(self, s1, s2, mot):
         self.motorcontrol.stepping_operation(s1, unit=0x01)
+        self.motormove = wm.MotorThread(self.motorcontrol, mot, s1)
+        self.motormove.updateText.connect(self._handleMotorText)
+        self.motormove.start()
 
 
     def closeEvent(self, event):
@@ -402,6 +473,7 @@ class NoddingExposure(QThread):
     updateText = pyqtSignal(str)
     startGuiding = pyqtSignal(str)
     stopGuiding = pyqtSignal()
+    progBar = pyqtSignal(int, int)
 
     def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, nramps, nreads,\
             objname, nodra, noddec):
@@ -449,30 +521,33 @@ class NoddingExposure(QThread):
         self.updateText.emit("####### STARTING NODDING SEQUENCE #######")
         self.updateText.emit("# Doing initial calibrations")
 
+        self.progBar.emit(20, self.nrampsval)
         self.scidet.takecalibrations(self.objnameval)
 
         for i in range(self.NNodsVal):
             for obstype in self.NodSelectionVal:
                 if obstype == 'A':
                     self.startGuiding.emit('Obj')
-                    self.sleep(3)
-                     
+                    self.sleep(5)
+
+                    self.progBar.emit(self.nreadsval, self.nrampsval)
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval)
 
                     self.stopGuiding.emit()
-                    self.sleep(3)
+                    self.sleep(5)
                 elif obstype == 'B':
                     self.guider.moveTelescopeNod(self.nodraval, self.noddecval)
-                    self.sleep(3)
+                    self.sleep(5)
                     self.startGuiding.emit('Sky')
-                    self.sleep(3)
+                    self.sleep(5)
 
+                    self.progBar.emit(self.nreadsval, self.nrampsval)
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky')
                     
                     self.stopGuiding.emit()
-                    self.sleep(3)
+                    self.sleep(5)
                     self.guider.moveTelescopeNod(-1.*self.nodraval, -1.*self.noddecval)
-                    self.sleep(3)
+                    self.sleep(5)
                 if self.stopthread:
                     break
 
@@ -557,13 +632,21 @@ class FocusTest(QThread):
                 self.updateText.emit("### MOVING TO %i" % (self.focarray[i]))
                 self.moveMotor.emit(str(self.focarray[i]),'Step',0)
                 self.sleep(3)
-                currentfocstatus = self.focstatus.text()
-                while currentfocstatus == "MOVING":
-                    currentfocstatus = self.focstatus.text()
+                currentfocvalue = self.focvalue.text()
+                t1 = time.time()
+                while currentfocvalue != str(self.focarray[i]):
+                    currentfocvalue = self.focvalue.text()
                     
                     if self.stopthread:
                         break
                     continue
+
+                    t2 = time.time()
+                    if ((t2 - t1) / 60) > 0.5:
+                        self.stopthread = True
+                        self.updateText.emit("Taking too long to move...")
+                        break
+
                     self.sleep(1)
 
                 self.sleep(2)

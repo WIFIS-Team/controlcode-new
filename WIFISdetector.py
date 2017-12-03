@@ -152,7 +152,7 @@ class h2rg(QObject):
 
         self.plotImage("CDS",1,finalPath+"/Result/CDSResult.fits", None)
 
-    def exposeRamp(self,nreads,nramps,obsType,sourceName):
+    def exposeRamp(self,nreads,nramps,obsType,sourceName, calib=False):
         if sourceName != "":
             self.printTxt("ACQUIRING RAMP FOR "+sourceName)
         else:
@@ -175,6 +175,11 @@ class h2rg(QObject):
         self.writeObsData(finalPath,obsType,sourceName)
         self.h2rgstatus.setStyleSheet('color: green')
 
+        if not calib:
+            f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/obs.lst','w')
+            f1.write(str(added[0]))
+            f1.close()
+
         self.printTxt("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
 
         if nreads < 2:
@@ -183,7 +188,7 @@ class h2rg(QObject):
             self.plotImage("Ramp",nreads,finalPath+"/H2RG_R01_M01_N01.fits", \
                     finalPath+"/H2RG_R01_M01_N%02d.fits" % nreads)
         
-        return(finalPath)
+        return added
 
     def plotImage(self,obsType,nreads,fileName1,fileName2):
 
@@ -198,34 +203,16 @@ class h2rg(QObject):
             hdu1.close()
             hdu2.close()
 
-        self.plotSignal.emit(image, fileName1.split('/')[-1])
-
-        #norm = ImageNormalize(image, interval=PercentileInterval(99.5),
-        #              stretch=LinearStretch())
-        
-        #try:
-        #    self.plotwindow.figure.clear()
-#
-#            ax = self.plotwindow.figure.add_subplot(1, 1, 1)
-#            im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
-#            ax.format_coord = Formatter(im)
-#            ax.set_title(fileName1.split('/')[-1])
-#            self.plotwindow.figure.colorbar(im)
-#
- #           self.plotwindow.canvas.draw()
-#        except Exception as e:
-#            print e
-#            print traceback.print_exc()
-#            self.printTxt("SOMETHING WENT WRONG WITH THE PLOTTING")
+        self.plotSignal.emit(image, fileName2.split('/')[-1])
 
 
     def flatramp(self,sourcename, notoggle = False):
         self.calibrationcontrol.flatsetup()
         sleep(7)
         sourcename = 'CalFlat ' + sourcename
-        added = self.exposeRamp(5, 1, 'Ramp',sourcename)
+        added = self.exposeRamp(5, 1, 'Ramp',sourcename, calib=True)
 
-        f1 = open('flat.lst','w')
+        f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/flat.lst','w')
         f1.write(str(added[0]))
         f1.close()
 
@@ -236,9 +223,9 @@ class h2rg(QObject):
         self.calibrationcontrol.arcsetup()
         sleep(3)
         sourcename = 'CalArc ' + sourcename
-        added = self.exposeRamp(5, 1, 'Ramp', sourcename)
+        added = self.exposeRamp(5, 1, 'Ramp', sourcename, calib=True)
         
-        f1 = open('wave.lst','w')
+        f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','w')
         f1.write(str(added[0]))
         f1.close()
 

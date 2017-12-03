@@ -10,10 +10,10 @@ This is a module used to control the motors for WIFIS
 """
 
 # initialize a serial RTU client instance
-from __future__ import print_function
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 import time
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal, QThread
+import traceback
 
 class MotorControl(QObject):
 
@@ -76,29 +76,6 @@ class MotorControl(QObject):
         self.client.write_register(0x001E, 0x2101, unit=unit)
         self.client.write_register(0x001E, 0x2001, unit=unit)
 
-    def updatemoving(self, unit):
-        resp = self.client.read_holding_registers(0x0020,1, unit=unit+1)
-        if resp != None:
-            bin_resp = '{0:016b}'.format(resp.registers[0])
-            if (bin_resp[5] == '1') and (bin_resp[2] == '0'):
-                while (bin_resp[5] == '1') and (bin_resp[2] == '0'):
-                    self.updateText.emit("MOVING",'Status',unit)
-                    
-                    temp = self.client.read_holding_registers(0x0118, 2, unit=unit+1)
-                    if temp != None:
-                        self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
-                        if self.motor_position >= 2**31:
-                            self.motor_position -= 2**32
-                        self.updateText.emit(str(self.motor_position), 'Position', unit)
-                    
-                    time.sleep(0.5)
-
-                    resp = self.client.read_holding_registers(0x0020,1, unit=unit+1)
-                    bin_resp = '{0:016b}'.format(resp.registers[0])
-
-        self.update_status()
-        self.get_positon()        
-
     def homing_operation(self, unit):
         
         #position_labels = [self.pos1,self.pos2,self.pos3]
@@ -144,11 +121,9 @@ class MotorControl(QObject):
 
     def m1_step(self):
         self.updateText.emit('','Step',0)
-        self.updatemoving(0)
 
     def m1_home(self):
-        self.homing_operation(0x01)
-        self.updatemoving(0)
+        self.updateText.emit("",'Home',0)
 
     def m1_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x01)
@@ -174,14 +149,11 @@ class MotorControl(QObject):
     def m2_step(self, action=False):
         if not action:
             self.updateText.emit('','Step', 1)
-            self.updatemoving(1)
         elif action:
-            self.stepping_operation(action, unit=0x02)
-            self.updatemoving(1)
+            self.updateText.emit(action,'Step', 1)
 
     def m2_home(self):
-        self.homing_operation(0x02)
-        self.updatemoving(1)
+        self.updateText.emit("",'Home',1)
 
     def m2_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x02)
@@ -207,14 +179,11 @@ class MotorControl(QObject):
     def m3_step(self, action=False):
         if not action:
             self.updateText.emit('','Step',2)
-            self.updatemoving(2)
         elif action:
-            self.stepping_operation(action, unit=0x03)
-            self.updatemoving(2)
+            self.updateText.emit(action,'Step', 2)
 
     def m3_home(self):
-        self.homing_operation(0x03)
-        self.updatemoving(2)
+        self.updateText.emit("",'Home',2)
 
     def m3_forward(self):
         self.client.write_register(0x001E, 0x2000, unit=0x03)
@@ -233,10 +202,14 @@ class MotorControl(QObject):
 
 class MotorThread(QThread):
 
-    def __init__(self, motorcontrol, unit):
+    updateText = pyqtSignal(str, str, int)
+
+    def __init__(self, motorcontrol, unit, move_pos):
         QThread.__init__(self)
 
         self.motorcontrol = motorcontrol
+        self.unit = unit
+        self.move_pos = move_pos
 
     def __del__(self):
         self.wait()
@@ -247,11 +220,61 @@ class MotorThread(QThread):
     def run(self):
 
         try: 
-            self.motorcontrol.stepping
+        
+            t1 = time.time()
+            temp = self.motorcontrol.client.read_holding_registers(0x0118, 2, unit=self.unit+1)
+            resp = self.motorcontrol.client.read_holding_registers(0x0020, 1, unit=self.unit+1)
+
+            if temp != None:
+                self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
+                if self.motor_position >= 2**31:
+                    self.motor_position -= 2**32
+            else:
+                print "NO MOTOR_POSITION VARIABLE..."
+                print "TEMP IS ", temp
+                print "RESP IS", resp
+                self.stop()
+
+            self.motor_position = str(self.motor_position)
+
+            while self.motor_position != self.move_pos:
+
+                temp = self.motorcontrol.client.read_holding_registers(0x0118, 2, unit=self.unit+1)
+                resp = self.motorcontrol.client.read_holding_registers(0x0020, 1, unit=self.unit+1)
+
+                if temp != None:
+                    self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
+                    if self.motor_position >= 2**31:
+                        self.motor_position -= 2**32
+                    self.updateText.emit(str(self.motor_position), 'Position', self.unit)
+                    
+                self.motor_position = str(self.motor_position)
+                
+                if resp != None:
+                    bin_resp = '{0:016b}'.format(resp.registers[0])
+                    if bin_resp[5] == '1' and bin_resp[2] == '0':
+                        self.updateText.emit("MOVING",'Status',self.unit)
+                    elif bin_resp[4] == '1' and bin_resp[2] == '1':
+                        self.updateText.emit("HOME",'Status',self.unit)
+                    elif bin_resp[4] == '0' and bin_resp[2] == '1':
+                        self.updateText.emit("READY",'Status',self.unit)
+                    elif bin_resp[0] == '1' and bin_resp[2] == '0':
+                        self.updateText.emit("OFF/ERR",'Status',self.unit)
+                    else:
+                        self.updateText.emit("UNKN",'Status',self.unit)
+                
+
+                t2 = time.time()
+                if (((t2 - t1) / 60.) >= 2.):
+                    print "MOTOR UPDATE TIMEOUT"
+                    break
+
+                self.usleep(500000)
+            
 
         except Exception as e:
             print "############################"
-            print "ERROR IN LABEL UPDATE THREAD"
+            print "ERROR IN MOTOR UPDATE THREAD"
             print traceback.print_exc()
             print e
             print "############################"
