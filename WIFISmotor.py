@@ -200,7 +200,7 @@ class MotorControl(QObject):
         self.client.write_register(0x001E, 0x0000, unit=0x03)
 
 
-class MotorThread(QThread):
+class UpdateMotorThread(QThread):
 
     updateText = pyqtSignal(str, str, int)
 
@@ -270,7 +270,6 @@ class MotorThread(QThread):
                     break
 
                 self.usleep(500000)
-            
 
         except Exception as e:
             print "############################"
