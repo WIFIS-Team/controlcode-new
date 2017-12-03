@@ -305,7 +305,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -2420,6 +2420,93 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>RAMoveBox</tabstop>
+  <tabstop>DECMoveBox</tabstop>
+  <tabstop>moveTelescopeButton</tabstop>
+  <tabstop>GuiderMoveButton</tabstop>
+  <tabstop>WIFISMoveButton</tabstop>
+  <tabstop>MoveBackButton</tabstop>
+  <tabstop>XPos</tabstop>
+  <tabstop>YPos</tabstop>
+  <tabstop>CalOffsetButton</tabstop>
+  <tabstop>CenteringCheck</tabstop>
+  <tabstop>ObjText</tabstop>
+  <tabstop>SkyCheckBox</tabstop>
+  <tabstop>NodRAText</tabstop>
+  <tabstop>NodDecText</tabstop>
+  <tabstop>NodSelection</tabstop>
+  <tabstop>NNods</tabstop>
+  <tabstop>NodsPerCal</tabstop>
+  <tabstop>NRampsText</tabstop>
+  <tabstop>NReadsText</tabstop>
+  <tabstop>TakeCalibButton</tabstop>
+  <tabstop>ExpTypeSelect</tabstop>
+  <tabstop>ExposureButton</tabstop>
+  <tabstop>NodBeginButton</tabstop>
+  <tabstop>StopExpButton</tabstop>
+  <tabstop>FilterVal</tabstop>
+  <tabstop>FocStep</tabstop>
+  <tabstop>BKWButton</tabstop>
+  <tabstop>FWDButton</tabstop>
+  <tabstop>ExpType</tabstop>
+  <tabstop>ExpTime</tabstop>
+  <tabstop>SetTempValue</tabstop>
+  <tabstop>SaveImageButton</tabstop>
+  <tabstop>TakeImageButton</tabstop>
+  <tabstop>FocusCameraButton</tabstop>
+  <tabstop>CentroidButton</tabstop>
+  <tabstop>SetTempButton</tabstop>
+  <tabstop>StartGuidingButton</tabstop>
+  <tabstop>StopGuidingButton</tabstop>
+  <tabstop>GratingStop</tabstop>
+  <tabstop>FocusStep</tabstop>
+  <tabstop>FilterStep</tabstop>
+  <tabstop>GratingStep</tabstop>
+  <tabstop>GuiderExpTime</tabstop>
+  <tabstop>CalibModeButton</tabstop>
+  <tabstop>ObsModeButton</tabstop>
+  <tabstop>ArclampModeButton</tabstop>
+  <tabstop>ISphereModeButton</tabstop>
+  <tabstop>FocusTestStop</tabstop>
+  <tabstop>FocusTestButton</tabstop>
+  <tabstop>ForceIISEntry</tabstop>
+  <tabstop>FocusHome</tabstop>
+  <tabstop>GratingHome</tabstop>
+  <tabstop>FilterGoTo</tabstop>
+  <tabstop>GratingGoTo</tabstop>
+  <tabstop>FocusGoTo</tabstop>
+  <tabstop>FilterStop</tabstop>
+  <tabstop>HButton</tabstop>
+  <tabstop>Power18</tabstop>
+  <tabstop>Power14</tabstop>
+  <tabstop>TBButton</tabstop>
+  <tabstop>Power16</tabstop>
+  <tabstop>FocusStop</tabstop>
+  <tabstop>FilterHome</tabstop>
+  <tabstop>BlankButton</tabstop>
+  <tabstop>GuidingText</tabstop>
+  <tabstop>SetNextButton</tabstop>
+  <tabstop>Power27</tabstop>
+  <tabstop>OffsetNod</tabstop>
+  <tabstop>RADECNod</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>RAObj</tabstop>
+  <tabstop>DECObj</tabstop>
+  <tabstop>Power23</tabstop>
+  <tabstop>Power24</tabstop>
+  <tabstop>Power11</tabstop>
+  <tabstop>Power13</tabstop>
+  <tabstop>Power15</tabstop>
+  <tabstop>Power28</tabstop>
+  <tabstop>Power26</tabstop>
+  <tabstop>Power12</tabstop>
+  <tabstop>Power17</tabstop>
+  <tabstop>Power22</tabstop>
+  <tabstop>Power25</tabstop>
+  <tabstop>Power21</tabstop>
+  <tabstop>OutputText</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
