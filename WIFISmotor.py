@@ -14,22 +14,24 @@ from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 import time
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
 import traceback
+from serial import SerialException
 
 class MotorControl(QObject):
 
     updateText = pyqtSignal(str, str, int)
 
-    def __init__(self):
+    def __init__(self, client):
         super(MotorControl, self).__init__()
 
         self.motor_speed1 = 10
         self.motor_speed2 = 500
         self.motor_speed3 = 10
 
-        self.client = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
-        bytesize=8, parity='E', baudrate=9600, timeout=0.1)
-        print("Connecting to motors...")
-        self.client.connect()
+        self.client = client
+        #self.client = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
+        #bytesize=8, parity='E', baudrate=9600, timeout=0.1)
+        #print "Connecting to motors..."
+        #self.client.connect()
 
 
     def get_position(self):
@@ -37,32 +39,40 @@ class MotorControl(QObject):
         #Focus, Filter, Grating
         for i in range(3):
             unit = i + 1
-            temp = self.client.read_holding_registers(0x0118, 2, unit=unit)
-            if temp != None:
-                self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
-                if self.motor_position >= 2**31:
-                    self.motor_position -= 2**32
-                self.updateText.emit(str(self.motor_position), 'Position', i)
+            try:
+                temp = self.client.read_holding_registers(0x0118, 2, unit=unit)
+                if temp != None:
+                    self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
+                    if self.motor_position >= 2**31:
+                        self.motor_position -= 2**32
+                    self.updateText.emit(str(self.motor_position), 'Position', i)
+            except SerialException:
+                print "Serial Exception (get_position)..."
 
     def update_status(self):
         #Returns 1025 if moving, 43009 if home, 8193 if stopped and not home, 
         #32768 if not operating/communicating (?) 
         #Focus, Filter, Grating
 
-        for unit in range(1,4):
-            resp = self.client.read_holding_registers(0x0020,1, unit=unit)
-            if resp != None:
-                bin_resp = '{0:016b}'.format(resp.registers[0])
-                if bin_resp[5] == '1' and bin_resp[2] == '0':
-                    self.updateText.emit("MOVING",'Status',unit-1)
-                elif bin_resp[4] == '1' and bin_resp[2] == '1':
-                    self.updateText.emit("HOME",'Status',unit-1)
-                elif bin_resp[4] == '0' and bin_resp[2] == '1':
-                    self.updateText.emit("READY",'Status',unit-1)
-                elif bin_resp[0] == '1' and bin_resp[2] == '0':
-                    self.updateText.emit("OFF/ERR",'Status',unit-1)
-                else:
-                    self.updateText.emit("UNKN",'Status',unit-1)
+        try:
+
+            for unit in range(1,4):
+                resp = self.client.read_holding_registers(0x0020,1, unit=unit)
+                if resp != None:
+                    bin_resp = '{0:016b}'.format(resp.registers[0])
+                    if bin_resp[5] == '1' and bin_resp[2] == '0':
+                        self.updateText.emit("MOVING",'Status',unit-1)
+                    elif bin_resp[4] == '1' and bin_resp[2] == '1':
+                        self.updateText.emit("HOME",'Status',unit-1)
+                    elif bin_resp[4] == '0' and bin_resp[2] == '1':
+                        self.updateText.emit("READY",'Status',unit-1)
+                    elif bin_resp[0] == '1' and bin_resp[2] == '0':
+                        self.updateText.emit("OFF/ERR",'Status',unit-1)
+                    else:
+                        self.updateText.emit("UNKN",'Status',unit-1)
+
+        except SerialException:
+            print "Serial Exception (Update Status)..."
 
 
     def stepping_operation(self, value, unit):
@@ -71,10 +81,14 @@ class MotorControl(QObject):
             step += 2**32
         upper = step >> 16
         lower = step & 0xFFFF
-        self.client.write_register(0x001E, 0x2000, unit=unit)
-        self.client.write_registers(0x0402, [upper, lower], unit=unit)
-        self.client.write_register(0x001E, 0x2101, unit=unit)
-        self.client.write_register(0x001E, 0x2001, unit=unit)
+
+        try:
+            self.client.write_register(0x001E, 0x2000, unit=unit)
+            self.client.write_registers(0x0402, [upper, lower], unit=unit)
+            self.client.write_register(0x001E, 0x2101, unit=unit)
+            self.client.write_register(0x001E, 0x2001, unit=unit)
+        except SerialException:
+            print "Serial Exception (stepping operation)..."
 
     def homing_operation(self, unit):
         
@@ -92,11 +106,12 @@ class MotorControl(QObject):
         #    self.client.write_register(0x001E, 0x2001, unit=units[unit-1])
         
         #Homes the motor
-        #self.update_status()
-        self.client.write_register(0x001E, 0x2000, unit=unit)
-        self.client.write_register(0x001E, 0x2800, unit=unit)
-        self.client.write_register(0x001E, 0x2000, unit=unit)
-        #self.update_status()
+        try:
+            self.client.write_register(0x001E, 0x2000, unit=unit)
+            self.client.write_register(0x001E, 0x2800, unit=unit)
+            self.client.write_register(0x001E, 0x2000, unit=unit)
+        except SerialException:
+            print "Serial Exception (Homing Operation)..."
 
     #Actions
     def gotoTB(self):
@@ -200,7 +215,7 @@ class MotorControl(QObject):
         self.client.write_register(0x001E, 0x0000, unit=0x03)
 
 
-class UpdateMotorThread(QThread):
+class MotorThread(QThread):
 
     updateText = pyqtSignal(str, str, int)
 

@@ -14,6 +14,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 import matplotlib.pyplot as mpl
 from astropy.visualization import (PercentileInterval, LinearStretch,
                                     ImageNormalize)
+from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
 import WIFISpower as pc
 import WIFISmotor as wm
@@ -21,6 +22,8 @@ import traceback
 import numpy as np
 from get_src_pos import do_get_src_pos
 import time
+
+motors = False
 
 class Formatter(object):
     def __init__(self, im):
@@ -95,9 +98,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, caliblabels)
 
             #Motor Control
-            self.motorcontrol = None
-            #self.motorcontrol = wm.MotorControl() 
-            #self.motorcontrol.updateText.connect(self._handleMotorText)
+            if motors:
+                self.motorclient = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
+                bytesize=8, parity='E', baudrate=9600, timeout=0.1)
+                print "Connecting to motors..."
+                self.motorclient.connect()
+
+                self.motorcontrol = wm.MotorControl(self.motorclient) 
+                self.motorcontrol.updateText.connect(self._handleMotorText)
+            else:
+                self.motorcontrol = None
+
             self.m1running = 0
             self.m2running = 0
             self.m3running = 0
@@ -129,8 +140,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.labelsThread.updateText.connect(self._handleUpdateLabels)
         self.labelsThread.start()
 
-        #self.motorcontrol.update_status()
-        #self.motorcontrol.get_position() 
+        if motors:
+            self.motorcontrol.update_status()
+            self.motorcontrol.get_position() 
 
         #Defining actions for Exposure Control
         if self.scidet.connected == False:
@@ -181,7 +193,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.Power28.clicked.connect(self.powercontrol.toggle_plug8)
 
         #Defining actions for Motor Control
-        if self.motorcontrol:
+        if motors:
             self.FocusGoTo.clicked.connect(self.motorcontrol.m1_step)
             self.FilterGoTo.clicked.connect(self.motorcontrol.m2_step)
             self.GratingGoTo.clicked.connect(self.motorcontrol.m3_step)
@@ -216,7 +228,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideexp.start()
 
     def startGuiding(self):
-        self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel)
+        self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
+                self.GuiderExpTime.text())
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
@@ -279,9 +292,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def _handleNoddingGuide(self, s):
         if s == 'Sky':
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, sky=True)
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
+                    self.GuiderExpTime.text(), sky=True)
         else:
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, sky=False)
+            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
+                    self.GuiderExpTime.text(), sky=False)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
@@ -388,53 +403,53 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if labeltype == 'Step':
             if motnum == 0:
                 self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FocusStep.text())
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FocusStep.text())
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
             elif motnum == 1:
                 self.motorcontrol.stepping_operation(self.FilterStep.text(), unit=0x02)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FilterStep.text())
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FilterStep.text())
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
             elif motnum == 2:
                 self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.GratingStep.text())
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.GratingStep.text())
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
 
         if (labeltype == 'Step') and (len(s) != 0):
             if motnum == 0:
                 self.motorcontrol.stepping_operation(s, unit=0x01)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
             elif motnum == 1:
                 self.motorcontrol.stepping_operation(s, unit=0x02)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
             elif motnum == 2:
                 self.motorcontrol.stepping_operation(s, unit=0x03)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
 
         if labeltype == 'Home':
             if motnum == 0:
                 self.motorcontrol.homing_operation(0x01)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
             elif motnum == 1:
                 self.motorcontrol.homing_operation(0x02)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
             elif motnum == 2:
                 self.motorcontrol.homing_operation(0x03)
-                self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
-                self.motormove.updateText.connect(self._handleMotorText)
-                self.motormove.start()
+                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
+                #self.motormove.updateText.connect(self._handleMotorText)
+                #self.motormove.start()
 
                 
     def runFocusTest(self):
@@ -449,9 +464,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def _handleMoveMotor(self, s1, s2, mot):
         self.motorcontrol.stepping_operation(s1, unit=0x01)
-        self.motormove = wm.MotorThread(self.motorcontrol, mot, s1)
-        self.motormove.updateText.connect(self._handleMotorText)
-        self.motormove.start()
+        #self.motormove = wm.MotorThread(self.motorcontrol, mot, s1)
+        #self.motormove.updateText.connect(self._handleMotorText)
+        #self.motormove.start()
 
 
     def closeEvent(self, event):
@@ -584,8 +599,10 @@ class UpdateLabels(QThread):
 
                 steppos = str(self.guider.foc.get_stepper_position())
                 ccdTemp = str(self.guider.cam.get_temperature())
-                #self.motorcontrol.update_status()
-                #self.motorcontrol.get_position()
+                
+                if motors:
+                    self.motorcontrol.update_status()
+                    self.motorcontrol.get_position()
 
                 self.updateText.emit([telemDict,steppos,ccdTemp])
 

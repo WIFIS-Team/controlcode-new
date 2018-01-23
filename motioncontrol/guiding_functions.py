@@ -171,23 +171,27 @@ class WIFISGuider(QObject):
 
     def moveTelescope(self):
         if self.telSock:
-            WG.move_telescope(self.telSock,float(self.RAMoveBox.text()), \
+            result = WG.move_telescope(self.telSock,float(self.RAMoveBox.text()), \
                     float(self.DECMoveBox.text()))
+            self.updateText.emit(result)
 
     def moveTelescopeBack(self):
         if self.telSock:
-            WG.move_telescope(self.telSock,-1.*float(self.RAMoveBox.text()), \
+            result = WG.move_telescope(self.telSock,-1.*float(self.RAMoveBox.text()), \
                     -1.*float(self.DECMoveBox.text()))
+            self.updateText.emit(result)
 
     def moveTelescopeNod(self, ra, dec):
         if self.telSock:
-            WG.move_telescope(self.telSock,ra, dec)
+            result = WG.move_telescope(self.telSock,ra, dec)
+            self.updateText.emit(result)
 
     def offsetToGuider(self):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO GUIDER FIELD ###")
             offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
-            WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
+            result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
+            self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to WIFIS',\
             #    command=self.offsetToWIFIS)
             time.sleep(3)
@@ -196,7 +200,8 @@ class WIFISGuider(QObject):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO WIFIS FIELD ###")
             offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
-            WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
+            result = WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
+            self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to Guider',\
             #    command=self.offsetToGuider)
             time.sleep(3)
@@ -467,12 +472,12 @@ class RunGuiding(QThread):
     setSkySignal = pyqtSignal(str)
     plotSignal = pyqtSignal(np.ndarray, str)
 
-    def __init__(self, telsock, cam, guideTargetVar, rotangle, sky=False):
+    def __init__(self, telsock, cam, guideTargetVar, rotangle, guideexp, sky=False):
         QThread.__init__(self)
         self.telsock = telsock
         self.guideTargetVar = guideTargetVar
         #self.guideExpVariable = guideExpVariable
-        self.guideExpVariable = 1500
+        self.guideExpVariable = int(guideexp)
         self.cam = cam
         self.deltRA = 0
         self.deltDEC = 0
@@ -502,12 +507,27 @@ class RunGuiding(QThread):
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
             int(self.guideExpVariable),gfls, self.rotangle)
 
+        if (guidingstuff[3] == None) or (guidingstuff[4] == None):
+            self.updateText.emit("NO STARS TO GUIDE ON...INCREASE GUIDE EXP TIME?")
+            self.quit()
+
+        if guidingstuff[-2] != None:
+            self.updateText.emit(guidingstuff[-2])
+        if guidingstuff[-1] != None: 
+            if len(guidingstuff[-1]) > 0:
+                for s in guidingstuff[-1]:
+                    self.updateText.emit(s)
+
+        guidingstuff = guidingstuff[:-2]
+
         #Plot guide star for reference
         starybox = int(guidingstuff[3])
         starxbox = int(guidingstuff[4])
         boxsize = int(guidingstuff[5])
         self.plotSignal.emit(guidingstuff[-1][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
                 self.guideTargetText + " GuideStar")
+
+        something_wrong_count = 0
         while True:
             if self.stopThread:
                 self.cam.end_exposure()
@@ -525,9 +545,14 @@ class RunGuiding(QThread):
                     self.updateText.emit(guideinfo)
                     self.updateText.emit(guideresult)
                     self.updateText.emit("DELTRA:\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
+                    something_wrong_count = 0
                 except Exception as e:
                     print e
                     self.updateText.emit("SOMETHING WRONG WITH GUIDING...CONTINUING...")
+                    something_wrong_count += 1
+                    if something_wrong_count > 15:
+                        self.updateText.emit("GUIDING NOT WORKING...QUITTING")
+                        break
 
     def setSky(self):
         self.setSkySignal.emit("True")

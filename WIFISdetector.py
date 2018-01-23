@@ -183,14 +183,14 @@ class h2rg(QObject):
         self.printTxt("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
 
         if nreads < 2:
-            self.plotImage("Ramp",nreads,finalPath+"/H2RG_R01_M01_N01.fits", None)
+            self.plotImage("Ramp",nreads,finalPath+"/H2RG_R01_M01_N01.fits", None, sourcename=sourceName)
         else:
             self.plotImage("Ramp",nreads,finalPath+"/H2RG_R01_M01_N01.fits", \
-                    finalPath+"/H2RG_R01_M01_N%02d.fits" % nreads)
+                    finalPath+"/H2RG_R01_M01_N%02d.fits" % nreads, sourcename=sourceName)
         
         return added
 
-    def plotImage(self,obsType,nreads,fileName1,fileName2):
+    def plotImage(self,obsType,nreads,fileName1,fileName2, sourcename=''):
 
         if(nreads < 2):
             hdu = fits.open(fileName1)
@@ -203,7 +203,7 @@ class h2rg(QObject):
             hdu1.close()
             hdu2.close()
 
-        self.plotSignal.emit(image, fileName2.split('/')[-1])
+        self.plotSignal.emit(image, fileName2.split('/')[-1] + ' '+sourcename)
 
 
     def flatramp(self,sourcename, notoggle = False):
@@ -235,8 +235,8 @@ class h2rg(QObject):
     def takecalibrations(self, sourcename):
         self.printTxt("STARTING CALIBRATIONS")
         self.arcramp(sourcename,flat=True)
-        self.calibrationcontrol.flatsetup()
-        sleep(7)
+        #self.calibrationcontrol.flatsetup()
+        #sleep(7)
         self.flatramp(sourcename)
         self.printTxt("FINISHED CALIBRATIONS")
 
@@ -248,7 +248,7 @@ class h2rgExposeThread(QThread):
     finished = pyqtSignal()
     updateText = pyqtSignal(str)
 
-    def __init__(self,detector,exposureType,nreads=2,nramps=1,sourceName="None"):
+    def __init__(self,detector,exposureType,nreads=2,nramps=1,sourceName=""):
         QThread.__init__(self)
 
         self.detector = detector
