@@ -13,14 +13,14 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as mpl
 from astropy.visualization import (PercentileInterval, LinearStretch,
-                                    ImageNormalize)
+                                    ImageNormalize, ZScaleInterval)
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
 import WIFISpower as pc
 import WIFISmotor as wm
 import traceback
 import numpy as np
-from get_src_pos import do_get_src_pos
+from get_src_pos import get_src_pos
 import time
 
 motors = False
@@ -73,9 +73,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideplotwindow.show()
 
         #Connect to telescope
-        self.telsock = wg.connect_to_telescope()
-        telemDict = wg.get_telemetry(self.telsock, verbose=False)
-        self.IISLabel.setText(telemDict['IIS']) #Set IIS early because certain functions rely on this value
+        try:
+            self.telsock = wg.connect_to_telescope()
+            telemDict = wg.get_telemetry(self.telsock, verbose=False)
+            self.IISLabel.setText(telemDict['IIS']) #Set IIS early because certain functions rely on this value
+            self.telescope = True
+        except:
+            self.telescope = False
+
 
         #Defining GUI Variables to feed into different control classes
         #Important that the classes only read the variables and never try to adjust them.
@@ -88,17 +93,31 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         caliblabels = [self.CalibModeButton,self.ObsModeButton,self.ArclampModeButton,self.ISphereModeButton]
 
         #Defining various control/serial variables
+        #Connecting to Power Switches
         try:
             #Power Control
             self.powercontrol = pc.PowerControl(power_widgets)
             self.switch1 = self.powercontrol.switch1
             self.switch2 = self.powercontrol.switch2
-           
-            #Calibration Control
-            self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, caliblabels)
+            self.poweron = True
+        except:
+            self.poweron = False
 
-            #Motor Control
-            if motors:
+        #Connecting to Calibration Control
+        if self.poweron:
+            try:
+                #Calibration Control
+                self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, caliblabels)
+                self.calibon = True
+            except:
+                self.calibon = False
+        else:
+            self.calibon = False
+
+        #Connecting to Motor Control /// Currently disabled due to unknown crashes caused by Motor
+        #Serial connection
+        if motors:
+            try:
                 self.motorclient = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
                 bytesize=8, parity='E', baudrate=9600, timeout=0.1)
                 print "Connecting to motors..."
@@ -106,29 +125,82 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
                 self.motorcontrol = wm.MotorControl(self.motorclient) 
                 self.motorcontrol.updateText.connect(self._handleMotorText)
-            else:
-                self.motorcontrol = None
+                self.motorson = True
+            except:
+                self.motorson = False
+        else:
+            self.motorcontrol = None
+            self.motorson = False
 
-            self.m1running = 0
-            self.m2running = 0
-            self.m3running = 0
+        self.m1running = 0
+        self.m2running = 0
+        self.m3running = 0
 
-            #Detector Control and Threads
-            self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2,\
-                    self.calibrationcontrol)
-            self.scidet.updateText.connect(self._handleOutputTextUpdate)
-            self.scidet.plotSignal.connect(self._handlePlotting)
+        #Connecting to Detector
+        if self.poweron and self.calibon:
+            try:
+                #Detector Control and Threads
+                self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2,\
+                        self.calibrationcontrol)
+                self.scidet.updateText.connect(self._handleOutputTextUpdate)
+                self.scidet.plotSignal.connect(self._handlePlotting)
+                self.scideton = True
+            except:
+                self.scideton = False
+        else:
+            self.scideton = False
 
+        #Connecting to Guider
+        try:
             #Guider Control and Threads
             self.guider = gf.WIFISGuider(guide_widgets)
             self.guider.updateText.connect(self._handleGuidingTextUpdate)
             self.guider.plotSignal.connect(self._handleGuidePlotting)
+            self.guideron = True
+        except:
+            self.guideron = False
 
-        except Exception as e:
-            print e
-            print traceback.print_exc()
-            print "Something isn't connecting properly"
-            self.close()
+        #try:
+        #    #Power Control
+        #    self.powercontrol = pc.PowerControl(power_widgets)
+        #    self.switch1 = self.powercontrol.switch1
+        #    self.switch2 = self.powercontrol.switch2
+        #   
+        #    #Calibration Control
+        #    self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, caliblabels)
+        #
+        #    #Motor Control
+        #    if motors:
+        #        self.motorclient = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
+        #        bytesize=8, parity='E', baudrate=9600, timeout=0.1)
+        #        print "Connecting to motors..."
+        #        self.motorclient.connect()
+        #
+        #        self.motorcontrol = wm.MotorControl(self.motorclient) 
+        #        self.motorcontrol.updateText.connect(self._handleMotorText)
+        #    else:
+        #        self.motorcontrol = None
+        #
+        #    self.m1running = 0
+        #    self.m2running = 0
+        #    self.m3running = 0
+        #
+        #    #Detector Control and Threads
+        #    self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2,\
+        #            self.calibrationcontrol)
+        #    self.scidet.updateText.connect(self._handleOutputTextUpdate)
+        #    self.scidet.plotSignal.connect(self._handlePlotting)
+        #
+        #    #Guider Control and Threads
+        #    self.guider = gf.WIFISGuider(guide_widgets)
+        #    self.guider.updateText.connect(self._handleGuidingTextUpdate)
+        #    self.guider.plotSignal.connect(self._handleGuidePlotting)
+
+        #except Exception as e:
+        #    print e
+        #    print traceback.print_exc()
+        #    print "Something isn't connecting properly"
+        #    self.close()
         
         #Defining settings from progress bar
         self.ExpProgressBar.setMinimum(0)
@@ -136,61 +208,141 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExpProgressBar.setValue(0)
         
         #Starting function to update labels. Still need to add guider info.
-        self.labelsThread = UpdateLabels(self.guider, self.motorcontrol)
-        self.labelsThread.updateText.connect(self._handleUpdateLabels)
-        self.labelsThread.start()
+        if self.guideron and self.telescope:
+            self.labelsThread = UpdateLabels(self.guider, self.motorcontrol)
+            self.labelsThread.updateText.connect(self._handleUpdateLabels)
+            self.labelsThread.start()
 
         if motors:
             self.motorcontrol.update_status()
             self.motorcontrol.get_position() 
 
         #Defining actions for Exposure Control
-        if self.scidet.connected == False:
+        #if self.scidet.connected == False:
+        if self.scideton and not self.self.scidet.connected:
             self.DetectorStatusLabel.setStyleSheet('color: red')
-            
-        self.actionConnect.triggered.connect(self.scidet.connect)
-        self.actionInitialize.triggered.connect(self.scidet.initialize)
-        self.actionDisconnect.triggered.connect(self.scidet.disconnect)
-        self.ExposureButton.clicked.connect(self.initExposure)
-        self.TakeCalibButton.clicked.connect(self.initCalibExposure)
-        self.NodBeginButton.clicked.connect(self.startNodding)
+        
+        if self.scideton:
+            self.actionConnect.triggered.connect(self.scidet.connect)
+            self.actionInitialize.triggered.connect(self.scidet.initialize)
+            self.actionDisconnect.triggered.connect(self.scidet.disconnect)
+            self.ExposureButton.clicked.connect(self.initExposure)
+            self.TakeCalibButton.clicked.connect(self.initCalibExposure)
+            self.NodBeginButton.clicked.connect(self.startNodding)
+        else:
+            self.ExposureButton.setStyleSheet('background-color: red')
+            self.TakeCalibButton.setStyleSheet('background-color: red')
+            self.NodBeginButton.setStyleSheet('background-color: red')
+            self.CenteringCheck.setStyleSheet('background-color: red')
+            self.ExposureButton.setEnabled(False)
+            self.TakeCalibButton.setEnabled(False)
+            self.NodBeginButton.setEnabled(False)
+            #self.CenteringCheck.setEnabled(False)
         self.CenteringCheck.clicked.connect(self.checkcentering)
 
-        #Defining actions for Telescope Control
-        self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
-        self.WIFISMoveButton.clicked.connect(self.guider.offsetToWIFIS)
-        self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
-        self.MoveBackButton.clicked.connect(self.guider.moveTelescopeBack)
-        self.CalOffsetButton.clicked.connect(self.guider.calcOffset)
+        #Defining actions for Telescope Control (moving the telescope)
+        if self.telescope:
+            self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
+            self.WIFISMoveButton.clicked.connect(self.guider.offsetToWIFIS)
+            self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
+            self.MoveBackButton.clicked.connect(self.guider.moveTelescopeBack)
+            self.CalOffsetButton.clicked.connect(self.guider.calcOffset)
+        else:
+            self.GuiderMoveButton.setStyleSheet('background-color: red')
+            self.WIFISMoveButton.setStyleSheet('background-color: red')
+            self.moveTelescopeButton.setStyleSheet('background-color: red')
+            self.MoveBackButton.setStyleSheet('background-color: red')
+            self.CalOffsetButton.setStyleSheet('background-color: red')
+            self.GuiderMoveButton.setEnabled(False)
+            self.WIFISMoveButton.setEnabled(False)
+            self.moveTelescopeButton.setEnabled(False)
+            self.MoveBackButton.setEnabled(False)
+            self.CalOffsetButton.setEnabled(False)
 
         #Defining actions for Guider Control
-        self.BKWButton.clicked.connect(self.guider.stepBackward)
-        self.FWDButton.clicked.connect(self.guider.stepForward)
-        self.SaveImageButton.clicked.connect(self.initGuideExposureSave)
-        self.TakeImageButton.clicked.connect(self.initGuideExposure)
-        self.FocusCameraButton.clicked.connect(self.focusCamera) 
-        self.StartGuidingButton.clicked.connect(self.startGuiding)
-        self.CentroidButton.clicked.connect(self.guider.checkCentroids)
-        self.SetTempButton.clicked.connect(self.guider.setTemperature)
-        self.FilterVal.currentIndexChanged.connect(self.guider.goToFilter)
+        if self.guideron:
+            self.BKWButton.clicked.connect(self.guider.stepBackward)
+            self.FWDButton.clicked.connect(self.guider.stepForward)
+            self.SaveImageButton.clicked.connect(self.initGuideExposureSave)
+            self.TakeImageButton.clicked.connect(self.initGuideExposure)
+            self.FocusCameraButton.clicked.connect(self.focusCamera) 
+            self.StartGuidingButton.clicked.connect(self.startGuiding)
+            self.CentroidButton.clicked.connect(self.guider.checkCentroids)
+            self.SetTempButton.clicked.connect(self.guider.setTemperature)
+            self.FilterVal.currentIndexChanged.connect(self.guider.goToFilter)
+        else:
+            self.BKWButton.setStyleSheet('background-color: red')
+            self.FWDButton.setStyleSheet('background-color: red')
+            self.SaveImageButton.setStyleSheet('background-color: red')
+            self.TakeImageButton.setStyleSheet('background-color: red')
+            self.FocusCameraButton.setStyleSheet('background-color: red')
+            self.StartGuidingButton.setStyleSheet('background-color: red')
+            self.CentroidButton.setStyleSheet('background-color: red')
+            self.SetTempButton.setStyleSheet('background-color: red')
+
+            self.BKWButton.setEnabled(False)
+            self.FWDButton.setEnabled(False)
+            self.SaveImageButton.setEnabled(False)
+            self.TakeImageButton.setEnabled(False)
+            self.FocusCameraButton.setEnabled(False)
+            self.StartGuidingButton.setEnabled(False)
+            self.CentroidButton.setEnabled(False)
+            self.SetTempButton.setEnabled(False)
+            self.FilterVal.setEnabled(False)
 
         #Defining Actions for Power Control
-        self.Power11.clicked.connect(self.powercontrol.toggle_plug9)
-        self.Power12.clicked.connect(self.powercontrol.toggle_plug10)
-        self.Power13.clicked.connect(self.powercontrol.toggle_plug11)
-        self.Power14.clicked.connect(self.powercontrol.toggle_plug12)
-        self.Power15.clicked.connect(self.powercontrol.toggle_plug13)
-        self.Power16.clicked.connect(self.powercontrol.toggle_plug14)
-        self.Power17.clicked.connect(self.powercontrol.toggle_plug15)
-        self.Power18.clicked.connect(self.powercontrol.toggle_plug16)
-        self.Power21.clicked.connect(self.powercontrol.toggle_plug1)
-        self.Power22.clicked.connect(self.powercontrol.toggle_plug2)
-        self.Power23.clicked.connect(self.powercontrol.toggle_plug3)
-        self.Power24.clicked.connect(self.powercontrol.toggle_plug4)
-        self.Power25.clicked.connect(self.powercontrol.toggle_plug5)
-        self.Power26.clicked.connect(self.powercontrol.toggle_plug6)
-        self.Power27.clicked.connect(self.powercontrol.toggle_plug7)
-        self.Power28.clicked.connect(self.powercontrol.toggle_plug8)
+        if self.poweron:
+            self.Power11.clicked.connect(self.powercontrol.toggle_plug9)
+            self.Power12.clicked.connect(self.powercontrol.toggle_plug10)
+            self.Power13.clicked.connect(self.powercontrol.toggle_plug11)
+            self.Power14.clicked.connect(self.powercontrol.toggle_plug12)
+            self.Power15.clicked.connect(self.powercontrol.toggle_plug13)
+            self.Power16.clicked.connect(self.powercontrol.toggle_plug14)
+            self.Power17.clicked.connect(self.powercontrol.toggle_plug15)
+            self.Power18.clicked.connect(self.powercontrol.toggle_plug16)
+            self.Power21.clicked.connect(self.powercontrol.toggle_plug1)
+            self.Power22.clicked.connect(self.powercontrol.toggle_plug2)
+            self.Power23.clicked.connect(self.powercontrol.toggle_plug3)
+            self.Power24.clicked.connect(self.powercontrol.toggle_plug4)
+            self.Power25.clicked.connect(self.powercontrol.toggle_plug5)
+            self.Power26.clicked.connect(self.powercontrol.toggle_plug6)
+            self.Power27.clicked.connect(self.powercontrol.toggle_plug7)
+            self.Power28.clicked.connect(self.powercontrol.toggle_plug8)
+
+        else:
+            self.Power11.setStyleSheet('background-color: red')
+            self.Power12.setStyleSheet('background-color: red')
+            self.Power13.setStyleSheet('background-color: red')
+            self.Power14.setStyleSheet('background-color: red')
+            self.Power15.setStyleSheet('background-color: red')
+            self.Power16.setStyleSheet('background-color: red')
+            self.Power17.setStyleSheet('background-color: red')
+            self.Power18.setStyleSheet('background-color: red')
+            self.Power21.setStyleSheet('background-color: red')
+            self.Power22.setStyleSheet('background-color: red')
+            self.Power23.setStyleSheet('background-color: red')
+            self.Power24.setStyleSheet('background-color: red')
+            self.Power25.setStyleSheet('background-color: red')
+            self.Power26.setStyleSheet('background-color: red')
+            self.Power27.setStyleSheet('background-color: red')
+            self.Power28.setStyleSheet('background-color: red')
+
+            self.Power11.setEnabled(False)
+            self.Power12.setEnabled(False)
+            self.Power13.setEnabled(False)
+            self.Power14.setEnabled(False)
+            self.Power15.setEnabled(False)
+            self.Power16.setEnabled(False)
+            self.Power17.setEnabled(False)
+            self.Power18.setEnabled(False)
+            self.Power21.setEnabled(False)
+            self.Power22.setEnabled(False)
+            self.Power23.setEnabled(False)
+            self.Power24.setEnabled(False)
+            self.Power25.setEnabled(False)
+            self.Power26.setEnabled(False)
+            self.Power27.setEnabled(False)
+            self.Power28.setEnabled(False)
 
         #Defining actions for Motor Control
         if motors:
@@ -208,16 +360,30 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.BlankButton.clicked.connect(self.motorcontrol.gotoBlank)
 
         #CalibrationControl Buttons in Other Tab
-        self.CalibModeButton.clicked.connect(self.calibrationcontrol.flip2pos2)
-        self.ObsModeButton.clicked.connect(self.calibrationcontrol.flip2pos1)
-        self.ArclampModeButton.clicked.connect(self.calibrationcontrol.flip1pos2)
-        self.ISphereModeButton.clicked.connect(self.calibrationcontrol.flip1pos1)
+        if self.calibon:
+            self.CalibModeButton.clicked.connect(self.calibrationcontrol.flip2pos2)
+            self.ObsModeButton.clicked.connect(self.calibrationcontrol.flip2pos1)
+            self.ArclampModeButton.clicked.connect(self.calibrationcontrol.flip1pos2)
+            self.ISphereModeButton.clicked.connect(self.calibrationcontrol.flip1pos1)
+
+        else:
+            self.CalibModeButton.setStyleSheet('background-color: red')
+            self.ObsModeButton.setStyleSheet('background-color: red')
+            self.ArclampModeButton.setStyleSheet('background-color: red')
+            self.ISphereModeButton.setStyleSheet('background-color: red')
+
+            self.CalibModeButton.setEnabled(False)
+            self.ObsModeButton.setEnabled(False)
+            self.ArclampModeButton.setEnabled(False)
+            self.ISphereModeButton.setEnabled(False)
 
         #Others
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
         self.actionQuit.triggered.connect(self.close)
-        self.FocusTestButton.clicked.connect(self.runFocusTest)
-        self.FocusTestStop.clicked.connect(self.stopFocusTest)
+        
+        self.FocusTestButton.setEnabled(False)
+        #self.FocusTestButton.clicked.connect(self.runFocusTest)
+        #self.FocusTestStop.clicked.connect(self.stopFocusTest)
 
     def initGuideExposure(self):
         self.guideexp = gf.ExposeGuider(self.guider, False)
@@ -340,8 +506,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CCDTemp.setText(str(self.guider.cam.get_temperature()))
 
     def checkcentering(self):
-        do_get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
+        fieldrecObj = get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
                 '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
+        fieldrecObj.plotField.connect(self._handleFRPlotting)
+        fieldrecObj.doFieldRec()
+
+
+        #Old implementation without classes
+        #do_get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
+        #        '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
 
     def _handlePlotting(self, image, flname):
 
@@ -377,6 +550,65 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             self.guideplotwindow.canvas.draw()
 
+        except Exception as e:
+            print e
+            print traceback.print_exc()
+            self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
+
+    def _handleFRPlotting(self, returns):
+
+        try:
+            dataImg, WCS, hdr, gFit = returns
+            
+            #Things that are needed for plotting the data
+            #WCS, dataImg, hdr
+
+            print('Plotting FIELD REC data')
+            self.plotwindow.figure.clear()
+            ax = self.plotwindow.figure.add_subplot(111, projection=WCS)
+
+            scaling = 'normal'
+            if scaling=='zscale':
+                interval=ZScaleInterval()
+                lims=interval.get_limits(dataImg)
+            else:
+                lims=[dataImg.min(),dataImg.max()]
+            im = ax.imshow(dataImg, origin='lower', cmap='jet', clim=lims)
+
+            #if colorbar:
+            #    plt.colorbar()
+            self.plotwindow.figure.colorbar()
+                
+            r = np.arange(360)*np.pi/180.
+            fwhmX = np.abs(2.3548*gFit.x_stddev*xScale)
+            fwhmY = np.abs(2.3548*gFit.y_stddev*yScale)
+            x = fwhmX*np.cos(r) + gFit.x_mean
+            y = fwhmY*np.sin(r) + gFit.y_mean
+
+            im2 = ax.plot(x,y, 'r--')
+
+            ax.set_ylim([-0.5, dataImg.shape[0]-0.5])
+            ax.set_xlim([-0.5, dataImg.shape[1]-0.5])
+
+            rotAng = hdr['CRPA']
+            rotMat = np.asarray([[np.cos(rotAng*np.pi/180.),np.sin(rotAng*np.pi/180.)],\
+                    [-np.sin(rotAng*np.pi/180.),np.cos(rotAng*np.pi/180.)]])
+
+            raAx = np.dot([5,0], rotMat)
+            decAx = np.dot([0,-5], rotMat)
+
+            cent = np.asarray([10,25])
+            ax.arrow(cent[0],cent[1], raAx[0],raAx[1], head_width=1, head_length=1, fc='w', ec='w')
+            ax.arrow(cent[0],cent[1], decAx[0],decAx[1], head_width=1, head_length=1, fc='w', ec='w')
+
+            ax.text((cent+decAx)[0]+1, (cent+decAx)[1]+1,"N",ha="left", va="top", rotation=rotAng, color='w')
+            ax.text((cent+raAx)[0]+1, (cent+raAx)[1]+1,"E",ha="left", va="bottom", rotation=rotAng, color='w')
+
+            ax.title(hdr['Object'] + ': FWHM of object is: '+'{:4.2f}'.format(fwhmX)+' in x and ' + '{:4.2f}'.format(fwhmY)+' in y, in arcsec')
+            #ax.tight_layout()
+            #plt.savefig('quick_reduction/'+rampFolder+'_quickRedImg.png', dpi=300)
+
+            self.plotwindow.canvas.draw()
         except Exception as e:
             print e
             print traceback.print_exc()
@@ -596,6 +828,8 @@ class UpdateLabels(QThread):
         while not self.stopthread:
             try:
                 telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
+
+                wg.write_telemetry(telemDict)
 
                 steppos = str(self.guider.foc.get_stepper_position())
                 ccdTemp = str(self.guider.cam.get_temperature())
