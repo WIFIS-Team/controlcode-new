@@ -146,7 +146,7 @@ def procScienceDataGUI(rampFolder='', flatFolder='', noProc=False, skyFolder=Non
     #plot the data
     WCS = wcs.WCS(hdr)
 
-    return dataImg, WCS, hdr, gFit
+    return dataImg, WCS, hdr, gFit, xScale, yScale
 
 
 

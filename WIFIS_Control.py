@@ -78,7 +78,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             telemDict = wg.get_telemetry(self.telsock, verbose=False)
             self.IISLabel.setText(telemDict['IIS']) #Set IIS early because certain functions rely on this value
             self.telescope = True
+            print "Connected to Telescope #####"
         except:
+            print "##### Can't connect to telescope"
             self.telescope = False
 
 
@@ -100,7 +102,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.switch1 = self.powercontrol.switch1
             self.switch2 = self.powercontrol.switch2
             self.poweron = True
+            print "Connected to Power Controllers #####"
         except:
+            print "##### Can't connect to Power Controllers"
             self.poweron = False
 
         #Connecting to Calibration Control
@@ -109,9 +113,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 #Calibration Control
                 self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, caliblabels)
                 self.calibon = True
+                print "Connected to Calibration Unit #####"
             except:
+                print "##### Can't connect to Calibraiton Unit"
                 self.calibon = False
         else:
+            print "##### Can't connect to Calibraiton Unit"
             self.calibon = False
 
         #Connecting to Motor Control /// Currently disabled due to unknown crashes caused by Motor
@@ -145,9 +152,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.scidet.updateText.connect(self._handleOutputTextUpdate)
                 self.scidet.plotSignal.connect(self._handlePlotting)
                 self.scideton = True
+                print "Connected to Science Array #####"
             except:
                 self.scideton = False
+                print "##### Can't Connect to Science Array"
         else:
+            print "##### Can't Connect to Science Array"
             self.scideton = False
 
         #Connecting to Guider
@@ -158,7 +168,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.guider.plotSignal.connect(self._handleGuidePlotting)
             self.guideron = True
         except:
+            print "##### Can't Connect to Guider #####"
             self.guideron = False
+
+        if not self.guider.guiderready:
+            print "##### Can't connect to one or all of the guider components"
+            print "FOC: ",self.guider.foc
+            print "CAM: ",self.guider.cam
+            print "FLT: ",self.guider.flt
+            self.guideron = False
+        else:
+            print "Connected to Guider #####"
 
         #try:
         #    #Power Control
@@ -208,8 +228,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExpProgressBar.setValue(0)
         
         #Starting function to update labels. Still need to add guider info.
-        if self.guideron and self.telescope:
-            self.labelsThread = UpdateLabels(self.guider, self.motorcontrol)
+        if self.telescope:
+            self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron)
             self.labelsThread.updateText.connect(self._handleUpdateLabels)
             self.labelsThread.start()
 
@@ -219,7 +239,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         #Defining actions for Exposure Control
         #if self.scidet.connected == False:
-        if self.scideton and not self.self.scidet.connected:
+        if self.scideton and not self.scidet.connected:
             self.DetectorStatusLabel.setStyleSheet('color: red')
         
         if self.scideton:
@@ -238,6 +258,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.TakeCalibButton.setEnabled(False)
             self.NodBeginButton.setEnabled(False)
             #self.CenteringCheck.setEnabled(False)
+
         self.CenteringCheck.clicked.connect(self.checkcentering)
 
         #Defining actions for Telescope Control (moving the telescope)
@@ -279,6 +300,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.StartGuidingButton.setStyleSheet('background-color: red')
             self.CentroidButton.setStyleSheet('background-color: red')
             self.SetTempButton.setStyleSheet('background-color: red')
+            self.StopGuidingButton.setStyleSheet('background-color: red')
 
             self.BKWButton.setEnabled(False)
             self.FWDButton.setEnabled(False)
@@ -289,6 +311,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.CentroidButton.setEnabled(False)
             self.SetTempButton.setEnabled(False)
             self.FilterVal.setEnabled(False)
+            self.StopGuidingButton.setEnabled(False)
 
         #Defining Actions for Power Control
         if self.poweron:
@@ -381,7 +404,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
         self.actionQuit.triggered.connect(self.close)
         
+        self.FocusTestButton.setStyleSheet('background-color: red')
+        self.FocusTestStop.setStyleSheet('background-color: red')
         self.FocusTestButton.setEnabled(False)
+        self.FocusTestStop.setEnabled(False)
         #self.FocusTestButton.clicked.connect(self.runFocusTest)
         #self.FocusTestStop.clicked.connect(self.stopFocusTest)
 
@@ -502,8 +528,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ELLabel.setText(telemDict['EL'])
         self.IISLabel.setText(telemDict['IIS'])
         self.HALabel.setText(telemDict['HA'])
-        self.FocPosition.setText(str(self.guider.foc.get_stepper_position()))
-        self.CCDTemp.setText(str(self.guider.cam.get_temperature()))
+        self.FocPosition.setText(steppos)
+        self.CCDTemp.setText(ccdtemp)
 
     def checkcentering(self):
         fieldrecObj = get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
@@ -558,7 +584,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def _handleFRPlotting(self, returns):
 
         try:
-            dataImg, WCS, hdr, gFit = returns
+            dataImg, WCS, hdr, gFit, xScale, yScale = returns
             
             #Things that are needed for plotting the data
             #WCS, dataImg, hdr
@@ -577,7 +603,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             #if colorbar:
             #    plt.colorbar()
-            self.plotwindow.figure.colorbar()
+            self.plotwindow.figure.colorbar(im)
                 
             r = np.arange(360)*np.pi/180.
             fwhmX = np.abs(2.3548*gFit.x_stddev*xScale)
@@ -604,7 +630,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             ax.text((cent+decAx)[0]+1, (cent+decAx)[1]+1,"N",ha="left", va="top", rotation=rotAng, color='w')
             ax.text((cent+raAx)[0]+1, (cent+raAx)[1]+1,"E",ha="left", va="bottom", rotation=rotAng, color='w')
 
-            ax.title(hdr['Object'] + ': FWHM of object is: '+'{:4.2f}'.format(fwhmX)+' in x and ' + '{:4.2f}'.format(fwhmY)+' in y, in arcsec')
+            ax.set_title(hdr['Object'] + ': FWHM of object is: '+'{:4.2f}'.format(fwhmX)+' in x and ' + '{:4.2f}'.format(fwhmY)+' in y, in arcsec')
             #ax.tight_layout()
             #plt.savefig('quick_reduction/'+rampFolder+'_quickRedImg.png', dpi=300)
 
@@ -810,11 +836,12 @@ class UpdateLabels(QThread):
 
     updateText = pyqtSignal(list)
 
-    def __init__(self, guider, motorcontrol):
+    def __init__(self, guider, motorcontrol, guideron):
         QThread.__init__(self)
 
         self.guider = guider
         self.motorcontrol = motorcontrol
+        self.guideron = guideron
         self.stopthread = False
 
     def __del__(self):
@@ -831,8 +858,12 @@ class UpdateLabels(QThread):
 
                 wg.write_telemetry(telemDict)
 
-                steppos = str(self.guider.foc.get_stepper_position())
-                ccdTemp = str(self.guider.cam.get_temperature())
+                if self.guideron:
+                    steppos = str(self.guider.foc.get_stepper_position())
+                    ccdTemp = str(self.guider.cam.get_temperature())
+                else:
+                    steppos = "N/A"
+                    ccdTemp = "N/A"
                 
                 if motors:
                     self.motorcontrol.update_status()

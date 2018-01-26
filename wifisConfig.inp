@@ -168,16 +168,16 @@ bpmCorRng = 1
 ######################################################
 #pixel scale
 #may old
-xScale = 0.532021532706
-yScale = -0.545667026386
+#xScale = 0.532021532706
+#yScale = -0.545667026386
 
 #may new
 #xScale = 0.529835976681
 #yScale = 0.576507533367
 
 #june
-#xScale = 0.549419840181
-#yScale = -0.581389824133
+xScale = 0.549419840181
+yScale = -0.581389824133
 
 #final cube pixel scales parameters
 ndiv = 1

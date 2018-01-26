@@ -151,6 +151,11 @@ class WIFISGuider(QObject):
         if not os.path.exists(self.direc):
             os.makedirs(self.direc)
 
+        if (self.cam == None) or (self.foc == None) or (self.flt == None):
+            self.guiderready = False
+        else:
+            self.guiderready = True
+
     ## Telescope Functions
 
     def calcOffset(self):

@@ -16,7 +16,7 @@ obsLstFile = 'obs.lst'
 
 hband = False
 colorbarLims = [0,10]
-
+varFile = '/home/utopea/WIFIS-Team/wifiscontrol/wifisConfig.inp'
 #****************************************************************************************
 
 class get_src_pos(QObject):
@@ -25,7 +25,8 @@ class get_src_pos(QObject):
     #plotField = pyqtSignal(np.ndarray, wcs.wcs.WCS, aio.fits.header.Header)
 
     def __init__(self, waveLstFile, flatLstFile, obsLstFile):
-
+        super(get_src_pos, self).__init__()
+        
         self.waveLstFile = waveLstFile
         self.flatLstFile = flatLstFile
         self.obsLstFile = obsLstFile
@@ -45,9 +46,9 @@ class get_src_pos(QObject):
 
         #quickReduction.initPaths()
         for fle in range(len(obsLst)):
-            dataImg, WCS, hdr, gFit = procScienceDataGUI(obsLst[fle], flatLst[fle], varFile ='wifisConfig.inp', scaling='')
+            dataImg, WCS, hdr, gFit, xScale, yScale = procScienceDataGUI(obsLst[fle], flatLst[fle], varFile = varFile, scaling='')
 
-        returns = [dataImg, WCS, hdr, gFit]
+        returns = [dataImg, WCS, hdr, gFit, xScale, yScale]
         self.plotField.emit(returns)
 
 
