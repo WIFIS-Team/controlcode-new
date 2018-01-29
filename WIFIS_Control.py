@@ -117,9 +117,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             except:
                 print "##### Can't connect to Calibraiton Unit"
                 self.calibon = False
+                self.calibrationcontrol = None
         else:
             print "##### Can't connect to Calibraiton Unit"
             self.calibon = False
+            self.calibrationcontrol = None
+
+        #self.calibon = False
+        #self.calibrationcontrol = False
 
         #Connecting to Motor Control /// Currently disabled due to unknown crashes caused by Motor
         #Serial connection
@@ -144,7 +149,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.m3running = 0
 
         #Connecting to Detector
-        if self.poweron and self.calibon:
+        if self.poweron:
             try:
                 #Detector Control and Threads
                 self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2,\
@@ -399,6 +404,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.ObsModeButton.setEnabled(False)
             self.ArclampModeButton.setEnabled(False)
             self.ISphereModeButton.setEnabled(False)
+
+            self.TakeCalibButton.setStyleSheet('background-color: red')
+            self.TakeCalibButton.setEnabled(False)
+            self.ExpTypeSelect.model().item(3).setEnabled(False)
+            self.ExpTypeSelect.model().item(4).setEnabled(False)
 
         #Others
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)

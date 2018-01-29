@@ -43,6 +43,11 @@ class h2rg(QObject):
         self.switch2 = switch2
         self.calibrationcontrol = calibrationcontrol
 
+        if self.calibrationcontrol == None:
+            self.calibon = False
+        else:
+            self.calibon = True
+
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connected = False
         self.initialized = False
@@ -207,38 +212,48 @@ class h2rg(QObject):
 
 
     def flatramp(self,sourcename, notoggle = False):
-        self.calibrationcontrol.flatsetup()
-        sleep(7)
-        sourcename = 'CalFlat ' + sourcename
-        added = self.exposeRamp(5, 1, 'Ramp',sourcename, calib=True)
+        if self.calibon:
+            self.calibrationcontrol.flatsetup()
+            sleep(7)
+            sourcename = 'CalFlat ' + sourcename
+            added = self.exposeRamp(5, 1, 'Ramp',sourcename, calib=True)
 
-        f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/flat.lst','w')
-        f1.write(str(added[0]))
-        f1.close()
+            f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/flat.lst','w')
+            f1.write(str(added[0]))
+            f1.close()
 
-        if not notoggle:
-            self.calibrationcontrol.sourcesetup()
+            if not notoggle:
+                self.calibrationcontrol.sourcesetup()
+        else:
+            self.printTxt("CALIBRATION CONTROL OFF...CONNECT AND RESTART GUI")
 
     def arcramp(self,sourcename, flat=False):
-        self.calibrationcontrol.arcsetup()
-        sleep(3)
-        sourcename = 'CalArc ' + sourcename
-        added = self.exposeRamp(5, 1, 'Ramp', sourcename, calib=True)
-        
-        f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','w')
-        f1.write(str(added[0]))
-        f1.close()
+        if self.calibon:
+            self.calibrationcontrol.arcsetup()
+            sleep(3)
+            sourcename = 'CalArc ' + sourcename
+            added = self.exposeRamp(5, 1, 'Ramp', sourcename, calib=True)
+            
+            f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','w')
+            f1.write(str(added[0]))
+            f1.close()
 
-        if not flat:
-            self.calibrationcontrol.sourcesetup()
+            if not flat:
+                self.calibrationcontrol.sourcesetup()
+        else:
+            self.printTxt("CALIBRATION CONTROL OFF...CONNECT AND RESTART GUI")
 
     def takecalibrations(self, sourcename):
-        self.printTxt("STARTING CALIBRATIONS")
-        self.arcramp(sourcename,flat=True)
-        #self.calibrationcontrol.flatsetup()
-        #sleep(7)
-        self.flatramp(sourcename)
-        self.printTxt("FINISHED CALIBRATIONS")
+        if self.calibon:
+            self.printTxt("STARTING CALIBRATIONS")
+            self.arcramp(sourcename,flat=True)
+            #self.calibrationcontrol.flatsetup()
+            #sleep(7)
+            self.flatramp(sourcename)
+            self.printTxt("FINISHED CALIBRATIONS")
+        else:
+            self.printTxt("CALIBRATION CONTROL OFF...CONNECT AND RESTART GUI")
+
 
     def printTxt(self, s):
         self.updateText.emit(s)
