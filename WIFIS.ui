@@ -2503,9 +2503,10 @@
      <string>Connect</string>
     </property>
     <addaction name="ConnectGuider"/>
-    <addaction name="ConnectCalibUnit"/>
+    <addaction name="ConnectCalib"/>
     <addaction name="ConnectTelescope"/>
     <addaction name="ConnectPower"/>
+    <addaction name="connectH2RG"/>
     <addaction name="ConnectAll"/>
    </widget>
    <addaction name="menuFile"/>
@@ -2551,7 +2552,7 @@
     <string>Guider</string>
    </property>
   </action>
-  <action name="ConnectCalibUnit">
+  <action name="ConnectCalib">
    <property name="text">
     <string>Calib Unit</string>
    </property>
@@ -2569,6 +2570,11 @@
   <action name="ConnectAll">
    <property name="text">
     <string>All Units</string>
+   </property>
+  </action>
+  <action name="connectH2RG">
+   <property name="text">
+    <string>H2RG</string>
    </property>
   </action>
  </widget>

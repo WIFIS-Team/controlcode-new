@@ -287,14 +287,16 @@ def findguidestar(img1, gfls):
     #check positions of stars    
     centroidx, centroidy, Iarr, Isat, width = WA.centroid_finder(img1, plot=False)
     bright_stars = np.argsort(Iarr)[::-1]
-    print Iarr
-    print Isat
+
+    #print Iarr
+    #print Isat
     #Choose the brightest non-saturated star for guiding
     try:
         guiding_star = bright_stars[0]
     except:
         return None,None
 
+    #Checking to see if the star is in the "center" of the field and isn't saturated
     for star in bright_stars:
         if (centroidx[star] > 50 and centroidx[star] < 950) and \
             (centroidy[star] > 50 and centroidy[star] < 950):
