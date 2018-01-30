@@ -944,13 +944,23 @@ class NoddingExposure(QThread):
             return
 
         self.NodSelectionVal = self.NodSelection.currentText()
-        self.NNodsVal = int(self.NNods.text())
-        self.NodsPerCalVal = int(self.NodsPerCal.text())
-        self.nrampsval = int(self.nramps.text())
-        self.nreadsval = int(self.nreads.text())
+        try:
+            self.nrampsval = int(self.nramps.text())
+            self.nreadsval = int(self.nreads.text())
+            self.NodsPerCalVal = int(self.NodsPerCal.text())
+            self.NNodsVal = int(self.NNods.text())
+        except:
+            self.updateText.emit("N_RAMPS/N_READS/N_NODS/N_CALS NOT INTS -- QUITTING")
+            return
+
         self.objnameval = self.objname.text()
-        self.nodraval = float(self.nodra.text())
-        self.noddecval = float(self.noddec.text())
+        try:
+            self.nodraval = float(self.nodra.text())
+            self.noddecval = float(self.noddec.text())
+        except:
+            self.updateText.emit("NOD VALUES NOT FLOATS -- QUITTING")
+            return
+
         if self.stopthread:
             self.stopthread = False
 

@@ -176,12 +176,26 @@ class WIFISGuider(QObject):
 
     def moveTelescope(self):
         if self.telSock:
+            try:
+                float(self.RAMoveBox.text())
+                float(self.DECMoveBox.text())
+            except:
+                self.updateText.emit("NON-FLOAT ENTRY IN RA/DEC")
+                return
+                
             result = WG.move_telescope(self.telSock,float(self.RAMoveBox.text()), \
                     float(self.DECMoveBox.text()))
             self.updateText.emit(result)
 
     def moveTelescopeBack(self):
         if self.telSock:
+            try:
+                float(self.RAMoveBox.text())
+                float(self.DECMoveBox.text())
+            except:
+                self.updateText.emit("NON-FLOAT ENTRY IN RA/DEC")
+                return
+
             result = WG.move_telescope(self.telSock,-1.*float(self.RAMoveBox.text()), \
                     -1.*float(self.DECMoveBox.text()))
             self.updateText.emit(result)
