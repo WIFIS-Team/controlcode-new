@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>979</width>
-    <height>1035</height>
+    <height>1005</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -2506,7 +2506,7 @@
     <addaction name="ConnectCalib"/>
     <addaction name="ConnectTelescope"/>
     <addaction name="ConnectPower"/>
-    <addaction name="connectH2RG"/>
+    <addaction name="ConnectH2RG"/>
     <addaction name="ConnectAll"/>
    </widget>
    <addaction name="menuFile"/>
@@ -2572,7 +2572,7 @@
     <string>All Units</string>
    </property>
   </action>
-  <action name="connectH2RG">
+  <action name="ConnectH2RG">
    <property name="text">
     <string>H2RG</string>
    </property>
