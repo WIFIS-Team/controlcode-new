@@ -15,7 +15,11 @@ from sys import exit
 from PyQt5.QtCore import QThread
 
 plate_scale = 0.29125
-guideroffsets = np.array([-0.7,362.68])
+
+guideroffsets = np.array([-4.6,363.73])
+
+# Dec 2017 guideroffsets = np.array([-0.7,362.68])
+
 
 #Aug/Sept guideroffsets = np.array([-5.54,361.37])
 #June 2017 -4.0,414.1
