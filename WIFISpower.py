@@ -52,6 +52,10 @@ class PowerControl():
         self.Power27.setText(self.switch2[6].description)
         self.Power28.setText(self.switch2[7].description)
 
+        self.powerStatusUpdate()
+
+    def powerStatusUpdate(self):
+
         if self.switch1[0].state == 'OFF':
             self.Power11.setStyleSheet('background-color: red')
         else:
