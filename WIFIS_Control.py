@@ -605,6 +605,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             if objtxt[-3:] == 'Sky':
                 self.ObjText.setText(objtxt[:-3])
 
+    def setNextRADEC(self):
+
+        pass 
+
     def initExposure(self):
         self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect.currentText(),\
                 nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()),\

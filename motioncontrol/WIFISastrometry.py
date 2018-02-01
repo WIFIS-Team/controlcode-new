@@ -62,13 +62,14 @@ def centroid_finder(img, plot = False, verbose=False):
             xsum += x*I
             ysum += y*I
             Isum += I
-            if I == 65536:
+            if I >= 63000: #65536
                 sat = True
         
         if sat == True:
             Isat.append(1)
         else:
             Isat.append(0)
+
         centroidx.append(xsum/Isum)
         centroidy.append(ysum/Isum)
         Iarr.append(Isum)
@@ -97,7 +98,7 @@ def centroid_finder(img, plot = False, verbose=False):
             gausx = gaussian_fit(xs, gx, [5000.0,3.0,10.0])
             gausy = gaussian_fit(ys, gy, [5000.0,3.0,10.0])
 
-            width.append(np.mean([gausx[0][1],gausy[0][1]]))
+            width.append(np.mean([gausx[0][1],gausy[0][1]]) * 2.355)
         except:
             width.append(0)
 

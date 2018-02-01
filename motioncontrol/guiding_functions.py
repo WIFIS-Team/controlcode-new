@@ -525,27 +525,45 @@ class RunGuiding(QThread):
         gfls = self.checkGuideVariable()
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
             int(self.guideExpVariable),gfls, self.rotangle)
+        #guidingstuff = [offsets, x_rot, y_rot, stary1, starx1, boxsize, img1, result, result2,fieldinfo]
 
         if (guidingstuff[3] == None) or (guidingstuff[4] == None):
             self.updateText.emit("NO STARS TO GUIDE ON...INCREASE GUIDE EXP TIME?")
             self.quit()
 
-        if guidingstuff[-2] != None:
+        fieldinfo = guidingstuff[9]
+        try:
+            if (fieldinfo != None) and (guidingstuff[3] != None):
+                fieldinfofl = np.savetxt('/home/utopea/elliot/guidefield/'+time.strftime('%Y%m%dT%H%M%S')+'_'+self.guideTargetText+'.txt',\
+                        np.transpose(fieldinfo))
+        except Exception as e:
+            print e
+        
+        if guidingstuff[7] != None:
             self.updateText.emit(guidingstuff[-2])
-        if guidingstuff[-1] != None: 
-            if len(guidingstuff[-1]) > 0:
-                for s in guidingstuff[-1]:
+        #guidingstuff[8] is the text outpu
+        if guidingstuff[8] != None: 
+            if len(guidingstuff[8]) > 0:
+                for s in guidingstuff[8]:
                     self.updateText.emit(s)
 
-        guidingstuff = guidingstuff[:-2]
 
-        #Plot guide star for reference
-        starybox = int(guidingstuff[3])
-        starxbox = int(guidingstuff[4])
-        boxsize = int(guidingstuff[5])
-        self.plotSignal.emit(guidingstuff[-1][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
+        try:
+            #Plot guide star for reference
+            starybox = int(guidingstuff[3])
+            starxbox = int(guidingstuff[4])
+            boxsize = int(guidingstuff[5])
+        except Exception as e:
+            print e
+            self.updateText.emit("SOMETHING WENT WRONG WITH GUIDE STAR ASSIGNMENT...")
+            self.quit()
+
+        self.plotSignal.emit(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
                 self.guideTargetText + " GuideStar")
+        mpl.imshow(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize], origin='lower')
+        mpl.savefig('/home/utopea/elliot/guideimages/'+time.strftime('%Y%m%dT%H%M%S')+'_'+self.guideTargetText+'.png')
 
+        guidingstuff = guidingstuff[:7]
         something_wrong_count = 0
         while True:
             if self.stopThread:
@@ -553,7 +571,6 @@ class RunGuiding(QThread):
                 self.updateText.emit("###### FINISHED GUIDING")
                 break
             else:
-
                 try:
                     dRA, dDEC, guideinfo, guideresult, img = WG.run_guiding(guidingstuff,\
                             self.cam, self.telsock,self.rotangle)
