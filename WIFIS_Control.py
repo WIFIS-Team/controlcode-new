@@ -119,19 +119,20 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         #Turn on label thread
         if self.telescope:
+            updatevals = [self.RAObj.text(), self.DECObj.text()]
             if not self.updateon:
-                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron)
+                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
                 self.labelsThread.start()
                 self.updateon = True
             else:
                 if self.labelsThread.isrunning:
                     self.labelsThread.stop()
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
                 else:
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
         
@@ -202,6 +203,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ConnectH2RG.triggered.connect(self.connectH2RGAction)
         self.ConnectTelescope.triggered.connect(self.connectTelescopeAction)
         self.ConnectAll.triggered.connect(self.connectAllAction)
+        
+        self.SetNextButton.clicked.connect(self.setNextRADEC)
 
     def calibSwitch(self):
         '''Connects all the calibration buttons to the proper functions'''
@@ -256,19 +259,20 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def telescopeSwitch(self):
         if self.telescope:
+            updatevals = [self.RAObj.text(), self.DECObj.text()]
             if not self.updateon:
-                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron)
+                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
                 self.labelsThread.start()
                 self.updateon = True
             else:
                 if self.labelsThread.isrunning:
                     self.labelsThread.stop()
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
                 else:
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
 
@@ -490,12 +494,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.moveTelescopeButton.setStyleSheet(s)
         self.MoveBackButton.setStyleSheet(s)
         self.CalOffsetButton.setStyleSheet(s)
+        self.SetNextButton.setStyleSheet(s)
 
         self.GuiderMoveButton.setEnabled(val)
         self.WIFISMoveButton.setEnabled(val)
         self.moveTelescopeButton.setEnabled(val)
         self.MoveBackButton.setEnabled(val)
         self.CalOffsetButton.setEnabled(val)
+        self.SetNextButton.setEnabled(val)
 
     def connectH2RGAction(self):
         #Connecting to Detector
@@ -586,7 +592,65 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def setNextRADEC(self):
 
-        pass
+        RAText = self.RAObj.text()
+        DECText = self.DECObj.text()
+
+        try:
+            float(RAText)
+            float(DECText)
+        except:
+            self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+            self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+            self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+            print 1
+            return
+
+        if (len(RAText) == 0) or (len(DECText) == 0):
+            self._handleOutputTextUpdate('RA or DEC Obj Text Empty!')
+            return
+
+        if (RAText[0] == '+') or (RAText[0] == '-'):
+            RAspl = RAText[1:].split('.')
+            if len(RAspl[0]) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                print 2
+                return
+        else:
+            RAspl = RAText.split('.')
+            if len(RAspl[0]) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                print 3
+                return
+
+        if (DECText[0] == '+') or (DECText[0] == '-'):
+            DECspl = DECText[1:].split('.')
+            if len(DECspl[0]) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                print 4
+                return
+        else:
+            DECspl = DECText.split('.')
+            if len(DECspl) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                print 5
+                return
+
+        RAText = float(RAText)
+        DECText = float(DECText)
+        RAText = '%.1f' % (RAText)
+        DECText = '%.1f' % (DECText)
+     
+        return1 = wg.set_next_radec(self.telsock,RAText,DECText)
+        self._handleOutputTextUpdate(return1)
+            
 
     def initExposure(self):
         self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect.currentText(),\
@@ -992,12 +1056,13 @@ class UpdateLabels(QThread):
 
     updateText = pyqtSignal(list)
 
-    def __init__(self, guider, motorcontrol, guideron):
+    def __init__(self, guider, motorcontrol, guideron,inputvals, updatevals):
         QThread.__init__(self)
 
         self.guider = guider
         self.motorcontrol = motorcontrol
         self.guideron = guideron
+        self.RAObj, self.DECObj = updatevals
         self.stopthread = False
         self.isrunning = False
 
@@ -1014,7 +1079,8 @@ class UpdateLabels(QThread):
             self.isrunning = True
             try:
                 telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
-
+                telemDict['RAObj'] = self.RAObj
+                telemDict['DECObj'] = self.DECObj
                 wg.write_telemetry(telemDict)
 
                 if self.guideron:
@@ -1108,7 +1174,7 @@ class FocusTest(QThread):
 
             except Exception as e:
                 print "############################"
-                print "ERROR IN LABEL UPDATE THREAD"
+                print "ERROR IN FOCUS TEST THREAD"
                 print traceback.print_exc()
                 print e
                 print "############################"

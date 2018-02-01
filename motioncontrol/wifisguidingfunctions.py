@@ -231,7 +231,7 @@ def set_next_radec(telSock,ra, dec, verbose=True):
     
     resp = query_telescope(telSock, reqString, verbose=verbose)
 
-    result = "SET NEXT RA: %s, DEC: %s" % (str(ra), str(dec))
+    result = "### SET NEXT RA: %s, DEC: %s" % (str(ra), str(dec))
     return result 
         
 def plotguiderimage(img):
