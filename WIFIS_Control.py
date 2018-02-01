@@ -291,12 +291,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             print "CAM: ",self.guider.cam
             print "FLT: ",self.guider.flt
             self.guideron = False
-            self.ConnectGuider.setText('Guider - X')
-
             self.guiderToggle(False)
-
         else:
-            self.ConnectGuider.setText('Guider - O')
             self.guiderToggle(True)
             self.guiderSwitch()
             print "Connected to Guider #####"
@@ -306,9 +302,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if on:
             s = ''
             en = True
+            self.ConnectGuider.setText('Guider - O')
         else:
             s = 'background-color: red'
             en = False
+            self.ConnectGuider.setText('Guider - X')
 
         self.BKWButton.setStyleSheet(s)
         self.FWDButton.setStyleSheet(s)
@@ -337,22 +335,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 #Calibration Control
                 self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, self.caliblabels)
                 self.calibon = True
-                self.ConnectCalib.setText('Calib Unit - O')
 
-                self.CalibModeButton.setStyleSheet('')
-                self.ObsModeButton.setStyleSheet('')
-                self.ArclampModeButton.setStyleSheet('')
-                self.ISphereModeButton.setStyleSheet('')
-
-                self.CalibModeButton.setEnabled(True)
-                self.ObsModeButton.setEnabled(True)
-                self.ArclampModeButton.setEnabled(True)
-                self.ISphereModeButton.setEnabled(True)
-
-                self.TakeCalibButton.setStyleSheet('')
-                self.TakeCalibButton.setEnabled(True)
-                self.ExpTypeSelect.model().item(3).setEnabled(True)
-                self.ExpTypeSelect.model().item(4).setEnabled(True)
+                self.calibToggle(True)
 
                 self.calibSwitch()
                 print "Connected to Calibration Unit #####"
@@ -362,42 +346,38 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 print e
                 self.calibon = False
                 self.calibrationcontrol = None
-                self.ConnectCalib.setText('Calib Unit - X')
-
-                self.CalibModeButton.setStyleSheet('background-color: red')
-                self.ObsModeButton.setStyleSheet('background-color: red')
-                self.ArclampModeButton.setStyleSheet('background-color: red')
-                self.ISphereModeButton.setStyleSheet('background-color: red')
-
-                self.CalibModeButton.setEnabled(False)
-                self.ObsModeButton.setEnabled(False)
-                self.ArclampModeButton.setEnabled(False)
-                self.ISphereModeButton.setEnabled(False)
-
-                self.TakeCalibButton.setStyleSheet('background-color: red')
-                self.TakeCalibButton.setEnabled(False)
-                self.ExpTypeSelect.model().item(3).setEnabled(False)
-                self.ExpTypeSelect.model().item(4).setEnabled(False)
+                self.calibToggle(False)
+                
         else:
             print "##### Can't connect to Calibraiton Unit -- No Power Connection"
             self.calibon = False
             self.calibrationcontrol = None
-            self.ConnectCalib.setText('Calib Unit - X')
+
+            self.calibToggle(False)
             
-            self.CalibModeButton.setStyleSheet('background-color: red')
-            self.ObsModeButton.setStyleSheet('background-color: red')
-            self.ArclampModeButton.setStyleSheet('background-color: red')
-            self.ISphereModeButton.setStyleSheet('background-color: red')
+    def calibToggle(self, status):
+        if status:
+            s = ''
+            val = True
+            self.ConnectCalib.setText('Calib Unit - O')
+        else:
+            s = 'background-color: red'
+            val = False
+            self.ConnectCalib.setText('Calib Unit - X')
 
-            self.CalibModeButton.setEnabled(False)
-            self.ObsModeButton.setEnabled(False)
-            self.ArclampModeButton.setEnabled(False)
-            self.ISphereModeButton.setEnabled(False)
+        self.CalibModeButton.setStyleSheet(s)
+        self.ObsModeButton.setStyleSheet(s)
+        self.ArclampModeButton.setStyleSheet(s)
+        self.ISphereModeButton.setStyleSheet(s)
+        self.TakeCalibButton.setStyleSheet(s)
 
-            self.TakeCalibButton.setStyleSheet('background-color: red')
-            self.TakeCalibButton.setEnabled(False)
-            self.ExpTypeSelect.model().item(3).setEnabled(False)
-            self.ExpTypeSelect.model().item(4).setEnabled(False)
+        self.CalibModeButton.setEnabled(val)
+        self.ObsModeButton.setEnabled(val)
+        self.ArclampModeButton.setEnabled(val)
+        self.ISphereModeButton.setEnabled(val)
+        self.TakeCalibButton.setEnabled(val)
+        self.ExpTypeSelect.model().item(3).setEnabled(val)
+        self.ExpTypeSelect.model().item(4).setEnabled(val)
 
     def connectPowerAction(self):
         try:
@@ -409,23 +389,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.ConnectPower.setText('Power - O')
 
             self.powercontrol.powerStatusUpdate()
-
-            self.Power11.setEnabled(True)
-            self.Power12.setEnabled(True)
-            self.Power13.setEnabled(True)
-            self.Power14.setEnabled(True)
-            self.Power15.setEnabled(True)
-            self.Power16.setEnabled(True)
-            self.Power17.setEnabled(True)
-            self.Power18.setEnabled(True)
-            self.Power21.setEnabled(True)
-            self.Power22.setEnabled(True)
-            self.Power23.setEnabled(True)
-            self.Power24.setEnabled(True)
-            self.Power25.setEnabled(True)
-            self.Power26.setEnabled(True)
-            self.Power27.setEnabled(True)
-            self.Power28.setEnabled(True)
+            self.powerToggle(True)
 
             self.powerSwitch()
             print "Connected to Power Controllers #####"
@@ -435,42 +399,62 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             print e
             self.poweron = False
             self.ConnectPower.setText('Power - X')
-            self.setPowerOff()
+            self.powerToggle(False)
 
-    def setPowerOff(self):
-        self.Power11.setStyleSheet('background-color: red')
-        self.Power12.setStyleSheet('background-color: red')
-        self.Power13.setStyleSheet('background-color: red')
-        self.Power14.setStyleSheet('background-color: red')
-        self.Power15.setStyleSheet('background-color: red')
-        self.Power16.setStyleSheet('background-color: red')
-        self.Power17.setStyleSheet('background-color: red')
-        self.Power18.setStyleSheet('background-color: red')
-        self.Power21.setStyleSheet('background-color: red')
-        self.Power22.setStyleSheet('background-color: red')
-        self.Power23.setStyleSheet('background-color: red')
-        self.Power24.setStyleSheet('background-color: red')
-        self.Power25.setStyleSheet('background-color: red')
-        self.Power26.setStyleSheet('background-color: red')
-        self.Power27.setStyleSheet('background-color: red')
-        self.Power28.setStyleSheet('background-color: red')
+    def powerToggle(self, status):
+        if status: 
+            val = True
+        else:
+            self.Power11.setStyleSheet('background-color: red')
+            self.Power12.setStyleSheet('background-color: red')
+            self.Power13.setStyleSheet('background-color: red')
+            self.Power14.setStyleSheet('background-color: red')
+            self.Power15.setStyleSheet('background-color: red')
+            self.Power16.setStyleSheet('background-color: red')
+            self.Power17.setStyleSheet('background-color: red')
+            self.Power18.setStyleSheet('background-color: red')
+            self.Power21.setStyleSheet('background-color: red')
+            self.Power22.setStyleSheet('background-color: red')
+            self.Power23.setStyleSheet('background-color: red')
+            self.Power24.setStyleSheet('background-color: red')
+            self.Power25.setStyleSheet('background-color: red')
+            self.Power26.setStyleSheet('background-color: red')
+            self.Power27.setStyleSheet('background-color: red')
+            self.Power28.setStyleSheet('background-color: red')
 
-        self.Power11.setEnabled(False)
-        self.Power12.setEnabled(False)
-        self.Power13.setEnabled(False)
-        self.Power14.setEnabled(False)
-        self.Power15.setEnabled(False)
-        self.Power16.setEnabled(False)
-        self.Power17.setEnabled(False)
-        self.Power18.setEnabled(False)
-        self.Power21.setEnabled(False)
-        self.Power22.setEnabled(False)
-        self.Power23.setEnabled(False)
-        self.Power24.setEnabled(False)
-        self.Power25.setEnabled(False)
-        self.Power26.setEnabled(False)
-        self.Power27.setEnabled(False)
-        self.Power28.setEnabled(False)
+            val = False
+
+        self.Power11.setEnabled(val)
+        self.Power12.setEnabled(val)
+        self.Power13.setEnabled(val)
+        self.Power14.setEnabled(val)
+        self.Power15.setEnabled(val)
+        self.Power16.setEnabled(val)
+        self.Power17.setEnabled(val)
+        self.Power18.setEnabled(val)
+        self.Power21.setEnabled(val)
+        self.Power22.setEnabled(val)
+        self.Power23.setEnabled(val)
+        self.Power24.setEnabled(val)
+        self.Power25.setEnabled(val)
+        self.Power26.setEnabled(val)
+        self.Power27.setEnabled(val)
+        self.Power28.setEnabled(val)
+
+    def checkPowerStatus(self):
+
+        #H2RG requires switch1[5]
+        #Motors require switch1[2]
+        #Guider requires switch2[3,5,6,7]
+        #Calib unit requires switch2[3]
+        #If any of these are toggled, lock out the controls.
+        if self.switch1[5].state == 'OFF':
+            self.H2RGToggle(False)
+        if (self.switch2[3].state == 'OFF') or (self.switch2[5].state == 'OFF') or \
+                (self.switch2[6].state == 'OFF') or (self.switch2[7].state == 'OFF'):
+            self.guiderToggle(False)
+        if self.switch2[3].state == 'OFF':
+            self.calibToggle(False)
     
     def connectTelescopeAction(self):
         #Connect to telescope
@@ -479,18 +463,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             telemDict = wg.get_telemetry(self.telsock, verbose=False)
             self.IISLabel.setText(telemDict['IIS']) #Set IIS early because certain functions rely on this value
             self.telescope = True
-            self.ConnectTelescope.setText('Telescope - O')
 
-            self.GuiderMoveButton.setStyleSheet('')
-            self.WIFISMoveButton.setStyleSheet('')
-            self.moveTelescopeButton.setStyleSheet('')
-            self.MoveBackButton.setStyleSheet('')
-            self.CalOffsetButton.setStyleSheet('')
-            self.GuiderMoveButton.setEnabled(True)
-            self.WIFISMoveButton.setEnabled(True)
-            self.moveTelescopeButton.setEnabled(True)
-            self.MoveBackButton.setEnabled(True)
-            self.CalOffsetButton.setEnabled(True)
+            self.telescopeToggle(True)
 
             #self.telescopeSwitch()
             print "Connected to Telescope #####"
@@ -499,18 +473,29 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             print "##### Can't connect to telescope -- Something Failed"
             print e
             self.telescope = False
+            self.telescopeToggle(False)
+
+    def telescopeToggle(self, status):
+        if status:
+            s = ''
+            val = True
+            self.ConnectTelescope.setText('Telescope - O')
+        else:
+            s = 'background-color: red'
+            val = False
             self.ConnectTelescope.setText('Telescope - X')
 
-            self.GuiderMoveButton.setStyleSheet('background-color: red')
-            self.WIFISMoveButton.setStyleSheet('background-color: red')
-            self.moveTelescopeButton.setStyleSheet('background-color: red')
-            self.MoveBackButton.setStyleSheet('background-color: red')
-            self.CalOffsetButton.setStyleSheet('background-color: red')
-            self.GuiderMoveButton.setEnabled(False)
-            self.WIFISMoveButton.setEnabled(False)
-            self.moveTelescopeButton.setEnabled(False)
-            self.MoveBackButton.setEnabled(False)
-            self.CalOffsetButton.setEnabled(False)
+        self.GuiderMoveButton.setStyleSheet(s)
+        self.WIFISMoveButton.setStyleSheet(s)
+        self.moveTelescopeButton.setStyleSheet(s)
+        self.MoveBackButton.setStyleSheet(s)
+        self.CalOffsetButton.setStyleSheet(s)
+
+        self.GuiderMoveButton.setEnabled(val)
+        self.WIFISMoveButton.setEnabled(val)
+        self.moveTelescopeButton.setEnabled(val)
+        self.MoveBackButton.setEnabled(val)
+        self.CalOffsetButton.setEnabled(val)
 
     def connectH2RGAction(self):
         #Connecting to Detector
@@ -522,15 +507,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.scidet.updateText.connect(self._handleOutputTextUpdate)
                 self.scidet.plotSignal.connect(self._handlePlotting)
                 self.scideton = True
-                self.ConnectH2RG.setText('H2RG - O')
 
-                self.ExposureButton.setStyleSheet('')
-                self.TakeCalibButton.setStyleSheet('')
-                self.NodBeginButton.setStyleSheet('')
-                self.CenteringCheck.setStyleSheet('')
-                self.ExposureButton.setEnabled(True)
-                self.TakeCalibButton.setEnabled(True)
-                self.NodBeginButton.setEnabled(True)
+                self.H2RGToggle(True)
 
                 self.scidetSwitch()
                 print "Connected to Science Array #####"
@@ -538,27 +516,29 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.scideton = False
                 print "##### Can't Connect to Science Array -- Something Failed"
                 print e
-                self.ConnectH2RG.setText('H2RG - X')
-
-                self.ExposureButton.setStyleSheet('background-color: red')
-                self.TakeCalibButton.setStyleSheet('background-color: red')
-                self.NodBeginButton.setStyleSheet('background-color: red')
-                self.CenteringCheck.setStyleSheet('background-color: red')
-                self.ExposureButton.setEnabled(False)
-                self.TakeCalibButton.setEnabled(False)
-                self.NodBeginButton.setEnabled(False)
+                self.H2RGToggle(False)
         else:
             print "##### Can't Connect to Science Array -- No Power Connection"
             self.scideton = False
+            self.H2RGToggle(False)
+
+    def H2RGToggle(self, status):
+        if status:
+            s = ''
+            val = True
+            self.ConnectH2RG.setText('H2RG - O')
+        else:
+            s = 'background-color: red'
+            val = False
             self.ConnectH2RG.setText('H2RG - X')
 
-            self.ExposureButton.setStyleSheet('background-color: red')
-            self.TakeCalibButton.setStyleSheet('background-color: red')
-            self.NodBeginButton.setStyleSheet('background-color: red')
-            self.CenteringCheck.setStyleSheet('background-color: red')
-            self.ExposureButton.setEnabled(False)
-            self.TakeCalibButton.setEnabled(False)
-            self.NodBeginButton.setEnabled(False)
+        self.ExposureButton.setStyleSheet(s)
+        self.TakeCalibButton.setStyleSheet(s)
+        self.NodBeginButton.setStyleSheet(s)
+        self.CenteringCheck.setStyleSheet(s)
+        self.ExposureButton.setEnabled(val)
+        self.TakeCalibButton.setEnabled(val)
+        self.NodBeginButton.setEnabled(val)
 
     def connectAllAction(self):
 
@@ -572,7 +552,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.connectCalibAction()
         if not self.guideron:
             self.connectGuiderAction()
-
 
     def initGuideExposure(self):
         self.guideexp = gf.ExposeGuider(self.guider, False)
