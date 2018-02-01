@@ -204,8 +204,7 @@ def set_next_radec(telSock,ra, dec, verbose=True):
     reqString = "%s TCS %i MANUAL" % (TELID, REF_NUM)
     
     resp = query_telescope(telSock, reqString, verbose=verbose)
-    print resp
-    time.sleep(3)
+    time.sleep(1)
 
     if dec[0] != '-':
         pm_DEC = '+'
@@ -226,13 +225,11 @@ def set_next_radec(telSock,ra, dec, verbose=True):
     reqString = "%s TCS %i NEXTDEC %s" % (TELID, REF_NUM, pm_DEC + dec)
     
     resp = query_telescope(telSock, reqString, verbose=verbose)
-    print resp
     time.sleep(1)
 
     reqString = "%s TCS %i NEXTRA %s" % (TELID, REF_NUM, pm_RA+ra)
     
     resp = query_telescope(telSock, reqString, verbose=verbose)
-    print resp
 
     result = "SET NEXT RA: %s, DEC: %s" % (str(ra), str(dec))
     return result 

@@ -586,7 +586,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def setNextRADEC(self):
 
-        pass 
+        pass
 
     def initExposure(self):
         self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect.currentText(),\
