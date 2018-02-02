@@ -180,6 +180,7 @@ def write_telemetry(telemDict):
     f.write('Timestamp: %s\n' % (time.ctime(time.time())))
     for (key,value) in telemDict.iteritems():
         f.write("%s:\t\t%s\n" % (key, value))
+        print "%s:\t\t%s\n" % (key, value)
     
     f.close()
 

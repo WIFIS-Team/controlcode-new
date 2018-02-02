@@ -119,7 +119,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         #Turn on label thread
         if self.telescope:
-            updatevals = [self.RAObj.text(), self.DECObj.text()]
+            updatevals = [self.RAObj, self.DECObj]
             if not self.updateon:
                 self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
@@ -259,7 +259,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def telescopeSwitch(self):
         if self.telescope:
-            updatevals = [self.RAObj.text(), self.DECObj.text()]
+            updatevals = [self.RAObj, self.DECObj]
             if not self.updateon:
                 self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
@@ -1056,7 +1056,7 @@ class UpdateLabels(QThread):
 
     updateText = pyqtSignal(list)
 
-    def __init__(self, guider, motorcontrol, guideron,inputvals, updatevals):
+    def __init__(self, guider, motorcontrol, guideron,updatevals):
         QThread.__init__(self)
 
         self.guider = guider
@@ -1079,8 +1079,8 @@ class UpdateLabels(QThread):
             self.isrunning = True
             try:
                 telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
-                telemDict['RAObj'] = self.RAObj
-                telemDict['DECObj'] = self.DECObj
+                telemDict['RAObj'] = self.RAObj.text()
+                telemDict['DECObj'] = self.DECObj.text()
                 wg.write_telemetry(telemDict)
 
                 if self.guideron:

@@ -540,7 +540,7 @@ class RunGuiding(QThread):
             print e
         
         if guidingstuff[7] != None:
-            self.updateText.emit(guidingstuff[-2])
+            self.updateText.emit(guidingstuff[7])
         #guidingstuff[8] is the text outpu
         if guidingstuff[8] != None: 
             if len(guidingstuff[8]) > 0:
@@ -560,8 +560,8 @@ class RunGuiding(QThread):
 
         self.plotSignal.emit(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
                 self.guideTargetText + " GuideStar")
-        mpl.imshow(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize], origin='lower')
-        mpl.savefig('/home/utopea/elliot/guideimages/'+time.strftime('%Y%m%dT%H%M%S')+'_'+self.guideTargetText+'.png')
+        #mpl.imshow(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize], origin='lower')
+        #mpl.savefig('/home/utopea/elliot/guideimages/'+time.strftime('%Y%m%dT%H%M%S')+'_'+self.guideTargetText+'.png')
 
         guidingstuff = guidingstuff[:7]
         something_wrong_count = 0
