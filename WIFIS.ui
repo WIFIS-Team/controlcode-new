@@ -297,7 +297,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QTabWidget" name="tabWidget">
+         <widget class="QTabWidget" name="WIFISTabWidget">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -305,7 +305,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -313,13 +313,13 @@
            </attribute>
            <layout class="QGridLayout" name="gridLayout_7">
             <property name="leftMargin">
-             <number>10</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
              <number>0</number>
             </property>
             <property name="rightMargin">
-             <number>10</number>
+             <number>0</number>
             </property>
             <property name="bottomMargin">
              <number>0</number>
@@ -1296,103 +1296,121 @@
             <string>Additional Options</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_14">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
             <item row="0" column="0">
              <layout class="QGridLayout" name="gridLayout_13">
-              <item row="0" column="1">
+              <item row="0" column="4">
                <widget class="QLineEdit" name="GuiderExpTime">
                 <property name="text">
                  <string>1500</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="CalibModeButton">
+              <item row="1" column="2">
+               <widget class="QPushButton" name="ISphereModeButton">
                 <property name="text">
-                 <string>Calibration Mode</string>
+                 <string>Int Sphere</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4">
+               <widget class="QLineEdit" name="GuideDEC"/>
+              </item>
+              <item row="1" column="4">
+               <widget class="QLineEdit" name="GuideRA"/>
+              </item>
+              <item row="2" column="3">
+               <widget class="QLabel" name="label_49">
+                <property name="text">
+                 <string>Guider DEC Offset</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QPushButton" name="ObsModeButton">
+                <property name="text">
+                 <string>Obs Mode</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QLabel" name="label_48">
+                <property name="text">
+                 <string>Guider RA Offset</string>
                 </property>
                </widget>
               </item>
               <item row="0" column="0">
-               <widget class="QLabel" name="label_11">
-                <property name="text">
-                 <string>Guide ExpTime</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
                <widget class="QLabel" name="label_45">
                 <property name="text">
                  <string>WIFIS Flipper</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="2">
-               <widget class="QPushButton" name="ObsModeButton">
-                <property name="text">
-                 <string>Observation Mode</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="ArclampModeButton">
-                <property name="text">
-                 <string>Arclamp</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="2">
-               <widget class="QPushButton" name="ISphereModeButton">
-                <property name="text">
-                 <string>Integrating Sphere</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
+              <item row="1" column="0">
                <widget class="QLabel" name="label_46">
                 <property name="text">
                  <string>Calib Flipper</string>
                 </property>
                </widget>
               </item>
-              <item row="5" column="2">
-               <widget class="QPushButton" name="FocusTestStop">
+              <item row="1" column="1">
+               <widget class="QPushButton" name="ArclampModeButton">
                 <property name="text">
-                 <string>Stop Focus Test</string>
+                 <string>Arclamp</string>
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
-               <widget class="QPushButton" name="FocusTestButton">
+              <item row="0" column="3">
+               <widget class="QLabel" name="label_11">
                 <property name="text">
-                 <string>Focus Test</string>
+                 <string>Guide ExpTime (ms)</string>
                 </property>
                </widget>
               </item>
-              <item row="7" column="0">
-               <widget class="QLabel" name="label_47">
+              <item row="0" column="1">
+               <widget class="QPushButton" name="CalibModeButton">
                 <property name="text">
-                 <string>Force IIS</string>
+                 <string>Calib Mode</string>
                 </property>
                </widget>
               </item>
-              <item row="7" column="1">
+              <item row="3" column="4">
                <widget class="QLineEdit" name="ForceIISEntry">
                 <property name="text">
                  <string>90</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="0" colspan="3">
-               <widget class="Line" name="line_9">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+              <item row="3" column="1">
+               <widget class="QPushButton" name="FocusTestStop">
+                <property name="text">
+                 <string>Stop Focus Test</string>
                 </property>
                </widget>
               </item>
-              <item row="4" column="0" colspan="3">
-               <widget class="Line" name="line_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+              <item row="3" column="3">
+               <widget class="QLabel" name="label_47">
+                <property name="text">
+                 <string>Force IIS</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QPushButton" name="FocusTestButton">
+                <property name="text">
+                 <string>Focus Test</string>
                 </property>
                </widget>
               </item>
@@ -1742,67 +1760,7 @@
       </item>
       <item row="5" column="0">
        <layout class="QGridLayout" name="gridLayout_5">
-        <item row="2" column="3">
-         <widget class="QLabel" name="DetectorStatusLabel">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="baseSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>H2RG Not Connected</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="4">
-         <widget class="QPushButton" name="NodBeginButton">
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>BEGIN NOD SEQ</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="4">
-         <widget class="QPushButton" name="ExposureButton">
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>SINGLE EXPOSURE</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0" colspan="5">
+        <item row="0" column="0" colspan="6">
          <widget class="QLabel" name="label_13">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
@@ -1967,7 +1925,88 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="4">
+        <item row="0" column="6" rowspan="4">
+         <widget class="QTextEdit" name="OutputText">
+          <property name="font">
+           <font>
+            <family>Helvetica</family>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="overwriteMode">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QPushButton" name="ExposureButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>SINGLE EXPOSURE</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="2">
+         <widget class="QLabel" name="DetectorStatusLabel">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>H2RG Not Connected</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="4" rowspan="4">
+         <widget class="Line" name="line_10">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
+         <widget class="QPushButton" name="NodBeginButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>BEGIN NOD SEQ</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="5">
          <widget class="QPushButton" name="StopExpButton">
           <property name="font">
            <font>
@@ -1980,17 +2019,10 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="5" rowspan="4">
-         <widget class="QTextEdit" name="OutputText">
-          <property name="font">
-           <font>
-            <family>Helvetica</family>
-            <pointsize>10</pointsize>
-            <italic>true</italic>
-           </font>
-          </property>
-          <property name="overwriteMode">
-           <bool>false</bool>
+        <item row="3" column="5">
+         <widget class="QCheckBox" name="SkipCalib">
+          <property name="text">
+           <string>Skip Initial Calibrations</string>
           </property>
          </widget>
         </item>
@@ -2613,9 +2645,6 @@
   <tabstop>NReadsText</tabstop>
   <tabstop>TakeCalibButton</tabstop>
   <tabstop>ExpTypeSelect</tabstop>
-  <tabstop>ExposureButton</tabstop>
-  <tabstop>NodBeginButton</tabstop>
-  <tabstop>StopExpButton</tabstop>
   <tabstop>FilterVal</tabstop>
   <tabstop>FocStep</tabstop>
   <tabstop>BKWButton</tabstop>
@@ -2647,10 +2676,6 @@
   <tabstop>Power26</tabstop>
   <tabstop>Power27</tabstop>
   <tabstop>Power28</tabstop>
-  <tabstop>CalibModeButton</tabstop>
-  <tabstop>ObsModeButton</tabstop>
-  <tabstop>ArclampModeButton</tabstop>
-  <tabstop>ISphereModeButton</tabstop>
   <tabstop>FilterHome</tabstop>
   <tabstop>BlankButton</tabstop>
   <tabstop>GuidingText</tabstop>
@@ -2658,18 +2683,14 @@
   <tabstop>HButton</tabstop>
   <tabstop>OffsetNod</tabstop>
   <tabstop>RADECNod</tabstop>
-  <tabstop>tabWidget</tabstop>
+  <tabstop>WIFISTabWidget</tabstop>
   <tabstop>FocusStep</tabstop>
   <tabstop>FilterStep</tabstop>
   <tabstop>FilterGoTo</tabstop>
   <tabstop>GratingGoTo</tabstop>
-  <tabstop>GuiderExpTime</tabstop>
   <tabstop>TBButton</tabstop>
   <tabstop>FocusStop</tabstop>
-  <tabstop>ForceIISEntry</tabstop>
   <tabstop>FilterStop</tabstop>
-  <tabstop>FocusTestStop</tabstop>
-  <tabstop>FocusTestButton</tabstop>
   <tabstop>GratingHome</tabstop>
   <tabstop>FocusGoTo</tabstop>
   <tabstop>FocusHome</tabstop>
