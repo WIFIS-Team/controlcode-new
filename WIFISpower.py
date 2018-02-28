@@ -33,94 +33,97 @@ class PowerControl():
             self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
             self.Power28 = power_widgets
 
-        self.Power11.setText(self.switch1[0].description)
-        self.Power12.setText(self.switch1[1].description)
-        self.Power13.setText(self.switch1[2].description)
-        self.Power14.setText(self.switch1[3].description)
-        self.Power15.setText(self.switch1[4].description)
-        self.Power16.setText(self.switch1[5].description)
-        self.Power17.setText(self.switch1[6].description)
-        self.Power18.setText(self.switch1[7].description)
+        if self.switch1.verify() == True:
+            self.Power11.setText(self.switch1[0].description)
+            self.Power12.setText(self.switch1[1].description)
+            self.Power13.setText(self.switch1[2].description)
+            self.Power14.setText(self.switch1[3].description)
+            self.Power15.setText(self.switch1[4].description)
+            self.Power16.setText(self.switch1[5].description)
+            self.Power17.setText(self.switch1[6].description)
+            self.Power18.setText(self.switch1[7].description)
 
-
-        self.Power21.setText(self.switch2[0].description)
-        self.Power22.setText(self.switch2[1].description)
-        self.Power23.setText(self.switch2[2].description)
-        self.Power24.setText(self.switch2[3].description)
-        self.Power25.setText(self.switch2[4].description)
-        self.Power26.setText(self.switch2[5].description)
-        self.Power27.setText(self.switch2[6].description)
-        self.Power28.setText(self.switch2[7].description)
+        if self.switch2.verify() == True:
+            self.Power21.setText(self.switch2[0].description)
+            self.Power22.setText(self.switch2[1].description)
+            self.Power23.setText(self.switch2[2].description)
+            self.Power24.setText(self.switch2[3].description)
+            self.Power25.setText(self.switch2[4].description)
+            self.Power26.setText(self.switch2[5].description)
+            self.Power27.setText(self.switch2[6].description)
+            self.Power28.setText(self.switch2[7].description)
 
         self.powerStatusUpdate()
 
     def powerStatusUpdate(self):
+        
+        if self.switch1.verify() == True:
+            if self.switch1[0].state == 'OFF':
+                self.Power11.setStyleSheet('background-color: red')
+            else:
+                self.Power11.setStyleSheet('background-color: green')
+            if self.switch1[1].state == 'OFF':
+                self.Power12.setStyleSheet('background-color: red')
+            else:
+                self.Power12.setStyleSheet('background-color: green')
+            if self.switch1[2].state == 'OFF':
+                self.Power13.setStyleSheet('background-color: red')
+            else:
+                self.Power13.setStyleSheet('background-color: green')
+            if self.switch1[3].state == 'OFF':
+                self.Power14.setStyleSheet('background-color: red')
+            else:
+                self.Power14.setStyleSheet('background-color: green')
+            if self.switch1[4].state == 'OFF':
+                self.Power15.setStyleSheet('background-color: red')
+            else:
+                self.Power15.setStyleSheet('background-color: green')
+            if self.switch1[5].state == 'OFF':
+                self.Power16.setStyleSheet('background-color: red')
+            else:
+                self.Power16.setStyleSheet('background-color: green')
+            if self.switch1[6].state == 'OFF':
+                self.Power17.setStyleSheet('background-color: red')
+            else:
+                self.Power17.setStyleSheet('background-color: green')
+            if self.switch1[7].state == 'OFF':
+                self.Power18.setStyleSheet('background-color: red')
+            else:
+                self.Power18.setStyleSheet('background-color: green')
 
-        if self.switch1[0].state == 'OFF':
-            self.Power11.setStyleSheet('background-color: red')
-        else:
-            self.Power11.setStyleSheet('background-color: green')
-        if self.switch1[1].state == 'OFF':
-            self.Power12.setStyleSheet('background-color: red')
-        else:
-            self.Power12.setStyleSheet('background-color: green')
-        if self.switch1[2].state == 'OFF':
-            self.Power13.setStyleSheet('background-color: red')
-        else:
-            self.Power13.setStyleSheet('background-color: green')
-        if self.switch1[3].state == 'OFF':
-            self.Power14.setStyleSheet('background-color: red')
-        else:
-            self.Power14.setStyleSheet('background-color: green')
-        if self.switch1[4].state == 'OFF':
-            self.Power15.setStyleSheet('background-color: red')
-        else:
-            self.Power15.setStyleSheet('background-color: green')
-        if self.switch1[5].state == 'OFF':
-            self.Power16.setStyleSheet('background-color: red')
-        else:
-            self.Power16.setStyleSheet('background-color: green')
-        if self.switch1[6].state == 'OFF':
-            self.Power17.setStyleSheet('background-color: red')
-        else:
-            self.Power17.setStyleSheet('background-color: green')
-        if self.switch1[7].state == 'OFF':
-            self.Power18.setStyleSheet('background-color: red')
-        else:
-            self.Power18.setStyleSheet('background-color: green')
-
-        if self.switch2[0].state == 'OFF':
-            self.Power21.setStyleSheet('background-color: red')
-        else:
-            self.Power21.setStyleSheet('background-color: green')
-        if self.switch2[1].state == 'OFF':
-            self.Power22.setStyleSheet('background-color: red')
-        else:
-            self.Power22.setStyleSheet('background-color: green')
-        if self.switch2[2].state == 'OFF':
-            self.Power23.setStyleSheet('background-color: red')
-        else:
-            self.Power23.setStyleSheet('background-color: green')
-        if self.switch2[3].state == 'OFF':
-            self.Power24.setStyleSheet('background-color: red')
-        else:
-            self.Power24.setStyleSheet('background-color: green')
-        if self.switch2[4].state == 'OFF':
-            self.Power25.setStyleSheet('background-color: red')
-        else:
-            self.Power25.setStyleSheet('background-color: green')
-        if self.switch2[5].state == 'OFF':
-            self.Power26.setStyleSheet('background-color: red')
-        else:
-            self.Power26.setStyleSheet('background-color: green')
-        if self.switch2[6].state == 'OFF':
-            self.Power27.setStyleSheet('background-color: red')
-        else:
-            self.Power27.setStyleSheet('background-color: green')
-        if self.switch2[7].state == 'OFF':
-            self.Power28.setStyleSheet('background-color: red')
-        else:
-            self.Power28.setStyleSheet('background-color: green')
+        if self.switch2.verify() == True:
+            if self.switch2[0].state == 'OFF':
+                self.Power21.setStyleSheet('background-color: red')
+            else:
+                self.Power21.setStyleSheet('background-color: green')
+            if self.switch2[1].state == 'OFF':
+                self.Power22.setStyleSheet('background-color: red')
+            else:
+                self.Power22.setStyleSheet('background-color: green')
+            if self.switch2[2].state == 'OFF':
+                self.Power23.setStyleSheet('background-color: red')
+            else:
+                self.Power23.setStyleSheet('background-color: green')
+            if self.switch2[3].state == 'OFF':
+                self.Power24.setStyleSheet('background-color: red')
+            else:
+                self.Power24.setStyleSheet('background-color: green')
+            if self.switch2[4].state == 'OFF':
+                self.Power25.setStyleSheet('background-color: red')
+            else:
+                self.Power25.setStyleSheet('background-color: green')
+            if self.switch2[5].state == 'OFF':
+                self.Power26.setStyleSheet('background-color: red')
+            else:
+                self.Power26.setStyleSheet('background-color: green')
+            if self.switch2[6].state == 'OFF':
+                self.Power27.setStyleSheet('background-color: red')
+            else:
+                self.Power27.setStyleSheet('background-color: green')
+            if self.switch2[7].state == 'OFF':
+                self.Power28.setStyleSheet('background-color: red')
+            else:
+                self.Power28.setStyleSheet('background-color: green')
 
 #These are the toggle plug buttons. each is the same turns the right plug 
 #on or off and changes the status to reflect this change

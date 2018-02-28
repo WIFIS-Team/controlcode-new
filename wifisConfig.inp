@@ -148,9 +148,15 @@ waveTempResultsFile = '/home/utopea/WIFIS-Team/pipeline/external_data/waveTempla
 #spatGridPropsFile = '/home/jason/wifis/data/ronchi_map_july/tb/processed/20170707175840_ronchi_spatGridProps.dat'
 
 #august
-distMapFile = '/home/utopea/quickreduce/calibfls/20170831211259_ronchi_distMap.fits'
-distMapLimitsFile = '/home/utopea/quickreduce/calibfls/20170831210255_flat_limits.fits'
-spatGridPropsFile = '/home/utopea/quickreduce/calibfls/20170831211259_ronchi_spatGridProps.dat'
+#distMapFile = '/home/utopea/quickreduce/calibfls/20170831211259_ronchi_distMap.fits'
+#distMapLimitsFile = '/home/utopea/quickreduce/calibfls/20170831210255_flat_limits.fits'
+#spatGridPropsFile = '/home/utopea/quickreduce/calibfls/20170831211259_ronchi_spatGridProps.dat'
+
+#Jan/Feb
+distMapFile = '/home/utopea/elliot/20180201211831_ronchi_distMap.fits'
+distMapLimitsFile = '/home/utopea/elliot/20180201212213_flat_limits.fits'
+spatGridPropsFile = '/home/utopea/elliot/20180201211831_ronchi_spatGridProps.dat'
+
 
 # calibration files
 nlFile = '/home/utopea/quickreduce/calibfls/master_detLin_NLCoeff.fits'        

@@ -69,18 +69,39 @@ class h2rg(QObject):
             self.connected = False
             self.initialized = False 
             self.printTxt("#### DISCONNECTED")
+            self.h2rgstatus.setStyleSheet('color: red')
+            self.h2rgstatus.setText("H2RG Disconnected")
             return(True)
         
         return(False)
         
     def initialize(self):
         if(self.connected):
+            self.printTxt("#### INITIALIZING")
             self.s.send("INITIALIZE1")
             response = self.s.recv(self.buffersize)
-            self.initialized = True            
-            self.h2rgstatus.setSyleSheet('color: green')
-            return(True)
+            self.printTxt(response)
 
+            self.s.send("SETGAIN(12)")
+            self.printTxt("#### Setting Gain")
+            response = self.s.recv(buffersize)
+            self.printTxt(response)
+
+            self.s.send("SETDETECTOR(2,32)")
+            self.printTxt("#### Setting Detector Channels")
+            response = self.s.recv(buffersize)
+            self.printTxt(response)
+
+            self.s.send("SETENHANCEDCLK(1)")
+            self.printTxt("#### Setting Clocking")
+            response = self.s.recv(buffersize)
+            self.printTxt(response)
+
+            self.printTxt("#### INITIALIZED")
+            self.initialized = True            
+            self.h2rgstatus.setStyleSheet('color: green')
+            return(True)
+        
         return(False)
         
     def setParams(self):
@@ -208,7 +229,10 @@ class h2rg(QObject):
             hdu1.close()
             hdu2.close()
 
-        self.plotSignal.emit(image, fileName2.split('/')[-1] + ' '+sourcename)
+        if fileName2 != None:
+            self.plotSignal.emit(image, fileName2.split('/')[-1] + ' '+sourcename)
+        else:
+            self.plotSignal.emit(image, fileName1.split('/')[-1] + ' '+sourcename)
 
 
     def flatramp(self,sourcename, notoggle = False):

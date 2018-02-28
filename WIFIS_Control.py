@@ -393,21 +393,44 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.ConnectPower.setText('Power - O')
 
             self.powercontrol.powerStatusUpdate()
-            self.powerToggle(True)
+            if self.switch1.verify() == True:
+                val1 = True
+            else:
+                val1 = False
 
+            if self.switch2.verify() == True:
+                val2 = True
+            else:
+                val2 = False
+
+            print self.switch1.status()
+            print self.switch2.status()
+            print val1, val2
+            self.powerToggle(True, val1, val2)
+
+            
             self.powerSwitch()
             print "Connected to Power Controllers #####"
 
         except Exception as e:
             print "##### Can't connect to Power Controllers -- Something Failed"
             print e
+            print traceback.print_exc()
             self.poweron = False
             self.ConnectPower.setText('Power - X')
-            self.powerToggle(False)
+            self.powerToggle(False, False, False)
 
-    def powerToggle(self, status):
+    def powerToggle(self, status, switch1, switch2):
         if status: 
-            val = True
+            if switch1:
+                val1 = True
+            else:
+                val1 = False
+
+            if switch2:
+                val2 = True
+            else:
+                val2 = False
         else:
             self.Power11.setStyleSheet('background-color: red')
             self.Power12.setStyleSheet('background-color: red')
@@ -426,24 +449,25 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.Power27.setStyleSheet('background-color: red')
             self.Power28.setStyleSheet('background-color: red')
 
-            val = False
+            val1 = False
+            val2 = False
 
-        self.Power11.setEnabled(val)
-        self.Power12.setEnabled(val)
-        self.Power13.setEnabled(val)
-        self.Power14.setEnabled(val)
-        self.Power15.setEnabled(val)
-        self.Power16.setEnabled(val)
-        self.Power17.setEnabled(val)
-        self.Power18.setEnabled(val)
-        self.Power21.setEnabled(val)
-        self.Power22.setEnabled(val)
-        self.Power23.setEnabled(val)
-        self.Power24.setEnabled(val)
-        self.Power25.setEnabled(val)
-        self.Power26.setEnabled(val)
-        self.Power27.setEnabled(val)
-        self.Power28.setEnabled(val)
+        self.Power11.setEnabled(val1)
+        self.Power12.setEnabled(val1)
+        self.Power13.setEnabled(val1)
+        self.Power14.setEnabled(val1)
+        self.Power15.setEnabled(val1)
+        self.Power16.setEnabled(val1)
+        self.Power17.setEnabled(val1)
+        self.Power18.setEnabled(val1)
+        self.Power21.setEnabled(val2)
+        self.Power22.setEnabled(val2)
+        self.Power23.setEnabled(val2)
+        self.Power24.setEnabled(val2)
+        self.Power25.setEnabled(val2)
+        self.Power26.setEnabled(val2)
+        self.Power27.setEnabled(val2)
+        self.Power28.setEnabled(val2)
 
     def checkPowerStatus(self):
 
@@ -452,12 +476,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Guider requires switch2[3,5,6,7]
         #Calib unit requires switch2[3]
         #If any of these are toggled, lock out the controls.
-        if self.switch1[5].state == 'OFF':
+        if self.switch1:
+            if self.switch1[5].state == 'OFF':
+                self.H2RGToggle(False)
+        else:
             self.H2RGToggle(False)
-        if (self.switch2[3].state == 'OFF') or (self.switch2[5].state == 'OFF') or \
-                (self.switch2[6].state == 'OFF') or (self.switch2[7].state == 'OFF'):
+        
+        if self.switch2:
+
+            if (self.switch2[3].state == 'OFF') or (self.switch2[5].state == 'OFF') or \
+                    (self.switch2[6].state == 'OFF') or (self.switch2[7].state == 'OFF'):
+                self.guiderToggle(False)
+            if self.switch2[3].state == 'OFF':
+                self.calibToggle(False)
+        else:
             self.guiderToggle(False)
-        if self.switch2[3].state == 'OFF':
             self.calibToggle(False)
     
     def connectTelescopeAction(self):
@@ -476,6 +509,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         except Exception as e:
             print "##### Can't connect to telescope -- Something Failed"
             print e
+            print traceback.print_exc()
             self.telescope = False
             self.telescopeToggle(False)
 
@@ -522,6 +556,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.scideton = False
                 print "##### Can't Connect to Science Array -- Something Failed"
                 print e
+                print traceback.print_exc()
                 self.H2RGToggle(False)
         else:
             print "##### Can't Connect to Science Array -- No Power Connection"
@@ -602,7 +637,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
             self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
             self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-            print 1
             return
 
         if (len(RAText) == 0) or (len(DECText) == 0):
@@ -615,7 +649,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
                 self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
                 self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                print 2
                 return
         else:
             RAspl = RAText.split('.')
@@ -623,7 +656,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
                 self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
                 self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                print 3
                 return
 
         if (DECText[0] == '+') or (DECText[0] == '-'):
@@ -632,7 +664,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
                 self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
                 self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                print 4
                 return
         else:
             DECspl = DECText.split('.')
@@ -640,7 +671,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
                 self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
                 self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                print 5
                 return
 
         RAText = float(RAText)
@@ -1016,9 +1046,15 @@ class NoddingExposure(QThread):
 
         self.progBar.emit(20, self.nrampsval)
         self.scidet.takecalibrations(self.objnameval)
+        if self.stopthread:
+            self.updateText.emit("####### STOPPED NODDING SEQUENCE #######")
+            return
 
         for i in range(self.NNodsVal):
             for obstype in self.NodSelectionVal:
+                if self.stopthread:
+                    break
+
                 if obstype == 'A':
                     self.startGuiding.emit('Obj')
                     self.sleep(5)

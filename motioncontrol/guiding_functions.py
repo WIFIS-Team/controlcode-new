@@ -495,7 +495,6 @@ class RunGuiding(QThread):
         QThread.__init__(self)
         self.telsock = telsock
         self.guideTargetVar = guideTargetVar
-        #self.guideExpVariable = guideExpVariable
         self.guideExpVariable = int(guideexp)
         self.cam = cam
         self.deltRA = 0
@@ -547,16 +546,22 @@ class RunGuiding(QThread):
                 for s in guidingstuff[8]:
                     self.updateText.emit(s)
 
-
         try:
             #Plot guide star for reference
             starybox = int(guidingstuff[3])
             starxbox = int(guidingstuff[4])
             boxsize = int(guidingstuff[5])
         except Exception as e:
+            starybox = None
+            starxbox = None
             print e
             self.updateText.emit("SOMETHING WENT WRONG WITH GUIDE STAR ASSIGNMENT...")
-            self.quit()
+            return
+            #self.quit()
+
+        if (starybox == None) or (starxbox == None):
+            self.updateText.emit("SOMETHING WENT WRONG WITH GUIDE STAR ASSIGNMENT...")
+            return
 
         self.plotSignal.emit(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
                 self.guideTargetText + " GuideStar")

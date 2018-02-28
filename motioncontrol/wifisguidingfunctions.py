@@ -16,10 +16,11 @@ from PyQt5.QtCore import QThread
 
 plate_scale = 0.29125
 
-guideroffsets = np.array([-4.6,363.73])
+guideroffsets = np.array([-9.,366.73])
 
 # Dec 2017 guideroffsets = np.array([-0.7,362.68])
 
+#JAN/FEB 2018 guideroffsets = np.array([-4.6,363.73])
 
 #Aug/Sept guideroffsets = np.array([-5.54,361.37])
 #June 2017 -4.0,414.1
@@ -180,7 +181,6 @@ def write_telemetry(telemDict):
     f.write('Timestamp: %s\n' % (time.ctime(time.time())))
     for (key,value) in telemDict.iteritems():
         f.write("%s:\t\t%s\n" % (key, value))
-        print "%s:\t\t%s\n" % (key, value)
     
     f.close()
 
@@ -330,7 +330,7 @@ def findguidestar(img1, gfls):
     try:
         guiding_star = bright_stars[0]
     except:
-        return None,None,centoridx,centroidy,Iarr,Isat,width
+        return None,None,centroidx,centroidy,Iarr,Isat,width
 
     #Checking to see if the star is in the "center" of the field and isn't saturated
     for star in bright_stars:
