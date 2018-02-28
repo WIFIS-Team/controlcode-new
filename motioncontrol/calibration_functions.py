@@ -139,6 +139,7 @@ class CalibrationControl():
             self.ser.write(bytes('V'))
             q=self.ser.readline()[0]
             sleep(1)
+        self.checkStatus1()
 
     def flip1pos2(self):
         self.ser.write(bytes('N'))
@@ -147,6 +148,7 @@ class CalibrationControl():
             self.ser.write(bytes('V'))
             q=self.ser.readline()[0]
             sleep(1)
+        self.checkStatus1()
 
     def flip2pos1(self):
         self.ser.write(bytes('L'))
@@ -155,6 +157,7 @@ class CalibrationControl():
             self.ser.write(bytes('R'))
             q=self.ser.readline()[0]
             sleep(1)
+        self.checkStatus2()
 
     def flip2pos2(self):
         self.ser.write(bytes('H'))
@@ -163,6 +166,7 @@ class CalibrationControl():
             self.ser.write(bytes('R'))
             q=self.ser.readline()[0]
             sleep(1)
+        self.checkStatus2()
 
     def flatsetup(self):
         self.flip2pos2()
@@ -171,7 +175,6 @@ class CalibrationControl():
             self.switch2[0].state = 'ON'
         if self.switch2[1].state == 'ON':
             self.switch2[1].state = 'OFF'
-
 
     def arcsetup(self):
         self.flip2pos2()
@@ -187,6 +190,28 @@ class CalibrationControl():
             self.switch2[0].state = 'OFF'
         if self.switch2[1].state == 'ON':
             self.switch2[1].state = 'OFF'
+    
+    def checkStatus1(self):
+        self.ser.write(bytes('B'))
+        q = self.ser.readline()[0]
+        if q == '1':
+            self.arclabel.setStyleSheet('background-color: green')
+            self.spherelabel.setStyleSheet('background-color: red')
+        elif q == '0':
+            self.arclabel.setStyleSheet('background-color: red')
+            self.spherelabel.setStyleSheet('background-color: green')
+
+        return q
+
+    def checkStatus2(self):
+        self.ser.write(bytes('A'))
+        q = self.ser.readline()[0]
+        if q == '0':
+            self.obslabel.setStyleSheet('background-color: red')
+            self.caliblabel.setStyleSheet('background-color: green')
+        elif q == '1':
+            self.obslabel.setStyleSheet('background-color: green')
+            self.caliblabel.setStyleSheet('background-color: red')
 
 def run_calib_gui(tkroot,mainloop = False):
     """Function for running the calibration as part of the launch_controls.py

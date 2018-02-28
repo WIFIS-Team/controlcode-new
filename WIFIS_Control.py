@@ -341,6 +341,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.calibon = True
 
                 self.calibToggle(True)
+                self.calibrationcontrol.checkStatus1()
+                self.calibrationcontrol.checkStatus2()
 
                 self.calibSwitch()
                 print "Connected to Calibration Unit #####"
