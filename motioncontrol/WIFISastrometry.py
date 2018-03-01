@@ -3,6 +3,8 @@ import numpy as np
 import urllib as url
 from astropy.io import fits
 from scipy.optimize import curve_fit
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 class Formatter(object):
     def __init__(self, im):
@@ -15,12 +17,12 @@ def grabUNSOfield(ra, dec):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
     
-    ra_offset = '000000.00' 
-    dec_offset = '000000.00' 
-    ra_deg = ra_conv(ra)
-    dec_deg = dec_conv(dec)
+    coord = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
 
-    fov_am =5.1
+    ra_deg = coord.ra.deg
+    dec_deg = coord.dec.deg
+
+    fov_am = 5
     name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
     
     return [name, rad, ded, rmag]
@@ -39,6 +41,9 @@ def centroid_finder(img, plot = False, verbose=False):
 
     brightpix = np.where(img >= imgmean + nstd*imgstd)
     new_img = np.zeros(imgsize)
+
+    if len(brightpix) == 0:
+        return False
 
     for i in range(len(brightpix[0])):
         new_img[brightpix[0][i],brightpix[1][i]] = 1.0
@@ -136,11 +141,12 @@ def explore_region(x,y, img):
 def bright_star(centroids, imshape, mindist = 25):
 
     Iarr = centroids[2]
+    Isat = centroids[3]
     bright_stars = np.argsort(Iarr)[::-1]
 
     starexists = 0
     for star in bright_stars:
-       if Iarr[star] > 3000:
+       if (Iarr[star] > 3000) and (Isat[star] != 1):
            starexists = 1
            break
 
@@ -174,11 +180,13 @@ def gaussian_fit(xdata, ydata, p0, gaussian=gaus):
 
 def unso(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min. import urllib as url
     
-    str1 = 'http://webviz.u-strasbg.fr/viz-bin/asu-tsv/?-source=USNO-B1'
+    #str1 = 'http://webviz.u-strasbg.fr/viz-bin/asu-tsv/?-source=USNO-B1'
+    str1 = 'http://vizier.hia.nrc.ca/viz-bin/asu-tsv/?-source=USNO-B1'
     str2 = '&-c.ra={:4.6f}&-c.dec={:4.6f}&-c.bm={:4.7f}/{:4.7f}&-out.max=unlimited'.format(radeg,decdeg,fovam,fovam)
 
     # Make sure str2 does not have any spaces or carriage returns/line feeds when you # cut and paste into your code
     URLstr = str1+str2
+    print URLstr
     f = url.urlopen(URLstr)
     # Read from the object, storing the page's contents in 's'.
     s = f.read()

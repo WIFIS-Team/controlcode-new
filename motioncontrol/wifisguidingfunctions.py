@@ -16,7 +16,9 @@ from PyQt5.QtCore import QThread
 
 plate_scale = 0.29125
 
-guideroffsets = np.array([-9.,366.73])
+guideroffsets = np.array([-9.,361.86])
+
+# Early March guideroffsets = np.array([-9.,366.73])
 
 # Dec 2017 guideroffsets = np.array([-0.7,362.68])
 
@@ -240,7 +242,7 @@ def plotguiderimage(img):
     mpl.imshow(np.log10(img), cmap='gray',interpolation='none',origin='lower')
     mpl.show()
 
-def get_rotation_solution(telSock, rotangle, forcerot=90):
+def get_rotation_solution(telSock, rotangle, guideroffsets,forcerot=90):
 
     x_sol = np.array([0.0, plate_scale])
     y_sol = np.array([plate_scale, 0.0])
@@ -266,13 +268,15 @@ def get_rotation_solution(telSock, rotangle, forcerot=90):
 
     return offsets, x_rot, y_rot
 
-def wifis_simple_guiding_setup(telSock, cam, exptime, gfls, rotangle):
+def wifis_simple_guiding_setup(telSock, cam, exptime, gfls, rotangle, goffsets):
 
     #Some constants that need defining
     #exptime = 1500
 
     #Gets the rotation solution so that we can guide at any instrument rotation angle
-    offsets, x_rot, y_rot = get_rotation_solution(telSock, rotangle)
+    guideroffsets = [float(goffsets[0].text()), float(goffsets[1].text())]
+            
+    offsets, x_rot, y_rot = get_rotation_solution(telSock, rotangle, guideroffsets)
 
     #Take image with guider (with shutter open)
     cam.set_exposure(exptime, frametype="normal")
@@ -299,8 +303,8 @@ def wifis_simple_guiding_setup(telSock, cam, exptime, gfls, rotangle):
 
         #Create box around star and check if star is in box. If star, correct it. If no star, reinitialize guiding
         imgbox = img1[stary1old-boxsize_f:stary1old+boxsize_f, starx1old-boxsize_f:starx1old+boxsize_f]
-        worked, result2 = checkstarinbox(imgbox, boxsize_f, telSock, rotangle)
-
+        worked, result2 = checkstarinbox(imgbox, boxsize_f, telSock, rotangle, guideroffsets)
+        
         if worked:
             #If we could put a star at the right coordinates, set the guiding coords to the old coords
             starx1 = starx1old
@@ -318,12 +322,19 @@ def wifis_simple_guiding_setup(telSock, cam, exptime, gfls, rotangle):
         fieldinfo = [centroidx,centroidy,Iarr,Isat, width]
     
     #Make sure were guiding on an actual star. If not maybe change the exptime for guiding.
+    print starx1, stary1
 
     return [offsets, x_rot, y_rot, stary1, starx1, boxsize, img1, result, result2, fieldinfo]
 
 def findguidestar(img1, gfls):
     #check positions of stars    
-    centroidx, centroidy, Iarr, Isat, width = WA.centroid_finder(img1, plot=False)
+    CFReturns = WA.centroid_finder(img1, plot=False)
+
+    if CFReturns == False:
+        return None, None, False, False, False, False, False
+
+    centroidx, centroidy, Iarr, Isat, width = CFReturns 
+
     bright_stars = np.argsort(Iarr)[::-1]
 
     #Choose the brightest non-saturated star for guiding
@@ -334,8 +345,8 @@ def findguidestar(img1, gfls):
 
     #Checking to see if the star is in the "center" of the field and isn't saturated
     for star in bright_stars:
-        if (centroidx[star] > 50 and centroidx[star] < 950) and \
-            (centroidy[star] > 50 and centroidy[star] < 950):
+        if (centroidx[star] > 50) and (centroidx[star] < 950) and \
+            (centroidy[star] > 50) and (centroidy[star] < 950):
             if Isat[star] != 1:
                 guiding_star = star
                 break 
@@ -343,8 +354,15 @@ def findguidestar(img1, gfls):
     stary1 = centroidx[guiding_star]
     starx1 = centroidy[guiding_star] 
 
-    #if Isat[guiding_star] == 1:
-    #    return False, False
+    if Iarr[guiding_star] < 6000:
+        return None,None,centroidx,centroidy,Iarr,Isat,width
+
+    if Isat[guiding_star] == 1:
+        return False, False, centroidx, centroidy, Iarr, Isat, width
+
+    if (centroidx[guiding_star] < 50) or (centroidx[guiding_star] > 950) or \
+            (centroidy[guiding_star] > 50 and centroidy[guiding_star] > 950):
+        return 'NoStar', 'NoStar', centroidx, centroidy, Iarr, Isat, width
 
     #Record this initial setup in the file
     if gfls[0] != '':
@@ -354,15 +372,21 @@ def findguidestar(img1, gfls):
     
     return starx1, stary1, centroidx,centroidy,Iarr,Isat,width
 
-def checkstarinbox(imgbox, boxsize, telSock, rotangle):
+def checkstarinbox(imgbox, boxsize, telSock, rotangle, guideroffsets):
 
     #platescale = 0.29125 #"/pixel
     result = []
 
-    offsets, x_rot, y_rot = get_rotation_solution(telSock, rotangle)
+    offsets, x_rot, y_rot = get_rotation_solution(telSock, rotangle, guideroffsets)
     
     #Try centroiding
-    centroidx, centroidy, Iarr, Isat, width = WA.centroid_finder(imgbox, plot=False)
+    CFReturns = WA.centroid_finder(imgbox, plot=False)
+
+    if CFReturns == False:
+        return [False, None]
+
+    centroidx, centroidy, Iarr, Isat, width = CFReturns
+
     try:
         #If centroid worked, great
         new_loc = np.argmax(Iarr)
@@ -419,7 +443,12 @@ def run_guiding(inputguiding,  cam, telSock, rotangle):
     imgbox = img[stary_box-boxsize:stary_box+boxsize, starx_box-boxsize:starx_box+boxsize]
 
     #FInd the star in the box
-    centroidx, centroidy, Iarr, Isat, width = WA.centroid_finder(imgbox, plot=False)
+    CFReturns = WA.centroid_finder(imgbox, plot=False)
+    if CFReturns == False:
+        return
+    
+    centroidx, centroidy, Iarr, Isat, width = CFReturns
+
     try:
         new_loc = np.argmax(Iarr)
     except:

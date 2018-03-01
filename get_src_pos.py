@@ -53,4 +53,4 @@ class get_src_pos(QObject):
 
 
 if __name__ == '__main__':
-    do_get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst','/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
+    get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst','/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')

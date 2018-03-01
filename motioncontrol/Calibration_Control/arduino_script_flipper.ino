@@ -25,6 +25,7 @@ void loop() {
      
         if(incomingByte == 'H'){
             digitalWrite(flip1, HIGH);
+            
         }else if(incomingByte == 'L'){
             digitalWrite(flip1, LOW);
             

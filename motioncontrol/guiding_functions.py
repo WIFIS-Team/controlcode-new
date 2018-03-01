@@ -83,6 +83,8 @@ def measure_focus(img, sideregions = 3, fitwidth = 10, plot=False, verbose=False
             imgregionshape = imgregion.shape
             brightstar = WA.bright_star(centroids, imgregionshape)
             if brightstar != None:
+                if centroids[3][brightstar] == 1:
+                    continue
                 if verbose:
                     print "BRIGHTSTAR: %f %f %f" % (centroids[0][brightstar], \
                         centroids[1][brightstar], centroids[2][brightstar])
@@ -103,7 +105,6 @@ def measure_focus(img, sideregions = 3, fitwidth = 10, plot=False, verbose=False
                     mpl.pause(0.0001)
 
                 try:
-
                     popt, pcov = WA.gaussian_fit(xs, star_x, [30000., 3.0, 10.0])
                     starsx = np.append(starsx,popt[1])
                     popt, pcov = WA.gaussian_fit(xs, star_y, [30000., 3.0, 10.0])
@@ -131,7 +132,7 @@ class WIFISGuider(QObject):
         super(WIFISGuider, self).__init__()
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
-                self.YPos, self.rotangle = guidevariables
+                self.YPos, self.rotangle, self.guideroffsets = guidevariables
 
         self.deltRA = 0
         self.deltDEC = 0
@@ -160,7 +161,8 @@ class WIFISGuider(QObject):
 
     def calcOffset(self):
         #Get rotation solution
-        offsets,x_rot,y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
+        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+        offsets,x_rot,y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
         yc = float(self.XPos.text())
         xc = float(self.YPos.text())
 
@@ -208,7 +210,8 @@ class WIFISGuider(QObject):
     def offsetToGuider(self):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO GUIDER FIELD ###")
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
+            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
             self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to WIFIS',\
@@ -218,7 +221,8 @@ class WIFISGuider(QObject):
     def offsetToWIFIS(self):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO WIFIS FIELD ###")
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
+            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
             self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to Guider',\
@@ -356,13 +360,20 @@ class WIFISGuider(QObject):
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='normal')
                 img = self.cam.take_photo()  
-            
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()))
+
+            if not auto:
+                self.plotSignal.emit(img, "Centroids")
+                
+            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
             
             centroids = WA.centroid_finder(img)
-            #for i in centroids:
-            #    print i
-
+            for a in centroids:
+                print a
+            if centroids == False:
+                self.updateText.emit("NO STARS FOUND -- TRY INCREASING EXP TIME")
+                return
+                
             barr = np.argsort(centroids[2])[::-1]
             b = np.argmax(centroids[2])
       
@@ -385,9 +396,6 @@ class WIFISGuider(QObject):
 		self.updateText.emit("DEC Move: %f" % (d*radec[0]))
                 self.updateText.emit("\n")
 
-            if not auto:
-                self.plotSignal.emit(img, "Centroids")
-
             b = np.argmax(centroids[2])
             offsetx = centroids[0][b] - 512
             offsety = centroids[1][b] - 512
@@ -399,7 +407,7 @@ class WIFISGuider(QObject):
 
     def focusCamera(self):
 
-        focusthread = FocusCamera(self.cam, self.foc)
+        focusthread = FocusCamera(self.cam, self.foc,self.expTime)
         focusthread.start()
 
     def startGuiding(self):
@@ -433,10 +441,11 @@ class FocusCamera(QThread):
     updateText = pyqtSignal(str)
     plotSignal = pyqtSignal(np.ndarray, str)
     
-    def __init__(self, cam, foc):
+    def __init__(self, cam, foc, expTime):
         QThread.__init__(self)
         self.cam = cam
         self.foc = foc
+        self.expTime = int(expTime.text())
         self.stopThread = False
 
     def __del__(self):
@@ -450,8 +459,12 @@ class FocusCamera(QThread):
         current_focus = self.foc.get_stepper_position() 
         step = 200
 
-        self.cam.set_exposure(3000)
-        #self.cam.set_exposure(int(self.entryExpVariable.get()))
+        if self.expTime > 4000:
+            self.updateText.emit("EXPTIME TOO LONG, FIND BRIGHTER FIELD OR CHANGE TIME")
+            return
+
+        #self.cam.set_exposure(3000)
+        self.cam.set_exposure(self.expTime)
         img = self.cam.take_photo()
         focus_check1, bx, by = measure_focus(img)
         direc = 1 #forward
@@ -490,8 +503,9 @@ class RunGuiding(QThread):
     updateText = pyqtSignal(str)
     setSkySignal = pyqtSignal(str)
     plotSignal = pyqtSignal(np.ndarray, str)
+    endNodding = pyqtSignal(bool)
 
-    def __init__(self, telsock, cam, guideTargetVar, rotangle, guideexp, sky=False):
+    def __init__(self, telsock, cam, guideTargetVar, rotangle, guideexp, overguidestar, guideroffsets, sky=False):
         QThread.__init__(self)
         self.telsock = telsock
         self.guideTargetVar = guideTargetVar
@@ -502,6 +516,9 @@ class RunGuiding(QThread):
         self.stopThread = False
         self.sky = sky
         self.rotangle = float(rotangle.text())
+        self.overguidestar = overguidestar
+        self.guideroffsets = guideroffsets
+
 
     def __del__(self):
         self.wait()
@@ -523,24 +540,65 @@ class RunGuiding(QThread):
         #self.guideButtonVar.set("Stop Guiding")
         gfls = self.checkGuideVariable()
         guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
-            int(self.guideExpVariable),gfls, self.rotangle)
+            int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
         #guidingstuff = [offsets, x_rot, y_rot, stary1, starx1, boxsize, img1, result, result2,fieldinfo]
 
+        if (guidingstuff[3] == 'NoStar') or (guidingstuff[4] == 'NoStar'):
+            self.updateText.emit("NO STARS IN CENTER FIELD...INCREASING GUIDE TIME...")
+            self.guideExpVariable += 1000
+            while (guidingstuff[3] == 'NoStar') and (self.guideExpVariable < 9000):
+                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.guideExpVariable))
+                guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
+                    int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
+                self.guideExpVariable += 1000
+            if guidingstuff[3] == 'NoStar':
+                self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
+                self.endNodding.emit(True)
+                return 
+
         if (guidingstuff[3] == None) or (guidingstuff[4] == None):
-            self.updateText.emit("NO STARS TO GUIDE ON...INCREASE GUIDE EXP TIME?")
-            self.quit()
+            self.updateText.emit("NO STARS TO GUIDE ON...INCREASING GUIDE TIME...")
+            self.guideExpVariable += 1000
+            while (guidingstuff[3] == None) and (self.guideExpVariable < 9000):
+                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.guideExpVariable))
+                guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
+                    int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
+                self.guideExpVariable += 1000
+            if guidingstuff[3] == None:
+                self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
+                self.endNodding.emit(True)
+                return 
+
+        elif guidingstuff[3] == False:
+            self.updateText.emit("ALL STARS IN FIELD SATURATED..DECREASING GUIDE TIME...")
+            self.guideExpVariable -= 100
+            while (guidingstuff[3] == False) and (self.guideExpVariable > 0):
+                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.guideExpVariable))
+                guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
+                    int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
+                self.guideExpVariable -= 100
+            if guidingstuff[3] == False:
+                self.updateText.emit("ALL STARS IN FIELD SATURATED AT ALL EXPTIME, QUITTING")
+                self.endNodding.emit(True)
+                return 
+
+        if guidingstuff[3] in [False, None, 'NoStar']:
+            self.updateText.emit("SOMETHING WENT WRONG WITH GUIDE STAR ASSIGNMENT...")
+            self.endNodding.emit(True)
+            return
 
         fieldinfo = guidingstuff[9]
         try:
             if (fieldinfo != None) and (guidingstuff[3] != None):
-                fieldinfofl = np.savetxt('/home/utopea/elliot/guidefield/'+time.strftime('%Y%m%dT%H%M%S')+'_'+self.guideTargetText+'.txt',\
-                        np.transpose(fieldinfo))
+                fieldinfofl = np.savetxt('/home/utopea/elliot/guidefield/'+time.strftime('%Y%m%dT%H%M%S')+\
+                        '_'+self.guideTargetText+'.txt', np.transpose(fieldinfo))
         except Exception as e:
             print e
         
         if guidingstuff[7] != None:
             self.updateText.emit(guidingstuff[7])
-        #guidingstuff[8] is the text outpu
+
+        #guidingstuff[8] is the text output
         if guidingstuff[8] != None: 
             if len(guidingstuff[8]) > 0:
                 for s in guidingstuff[8]:
@@ -559,14 +617,8 @@ class RunGuiding(QThread):
             return
             #self.quit()
 
-        if (starybox == None) or (starxbox == None):
-            self.updateText.emit("SOMETHING WENT WRONG WITH GUIDE STAR ASSIGNMENT...")
-            return
-
         self.plotSignal.emit(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize],\
                 self.guideTargetText + " GuideStar")
-        #mpl.imshow(guidingstuff[6][starybox-boxsize:starybox+boxsize, starxbox-boxsize:starxbox+boxsize], origin='lower')
-        #mpl.savefig('/home/utopea/elliot/guideimages/'+time.strftime('%Y%m%dT%H%M%S')+'_'+self.guideTargetText+'.png')
 
         guidingstuff = guidingstuff[:7]
         something_wrong_count = 0
@@ -611,11 +663,18 @@ class RunGuiding(QThread):
         guidefls = glob('/home/utopea/elliot/guidefiles/*.txt')
         if self.guideTargetText == '':
             return '', False
-        if gfl not in guidefls:
+        if (gfl in guidefls) and (self.overguidestar.isChecked()):
+            self.updateText.emit("OVERWRITING GUIDE STAR...UNCHECKING")
+            os.remove(gfl)
+            self.overguidestar.setChecked(False)
+            return gfl, False
+        elif gfl not in guidefls:
             self.updateText.emit("OBJECT NOT OBSERVED, INITIALIZING GUIDE STAR")
             return gfl, False
         else:
             self.updateText.emit("OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR")
             return gfl, True
-    
+        
+
+
 

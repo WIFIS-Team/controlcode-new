@@ -25,6 +25,17 @@ import time
 
 motors = False
 
+def read_defaults():
+
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    valuesdict = {}
+    for line in f:
+        spl = line.split()
+        valuesdict[spl[0]] = spl[1]
+    f.close()
+
+    return valuesdict
+
 class Formatter(object):
     def __init__(self, im):
         self.im = im
@@ -72,10 +83,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideplotwindow = PlotWindow('Guider Plot Window')
         self.guideplotwindow.show()
 
+        guidevals = read_defaults()
+        self.GuideRA.setText(guidevals['GuideRA'])
+        self.GuideDEC.setText(guidevals['GuideDEC'])
+        self.SetGuideOffset.clicked.connect(self.setGuideOffset)
+
+        self.guideroffsets = [self.GuideRA, self.GuideDEC]
+
         #Defining GUI Variables to feed into different control classes
         #Important that the classes only read the variables and never try to adjust them.
         self.guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
-                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel]
+                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel, self.guideroffsets]
         self.power_widgets = [self.Power11, self.Power12, self.Power13, self.Power14, self.Power15,\
                         self.Power16, self.Power17, self.Power18, self.Power21, self.Power22,\
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
@@ -206,6 +224,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         
         self.SetNextButton.clicked.connect(self.setNextRADEC)
 
+    def setGuideOffset(self):
+        self._handleOutputTextUpdate('SETTING NEW GUIDE OFFSETS...')
+        guidevals['GuideRA'] = self.GuideRA.text()
+        guidevals['GuideDEC'] = self.GuideDEC.text()
+        fl = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','w')
+        for key, val in guidevals.iteritems():
+            fl.write('%s\t\t%s\n' % (key, val))
+        fl.close()
+        self._handleOutputTextUpdate('NEW GUIDE OFFSETS SET')
+        
+
     def calibSwitch(self):
         '''Connects all the calibration buttons to the proper functions'''
         if self.calibon:
@@ -256,6 +285,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.actionConnect.triggered.connect(self.scidet.connect)
             self.actionInitialize.triggered.connect(self.scidet.initialize)
             self.actionDisconnect.triggered.connect(self.scidet.disconnect)
+            self.scidet.connect()
 
     def telescopeSwitch(self):
         if self.telescope:
@@ -405,9 +435,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             else:
                 val2 = False
 
-            print self.switch1.status()
-            print self.switch2.status()
-            print val1, val2
             self.powerToggle(True, val1, val2)
 
             
@@ -606,7 +633,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def startGuiding(self):
         self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                self.GuiderExpTime.text())
+                self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
@@ -614,7 +641,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideThread.start()
 
     def focusCamera(self):
-        self.fcthread = gf.FocusCamera(self.guider.cam, self.guider.foc)
+        self.fcthread = gf.FocusCamera(self.guider.cam, self.guider.foc, self.ExpTime)
         self.fcthread.plotSignal.connect(self._handleGuidePlotting)
         self.fcthread.updateText.connect(self._handleGuidingTextUpdate)
         self.fcthread.start()
@@ -708,7 +735,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def startNodding(self):
         self.noddingexposure = NoddingExposure(self.scidet, self.guider, self.NodSelection, \
                 self.NNods, self.NodsPerCal, self.NRampsText, self.NReadsText, \
-                self.ObjText, self.NodRAText, self.NodDecText)
+                self.ObjText, self.NodRAText, self.NodDecText, self.SkipCalib)
         self.noddingexposure.updateText.connect(self._handleOutputTextUpdate)
         self.noddingexposure.startGuiding.connect(self._handleNoddingGuide)
         self.noddingexposure.stopGuiding.connect(self._handleNoddingGuideStop)
@@ -727,15 +754,19 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def _handleNoddingGuide(self, s):
         if s == 'Sky':
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                    self.GuiderExpTime.text(), sky=True)
+                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, sky=True)
         else:
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                    self.GuiderExpTime.text(), sky=False)
+                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, sky=False)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
+        self.guideThread.endNodding.connect(self._endNodding)
         self.StopGuidingButton.clicked.connect(self.guideThread.stop)
         self.guideThread.start()
+
+    def _endNodding(self, b):
+        self.noddingexposure.stop()
 
     def _handleNoddingGuideStop(self):
         self.guideThread.stop()
@@ -804,6 +835,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
 
     def _handleGuidePlotting(self, image, flname):
+        print "IMAGE IS...", image
 
         try:
             norm = ImageNormalize(image, interval=PercentileInterval(99.5),stretch=LinearStretch())
@@ -991,7 +1023,7 @@ class NoddingExposure(QThread):
     progBar = pyqtSignal(int, int)
 
     def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, nramps, nreads,\
-            objname, nodra, noddec):
+            objname, nodra, noddec, skipcalib):
 
         QThread.__init__(self)
 
@@ -1005,6 +1037,7 @@ class NoddingExposure(QThread):
         self.objname = objname
         self.nodra = nodra
         self.noddec = noddec
+        self.skipcalib = skipcalib
 
         self.stopthread = False
 
@@ -1046,8 +1079,10 @@ class NoddingExposure(QThread):
         self.updateText.emit("####### STARTING NODDING SEQUENCE #######")
         self.updateText.emit("# Doing initial calibrations")
 
-        self.progBar.emit(20, self.nrampsval)
-        self.scidet.takecalibrations(self.objnameval)
+        if not self.skipcalib.isChecked():
+            self.progBar.emit(20, self.nrampsval)
+            self.scidet.takecalibrations(self.objnameval)
+
         if self.stopthread:
             self.updateText.emit("####### STOPPED NODDING SEQUENCE #######")
             return
@@ -1060,6 +1095,8 @@ class NoddingExposure(QThread):
                 if obstype == 'A':
                     self.startGuiding.emit('Obj')
                     self.sleep(5)
+                    if self.stopthread:
+                        break
 
                     self.progBar.emit(self.nreadsval, self.nrampsval)
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval)
@@ -1071,6 +1108,8 @@ class NoddingExposure(QThread):
                     self.sleep(5)
                     self.startGuiding.emit('Sky')
                     self.sleep(5)
+                    if self.stopthread:
+                        break
 
                     self.progBar.emit(self.nreadsval, self.nrampsval)
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky')
@@ -1079,6 +1118,7 @@ class NoddingExposure(QThread):
                     self.sleep(5)
                     self.guider.moveTelescopeNod(-1.*self.nodraval, -1.*self.noddecval)
                     self.sleep(5)
+
                 if self.stopthread:
                     break
 
