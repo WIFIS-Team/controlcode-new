@@ -218,21 +218,26 @@ class h2rg(QObject):
 
     def plotImage(self,obsType,nreads,fileName1,fileName2, sourcename=''):
 
-        if(nreads < 2):
-            hdu = fits.open(fileName1)
-            image = hdu[0].data*1.0
-            hdu.close()
-        else:
-            hdu1 = fits.open(fileName1)
-            hdu2 = fits.open(fileName2)
-            image = hdu2[0].data*1.0 - hdu1[0].data*1.0
-            hdu1.close()
-            hdu2.close()
+        try:
+            if(nreads < 2):
+                hdu = fits.open(fileName1)
+                image = hdu[0].data*1.0
+                hdu.close()
+            else:
+                hdu1 = fits.open(fileName1)
+                hdu2 = fits.open(fileName2)
+                image = hdu2[0].data*1.0 - hdu1[0].data*1.0
+                hdu1.close()
+                hdu2.close()
 
-        if fileName2 != None:
-            self.plotSignal.emit(image, fileName2.split('/')[-1] + ' '+sourcename)
-        else:
-            self.plotSignal.emit(image, fileName1.split('/')[-1] + ' '+sourcename)
+            if fileName2 != None:
+                self.plotSignal.emit(image, fileName2.split('/')[-1] + ' '+sourcename)
+            else:
+                self.plotSignal.emit(image, fileName1.split('/')[-1] + ' '+sourcename)
+        except Exception as e:
+            print e
+            print traceback.print_exc()
+            self.printTxt("SOMETHING WENT WRONG WITH PLOTTING...")
 
 
     def flatramp(self,sourcename, notoggle = False):

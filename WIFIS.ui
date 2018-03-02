@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>950</width>
-    <height>993</height>
+    <width>1022</width>
+    <height>1064</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -305,7 +305,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -379,13 +379,6 @@
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="2">
-               <widget class="QPushButton" name="MoveBackButton">
-                <property name="text">
-                 <string>Move Back</string>
                 </property>
                </widget>
               </item>
@@ -468,17 +461,24 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="2">
-               <widget class="QPushButton" name="CenteringCheck">
-                <property name="text">
-                 <string>Centering Check</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="3" rowspan="4">
                <widget class="Line" name="line_8">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QPushButton" name="MoveBackButton">
+                <property name="text">
+                 <string>Move Back</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QPushButton" name="CenteringCheck">
+                <property name="text">
+                 <string>Centering Check</string>
                 </property>
                </widget>
               </item>
@@ -1375,7 +1375,7 @@
               <item row="0" column="3">
                <widget class="QLabel" name="label_11">
                 <property name="text">
-                 <string>Guide ExpTime (ms)</string>
+                 <string>Guider ExpTime (ms)</string>
                 </property>
                </widget>
               </item>
@@ -1867,64 +1867,6 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="2">
-         <widget class="QLabel" name="label_34">
-          <property name="text">
-           <string>Exposure Type:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QComboBox" name="ExpTypeSelect">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <item>
-           <property name="text">
-            <string>Ramp</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>CDS</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Single Frame</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Arc Ramp</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Flat Ramp</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="2" column="2">
-         <widget class="QPushButton" name="TakeCalibButton">
-          <property name="font">
-           <font>
-            <weight>50</weight>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>Take Calibrations</string>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="1" colspan="3">
          <widget class="QProgressBar" name="ExpProgressBar">
           <property name="value">
@@ -1932,22 +1874,22 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="6" rowspan="4">
-         <widget class="QTextEdit" name="OutputText">
-          <property name="font">
-           <font>
-            <family>Helvetica</family>
-            <pointsize>10</pointsize>
-            <italic>true</italic>
-           </font>
-          </property>
-          <property name="overwriteMode">
-           <bool>false</bool>
+        <item row="1" column="4" rowspan="4">
+         <widget class="Line" name="line_10">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
           </property>
          </widget>
         </item>
-        <item row="2" column="3">
-         <widget class="QPushButton" name="ExposureButton">
+        <item row="3" column="5">
+         <widget class="QCheckBox" name="SkipCalib">
+          <property name="text">
+           <string>Skip Initial Cals</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
+         <widget class="QPushButton" name="NodBeginButton">
           <property name="font">
            <font>
             <weight>75</weight>
@@ -1955,7 +1897,20 @@
            </font>
           </property>
           <property name="text">
-           <string>SINGLE EXPOSURE</string>
+           <string>BEGIN NOD SEQ</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="5">
+         <widget class="QPushButton" name="StopExpButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>STOP NODS</string>
           </property>
          </widget>
         </item>
@@ -1993,15 +1948,70 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="4" rowspan="4">
-         <widget class="Line" name="line_10">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+        <item row="0" column="6" rowspan="5">
+         <widget class="QTextEdit" name="OutputText">
+          <property name="font">
+           <font>
+            <family>Helvetica</family>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="overwriteMode">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
-        <item row="1" column="5">
-         <widget class="QPushButton" name="NodBeginButton">
+        <item row="1" column="2">
+         <widget class="QPushButton" name="TakeCalibButton">
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Take Calibrations</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QComboBox" name="ExpTypeSelect">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <item>
+           <property name="text">
+            <string>Ramp</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CDS</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Single Frame</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Arc Ramp</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Flat Ramp</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QPushButton" name="ExposureButton">
           <property name="font">
            <font>
             <weight>75</weight>
@@ -2009,27 +2019,17 @@
            </font>
           </property>
           <property name="text">
-           <string>BEGIN NOD SEQ</string>
+           <string>EXPOSURE</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="5">
-         <widget class="QPushButton" name="StopExpButton">
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
+        <item row="2" column="2">
+         <widget class="QLabel" name="label_34">
           <property name="text">
-           <string>STOP NODS</string>
+           <string>Exposure Type:</string>
           </property>
-         </widget>
-        </item>
-        <item row="3" column="5">
-         <widget class="QCheckBox" name="SkipCalib">
-          <property name="text">
-           <string>Skip Initial Calibrations</string>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -2037,138 +2037,6 @@
       </item>
       <item row="7" column="0">
        <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0,0,0,0,0,0,0,0">
-        <item row="6" column="7">
-         <widget class="QCheckBox" name="OverGuideStar">
-          <property name="text">
-           <string>Overwrite Guide Star</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="3" rowspan="4">
-         <widget class="Line" name="line_5">
-          <property name="font">
-           <font>
-            <pointsize>13</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="6">
-         <widget class="QPushButton" name="SetTempButton">
-          <property name="text">
-           <string>Set Temp</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="4">
-         <widget class="QLabel" name="label_26">
-          <property name="font">
-           <font>
-            <pointsize>13</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Exp Type:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="6">
-         <widget class="QPushButton" name="CentroidButton">
-          <property name="text">
-           <string>Centroid Stars</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="4">
-         <widget class="QLabel" name="label_33">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>13</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Exp Time (ms):</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="5">
-         <widget class="QComboBox" name="ExpType">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>80</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="currentText">
-           <string>Normal</string>
-          </property>
-          <item>
-           <property name="text">
-            <string>Normal</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Dark</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="5" column="7">
-         <widget class="QPushButton" name="StopGuidingButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Stop Guiding</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="5">
-         <widget class="QLineEdit" name="ExpTime">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>80</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>1500</string>
-          </property>
-         </widget>
-        </item>
         <item row="5" column="2">
          <widget class="QLineEdit" name="FocStep">
           <property name="sizePolicy">
@@ -2272,62 +2140,6 @@
           </item>
          </widget>
         </item>
-        <item row="6" column="4">
-         <widget class="QLabel" name="label_28">
-          <property name="font">
-           <font>
-            <pointsize>13</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Set CCD Temp</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="7">
-         <widget class="QPushButton" name="StartGuidingButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Start Guiding</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="6">
-         <widget class="QPushButton" name="FocusCameraButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Focus Camera</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="4">
-         <widget class="QLabel" name="label_27">
-          <property name="font">
-           <font>
-            <pointsize>13</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>CCD Temp:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
         <item row="5" column="1">
          <widget class="QLabel" name="label_24">
           <property name="font">
@@ -2343,25 +2155,6 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="5">
-         <widget class="QLabel" name="CCDTemp">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>80</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="1">
          <widget class="QLabel" name="label_22">
           <property name="font">
@@ -2374,25 +2167,6 @@
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="5">
-         <widget class="QLineEdit" name="SetTempValue">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>80</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>-20</string>
           </property>
          </widget>
         </item>
@@ -2422,29 +2196,6 @@
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="8" rowspan="5">
-         <widget class="QTextEdit" name="GuidingText">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>250</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Helvetica</family>
-            <pointsize>10</pointsize>
-            <italic>true</italic>
-           </font>
           </property>
          </widget>
         </item>
@@ -2503,16 +2254,297 @@
          </layout>
         </item>
         <item row="3" column="7">
+         <widget class="QPushButton" name="StartGuidingButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Start Guiding</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QLabel" name="label_28">
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>CCD Temp</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="4">
+         <widget class="QPushButton" name="CentroidButton">
+          <property name="text">
+           <string>Centroid Stars</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="2">
+         <widget class="QLineEdit" name="SetTempValue">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>-20</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="5">
+         <widget class="QPushButton" name="SaveImageButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Save Image</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="7">
+         <widget class="QCheckBox" name="OverGuideStar">
+          <property name="text">
+           <string>Overwrite Guide Star</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="3" rowspan="6">
+         <widget class="Line" name="line_5">
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="4">
          <widget class="QPushButton" name="TakeImageButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
           <property name="text">
            <string>Take Image</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="6">
-         <widget class="QPushButton" name="SaveImageButton">
+        <item row="3" column="6" rowspan="6">
+         <widget class="Line" name="line_7">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="1" colspan="2">
+         <widget class="QPushButton" name="SetTempButton">
           <property name="text">
-           <string>Save Image</string>
+           <string>Set Temp</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="8" rowspan="7">
+         <widget class="QTextEdit" name="GuidingText">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>250</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Helvetica</family>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="7">
+         <widget class="QPushButton" name="StopGuidingButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Stop Guiding</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="4">
+         <widget class="QLabel" name="label_27">
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>CCD Temp:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="5">
+         <widget class="QLabel" name="CCDTemp">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="4">
+         <widget class="QLabel" name="label_26">
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Exp Type:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="5">
+         <widget class="QComboBox" name="ExpType">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="currentText">
+           <string>Normal</string>
+          </property>
+          <item>
+           <property name="text">
+            <string>Normal</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Dark</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="6" column="4">
+         <widget class="QLabel" name="label_33">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Exp Time (ms):</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="5">
+         <widget class="QLineEdit" name="ExpTime">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>1500</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="4">
+         <widget class="QPushButton" name="FocusCameraButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Focus Camera</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="5">
+         <widget class="QPushButton" name="StopFocus">
+          <property name="text">
+           <string>Stop Focus</string>
           </property>
          </widget>
         </item>
@@ -2529,7 +2561,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>950</width>
+     <width>1022</width>
      <height>22</height>
     </rect>
    </property>
@@ -2633,11 +2665,9 @@
   <tabstop>moveTelescopeButton</tabstop>
   <tabstop>GuiderMoveButton</tabstop>
   <tabstop>WIFISMoveButton</tabstop>
-  <tabstop>MoveBackButton</tabstop>
   <tabstop>XPos</tabstop>
   <tabstop>YPos</tabstop>
   <tabstop>CalOffsetButton</tabstop>
-  <tabstop>CenteringCheck</tabstop>
   <tabstop>ObjText</tabstop>
   <tabstop>SkyCheckBox</tabstop>
   <tabstop>RAObj</tabstop>
@@ -2650,23 +2680,10 @@
   <tabstop>NodsPerCal</tabstop>
   <tabstop>NRampsText</tabstop>
   <tabstop>NReadsText</tabstop>
-  <tabstop>TakeCalibButton</tabstop>
-  <tabstop>ExpTypeSelect</tabstop>
   <tabstop>FilterVal</tabstop>
   <tabstop>FocStep</tabstop>
   <tabstop>BKWButton</tabstop>
   <tabstop>FWDButton</tabstop>
-  <tabstop>ExpType</tabstop>
-  <tabstop>ExpTime</tabstop>
-  <tabstop>SetTempValue</tabstop>
-  <tabstop>SaveImageButton</tabstop>
-  <tabstop>TakeImageButton</tabstop>
-  <tabstop>FocusCameraButton</tabstop>
-  <tabstop>CentroidButton</tabstop>
-  <tabstop>SetTempButton</tabstop>
-  <tabstop>StartGuidingButton</tabstop>
-  <tabstop>StopGuidingButton</tabstop>
-  <tabstop>OverGuideStar</tabstop>
   <tabstop>Power11</tabstop>
   <tabstop>Power12</tabstop>
   <tabstop>Power13</tabstop>

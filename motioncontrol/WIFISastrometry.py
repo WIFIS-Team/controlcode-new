@@ -13,11 +13,13 @@ class Formatter(object):
         z = self.im.get_array()[int(y), int(x)]
         return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
-def grabUNSOfield(ra, dec):
+def grabUNSOfield(fl):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
+
+    data, head, RA, DEC = load_img(fl)
     
-    coord = SkyCoord(ra, dec, unit=(u.hourangle, u.deg))
+    coord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
 
     ra_deg = coord.ra.deg
     dec_deg = coord.dec.deg
@@ -26,6 +28,16 @@ def grabUNSOfield(ra, dec):
     name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
     
     return [name, rad, ded, rmag]
+
+def load_img(fl):
+    f = fits.open(fl)
+    data = f[0].data
+    head = f[0].header
+    RA = head['RA']
+    DEC = head['DEC']
+    RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
+    DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+    return data, head, RA, DEC
 
 def centroid_finder(img, plot = False, verbose=False):
 

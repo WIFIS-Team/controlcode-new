@@ -169,7 +169,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Detector control functions that don't reference the detector
         self.ExposureButton.clicked.connect(self.initExposure)
         self.TakeCalibButton.clicked.connect(self.initCalibExposure)
-        self.NodBeginButton.clicked.connect(self.startNodding)
+        self.NodBeginButton.clicked.connect(self.checkStartNodding)
         self.CenteringCheck.clicked.connect(self.checkcentering)
 
         #Defining actions for Guider Control
@@ -731,6 +731,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.calibexpose.updateText.connect(self._handleOutputTextUpdate)
         self._handleNoddingProgBar(20,1)
         self.calibexpose.start()
+
+    def checkStartNoding(self):
+        choice = QtGui.QMessageBox.question(self, 'Nodding Sequence?',
+                                            "Start Nodding Sequence?",
+                                            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+        if choice == QtGui.QMessageBox.Yes:
+            self.startNodding()
+        else:
+            pass
 
     def startNodding(self):
         self.noddingexposure = NoddingExposure(self.scidet, self.guider, self.NodSelection, \
