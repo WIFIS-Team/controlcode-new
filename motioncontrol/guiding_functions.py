@@ -22,6 +22,9 @@ from glob import glob
 from astropy.visualization import (PercentileInterval,\
                                 LinearStretch, ImageNormalize)
 from PyQt5.QtCore import QThread, QObject, pyqtSignal
+import traceback
+
+plate_scale = 0.29125
 
 try:
     import FLI
@@ -211,7 +214,10 @@ class WIFISGuider(QObject):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO GUIDER FIELD ###")
             guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+            print guideroffsets
+            print self.rotangle.text()
             offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
+            print offsets, x_rot, y_rot
             result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
             self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to WIFIS',\
@@ -486,7 +492,7 @@ class FocusCamera(QThread):
             self.updateText.emit("Old Focus: %f, New Focus: %f" % (focus_check1, focus_check2))
 
             #if focus gets go back to beginning, change direction and reduce step
-            if focus_check2 > focus_check1:
+            if (focus_check2 > focus_check1) or (focus_check2 == np.NaN):
                 direc = direc*-1
                 self.foc.step_motor(direc*step)
                 step = int(step / 2)
@@ -509,7 +515,7 @@ class RunGuiding(QThread):
         QThread.__init__(self)
         self.telsock = telsock
         self.guideTargetVar = guideTargetVar
-        self.guideExpVariable = int(guideexp)
+        self.exptime= int(guideexp)
         self.cam = cam
         self.deltRA = 0
         self.deltDEC = 0
@@ -537,20 +543,20 @@ class RunGuiding(QThread):
             self.guideTargetText = self.guideTargetVar.text()
 
         self.updateText.emit("###### STARTING GUIDING ON %s" % (self.guideTargetText))
-        #self.guideButtonVar.set("Stop Guiding")
         gfls = self.checkGuideVariable()
-        guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
-            int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
-        #guidingstuff = [offsets, x_rot, y_rot, stary1, starx1, boxsize, img1, result, result2,fieldinfo]
+
+        guidingstuff = self.wifis_simple_guiding_setup(gfls)
+        #guidingstuff = [offsets, x_rot, y_rot, stary1, starx1, boxsize, img1, fieldinfo]
 
         if (guidingstuff[3] == 'NoStar') or (guidingstuff[4] == 'NoStar'):
             self.updateText.emit("NO STARS IN CENTER FIELD...INCREASING GUIDE TIME...")
-            self.guideExpVariable += 1000
-            while (guidingstuff[3] == 'NoStar') and (self.guideExpVariable < 9000):
-                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.guideExpVariable))
-                guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
-                    int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
-                self.guideExpVariable += 1000
+            self.exptime += 1000
+
+            while (guidingstuff[3] == 'NoStar') and (self.exptime < 9000):
+                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.exptime))
+                guidingstuff = self.wifis_simple_guiding_setup(gfls)
+                self.exptime += 1000
+
             if guidingstuff[3] == 'NoStar':
                 self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
                 self.endNodding.emit(True)
@@ -558,12 +564,13 @@ class RunGuiding(QThread):
 
         if (guidingstuff[3] == None) or (guidingstuff[4] == None):
             self.updateText.emit("NO STARS TO GUIDE ON...INCREASING GUIDE TIME...")
-            self.guideExpVariable += 1000
-            while (guidingstuff[3] == None) and (self.guideExpVariable < 9000):
-                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.guideExpVariable))
-                guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
-                    int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
-                self.guideExpVariable += 1000
+            self.exptime += 1000
+
+            while (guidingstuff[3] == None) and (self.exptime < 9000):
+                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.exptime))
+                guidingstuff = self.wifis_simple_guiding_setup(gfls)
+                self.exptime += 1000
+
             if guidingstuff[3] == None:
                 self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
                 self.endNodding.emit(True)
@@ -571,12 +578,16 @@ class RunGuiding(QThread):
 
         elif guidingstuff[3] == False:
             self.updateText.emit("ALL STARS IN FIELD SATURATED..DECREASING GUIDE TIME...")
-            self.guideExpVariable -= 100
-            while (guidingstuff[3] == False) and (self.guideExpVariable > 0):
-                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.guideExpVariable))
-                guidingstuff = WG.wifis_simple_guiding_setup(self.telsock, self.cam, \
-                    int(self.guideExpVariable),gfls, self.rotangle, self.guideroffsets)
-                self.guideExpVariable -= 100
+            self.exptime -= 100
+
+            while (guidingstuff[3] == False) and (self.exptime > 0):
+                self.updateText.emit("TRYING GUIDE EXPTIME: %i" % (self.exptime))
+                guidingstuff = self.wifis_simple_guiding_setup(gfls)
+                if self.exptime < 150:
+                    self.exptime -= 10
+                else:
+                    self.exptime -= 100
+
             if guidingstuff[3] == False:
                 self.updateText.emit("ALL STARS IN FIELD SATURATED AT ALL EXPTIME, QUITTING")
                 self.endNodding.emit(True)
@@ -587,7 +598,7 @@ class RunGuiding(QThread):
             self.endNodding.emit(True)
             return
 
-        fieldinfo = guidingstuff[9]
+        fieldinfo = guidingstuff[7]
         try:
             if (fieldinfo != None) and (guidingstuff[3] != None):
                 fieldinfofl = np.savetxt('/home/utopea/elliot/guidefield/'+time.strftime('%Y%m%dT%H%M%S')+\
@@ -595,15 +606,6 @@ class RunGuiding(QThread):
         except Exception as e:
             print e
         
-        if guidingstuff[7] != None:
-            self.updateText.emit(guidingstuff[7])
-
-        #guidingstuff[8] is the text output
-        if guidingstuff[8] != None: 
-            if len(guidingstuff[8]) > 0:
-                for s in guidingstuff[8]:
-                    self.updateText.emit(s)
-
         try:
             #Plot guide star for reference
             starybox = int(guidingstuff[3])
@@ -629,18 +631,14 @@ class RunGuiding(QThread):
                 break
             else:
                 try:
-                    dRA, dDEC, guideinfo, guideresult, img = WG.run_guiding(guidingstuff,\
-                            self.cam, self.telsock,self.rotangle)
-                    self.plotSignal.emit(img[starybox-boxsize:starybox+boxsize,\
-                            starxbox-boxsize:starxbox+boxsize],self.guideTargetText + ' GuideStar')
+                    dRA, dDEC = self.run_guiding(guidingstuff)
                     self.deltRA += dRA
                     self.deltDEC += dDEC
-                    self.updateText.emit(guideinfo)
-                    self.updateText.emit(guideresult)
                     self.updateText.emit("DELTRA:\t%f\nDELTDEC:\t%f\n" % (self.deltRA, self.deltDEC))
                     something_wrong_count = 0
                 except Exception as e:
                     print e
+                    print traceback.print_exc()
                     self.updateText.emit("SOMETHING WRONG WITH GUIDING...CONTINUING...")
                     something_wrong_count += 1
                     if something_wrong_count > 15:
@@ -674,7 +672,323 @@ class RunGuiding(QThread):
         else:
             self.updateText.emit("OBJECT ALREADY OBSERVED, USING ORIGINAL GUIDE STAR")
             return gfl, True
+
+    def wifis_simple_guiding_setup(self, gfls):
+
+        #Gets the rotation solution so that we can guide at any instrument rotation angle
+        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+                
+        offsets, x_rot, y_rot = WG.get_rotation_solution(self.telsock, self.rotangle, guideroffsets)
+
+        #Take image with guider (with shutter open)
+        self.cam.set_exposure(self.exptime, frametype="normal")
+        self.cam.end_exposure()
+
+        #Takes initial image
+        img1 = self.cam.take_photo()
+        img1size = img1.shape
+        boxsize = 30
+
+        #Checks to see if there exists a guiding star for this target
+        if gfls[1] and (gfls[0] != ''):
+            #Sets the larger boxsize for guiding setup
+            boxsize_f = 50
+            
+            #Get the original guidestar coordinates.
+            f = open(gfls[0], 'r')
+            lines = f.readlines()
+
+            spl = lines[0].split()
+            starx1old, stary1old = int(spl[0]), int(spl[1])
+
+            centroidxold, centroidyold = [], []
+            diffxold, diffyold = [], []
+            if len(lines) > 1:
+                for l in range(1, len(lines)):
+                    spl = lines[l].split()
+                    centroidxold.append(int(spl[0]))
+                    centroidyold.append(int(spl[1]))
+                    diffxold.append(int(spl[0]) - starx1old)
+                    diffyold.append(int(spl[1]) - stary1old)
+
+            if len(lines) > 1:
+                inbox = self.numstarsinbox(centroidxold, centroidyold, starx1old, stary1old, boxsize_f)
+
+            if len(inbox) > 0:
+                #Create box around star and check if star is in box. If star, correct it. If no star, reinitialize guiding
+                imgbox = img1[stary1old-boxsize_f:stary1old+boxsize_f, starx1old-boxsize_f:starx1old+boxsize_f]
+                worked, Iarr = self.checkstarinbox(imgbox, boxsize_f, multistar = [diffxold, diffyold, inbox])
+            else:
+                #Create box around star and check if star is in box. If star, correct it. If no star, reinitialize guiding
+                imgbox = img1[stary1old-boxsize_f:stary1old+boxsize_f, starx1old-boxsize_f:starx1old+boxsize_f]
+                worked, Iarr = self.checkstarinbox(imgbox, boxsize_f, multistar = False)
+            
+            if worked:
+                #If we could put a star at the right coordinates, set the guiding coords to the old coords
+                starx1 = starx1old
+                stary1 = stary1old
+                self.updateText.emit("FOUND OLD GUIDE STAR...CORRECTING")
+                fieldinfo = None
+            else:
+                #If we could not move a star to the right coordinates, then restart guiding for this object
+                self.updateText.emit("COULD NOT FIND OLD GUIDESTAR IN IMAGE...SELECTING NEW GUIDESTAR")
+                starx1, stary1, centroidx,centroidy,Iarr,Isat,width, gs = self.findguidestar(img1, gfls)
+                fieldinfo = [centroidx,centroidy,Iarr,Isat, width]
+        else:
+            #restart guiding by selecting a new guide star in the image 
+            starx1, stary1, centroidx,centroidy,Iarr,Isat,width,gs = self.findguidestar(img1,gfls)
+            fieldinfo = [centroidx,centroidy,Iarr,Isat, width]
+            worked = False
         
+        #Make sure were guiding on an actual star. If not maybe change the exptime for guiding.
+        print starx1, stary1
+        #Record this initial setup in the file
+        if (gfls[0] != '') and (starx1 not in [None, False, "NoStar"]) and (not worked):
+            f = open(gfls[0], 'w')
+            f.write('%i\t%i\t%i\t%i\n' % (starx1, stary1, self.exptime, Iarr[gs]))
+            for j in range(len(centroidx)):
+                if j == gs:
+                    continue
+                f.write('%i\t%i\t%i\t%i\n' % (centroidy[j], centroidx[j], self.exptime, Iarr[j]))
+            f.close()
+        
+
+        return [offsets, x_rot, y_rot, stary1, starx1, boxsize, img1, fieldinfo]
+
+    def numstarsinbox(self, centroidx, centroidy, starx1, stary1, boxsize):
+        
+        inbox = []
+        for i in range(len(centroidx)):
+            if (centroidx[i]  > starx1 - boxsize) and (centroidx[i] < starx1 + boxsize) \
+                    and (centroidy[i] > stary1 - boxsize) and (centroidy[i] < stary1 + boxsize):
+                inbox.append(i)
+        
+        return inbox
+
+    def findguidestar(self, img1, gfls):
+        #check positions of stars    
+        CFReturns = WA.centroid_finder(img1, plot=False)
+
+        if CFReturns == False:
+            return None, None, False, False, False, False, False, False
+
+        centroidx, centroidy, Iarr, Isat, width = CFReturns 
+
+        #for i in CFReturns:
+        #    print i
+
+        bright_stars = np.argsort(Iarr)[::-1]
+
+        #Choose the brightest non-saturated star for guiding
+        try:
+            guiding_star = bright_stars[0]
+        except:
+            return None,None,centroidx,centroidy,Iarr,Isat,width, None
+
+        #Checking to see if the star is in the "center" of the field and isn't saturated
+        for star in bright_stars:
+            if (centroidx[star] > 50) and (centroidx[star] < 950) and \
+                (centroidy[star] > 50) and (centroidy[star] < 950):
+                if Isat[star] != 1:
+                    guiding_star = star
+                    break 
+        
+        stary1 = centroidx[guiding_star]
+        starx1 = centroidy[guiding_star] 
+
+        if Iarr[guiding_star] < 9000:
+            return None,None,centroidx,centroidy,Iarr,Isat,width, guiding_star
+
+        if Isat[guiding_star] == 1:
+            return False, False, centroidx, centroidy, Iarr, Isat, width, guiding_star
+
+        if (centroidx[guiding_star] < 50) or (centroidx[guiding_star] > 950) or \
+                (centroidy[guiding_star] > 50 and centroidy[guiding_star] > 950):
+            return 'NoStar', 'NoStar', centroidx, centroidy, Iarr, Isat, width, guiding_star
+
+        return starx1, stary1, centroidx,centroidy,Iarr,Isat,width,guiding_star
+
+    def checkstarinbox(self, imgbox, boxsize, multistar = False):
+
+        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+        offsets, x_rot, y_rot = WG.get_rotation_solution(self.telsock, self.rotangle, guideroffsets)
+        
+        #Try centroiding
+        CFReturns = WA.centroid_finder(imgbox, plot=False)
+
+        if CFReturns == False:
+            return False, False
+
+        centroidx, centroidy, Iarr, Isat, width = CFReturns
+
+        if not multistar:
+            try:
+                #If centroid worked, great
+                new_loc = np.argmax(Iarr)
+            except:
+                #If centroid didn't work, exit and restart gudding
+                return False, False
+
+            newx = centroidx[new_loc]
+            newy = centroidy[new_loc]
+
+            #Figure out how to move based on the rotation solution
+            dx = newx - boxsize 
+            dy = newy - boxsize
+            d_ra = dx * x_rot
+            d_dec = dy * y_rot
+            radec = d_ra + d_dec
+
+            self.updateText.emit("INITIAL MOVEMENT TO GET SOURCE BACK IN CENTER")
+            self.updateText.emit("X Offset:\t%f\nY Offset:\t%f\nRA ADJ:\t\t%f\nDEC ADJ:\t%f\nPix Width:\t%f\nSEEING:\t\t%f\n" \
+               % (dx,dy,radec[1],radec[0],width[0], width[0]*plate_scale))
+
+            #Move the telescope if the required movement is greater than 0.5" 
+            lim = 0.5
+            r = -1
+            d = -1
+
+            if (abs(radec[1]) < lim) and (abs(radec[0]) < lim):
+                self.updateText.emit("NOT MOVING, TOO SMALL SHIFT")
+            elif abs(radec[1]) < lim:
+                self.updateText.emit("MOVING DEC ONLY")
+                WG.move_telescope(self.telsock, 0.0, d*radec[0], verbose=False)
+            elif abs(radec[0]) < lim:
+                self.updateText.emit("MOVING RA ONLY")
+                WG.move_telescope(self.telsock, r*radec[1], 0.0, verbose=False)
+            else:
+                WG.move_telescope(self.telsock,r*radec[1],d*radec[0], verbose=False)
+            
+            time.sleep(2)
+
+            return True, Iarr
+
+        else:
+            diffxold, diffyold, inbox = multistar
+            inbox_xold, inboxy_old = [], []
+            for i in inbox:
+                inbox_xold.append(diffxold[i])
+                inboy_xold.append(diffyold[i])
+
+            try:
+                #If centroid worked, great
+                new_loc = np.argmax(Iarr)
+            except:
+                #If centroid didn't work, exit and restart gudding
+                return False, False
+
+            newx = centroidx[new_loc]
+            newy = centroidy[new_loc]
+            
+            #Figure out how to move based on the rotation solution
+            dx = newx - boxsize 
+            dy = newy - boxsize
+            d_ra = dx * x_rot
+            d_dec = dy * y_rot
+            radec = d_ra + d_dec
+            
+            self.updateText.emit("INITIAL MOVEMENT TO GET SOURCE BACK IN CENTER")
+            self.updateText.emit("X Offset:\t%f\nY Offset:\t%f\nRA ADJ:\t\t%f\nDEC ADJ:\t%f\nPix Width:\t%f\nSEEING:\t\t%f\n" \
+               % (dx,dy,radec[1],radec[0],width[0], width[0]*plate_scale))
+
+            #Move the telescope if the required movement is greater than 0.5" 
+            lim = 0.5
+            r = -1
+            d = -1
+
+            if (abs(radec[1]) < lim) and (abs(radec[0]) < lim):
+                self.updateText.emit("NOT MOVING, TOO SMALL SHIFT")
+            elif abs(radec[1]) < lim:
+                self.updateText.emit("MOVING DEC ONLY")
+                WG.move_telescope(self.telsock, 0.0, d*radec[0], verbose=False)
+            elif abs(radec[0]) < lim:
+                self.updateText.emit("MOVING RA ONLY")
+                WG.move_telescope(self.telsock, r*radec[1], 0.0, verbose=False)
+            else:
+                WG.move_telescope(self.telsock,r*radec[1],d*radec[0], verbose=False)
+
+            return True, Iarr
+
+           #result.append("Checking if right guide star")
+
+    def run_guiding(self, inputguiding):
+       
+        #Get all the parameters from the guiding input
+        offsets, x_rot, y_rot, stary1, starx1, boxsize, img1  = inputguiding
+
+        #Take an image
+        img = self.cam.take_photo(shutter='open')
+        starx_box = int(starx1)
+        stary_box = int(stary1)
+        imgbox = img[stary_box-boxsize:stary_box+boxsize, starx_box-boxsize:starx_box+boxsize]
+
+        #FInd the star in the box
+        CFReturns = WA.centroid_finder(imgbox, plot=False)
+        if CFReturns == False:
+            return
+        
+        centroidx, centroidy, Iarr, Isat, width = CFReturns
+
+        try:
+            new_loc = np.argmax(Iarr)
+        except:
+            return
+
+        newx = centroidx[new_loc]
+        newy = centroidy[new_loc]
+
+        #Determine rotation solution 
+        dx = newx - boxsize 
+        dy = newy - boxsize
+        d_ra = dx * x_rot
+        d_dec = dy * y_rot
+        radec = d_ra + d_dec
+
+        self.updateText.emit("X Offset:\t%f\nY Offset:\t%f\nRA ADJ:\t%f\nDEC ADJ:\t%f\nPix Width:\t%f\nSEEING:\t%f" \
+           % (dx,dy,radec[1],radec[0],width[0], width[0]*plate_scale))
+
+        ##### IMPORTANT GUIDING PARAMETERS #####
+        lim = 0.6 #Changes the absolute limit at which point the guider moves the telescope
+        d = -0.9 #Affects how much the guider corrects by. I was playing around with -0.8 but the default is -1. Keep this negative.
+        #######################################
+
+        deltRA = 0
+        deltDEC = 0
+
+        guidingon=True
+        if guidingon:
+            if (abs(radec[1]) < lim) and (abs(radec[0]) < lim):
+                self.updateText.emit("NOT MOVING, TOO SMALL SHIFT\n")
+            elif abs(radec[1]) < lim:
+                self.updateText.emit("MOVING DEC ONLY\n")
+                deltDEC = d*radec[0]
+                WG.move_telescope(self.telsock, 0.0, d*radec[0], verbose=False)
+            elif abs(radec[0]) < lim:
+                self.updateText.emit("MOVING RA ONLY\n")
+                deltRA = d*radec[1]
+                WG.move_telescope(self.telsock, d*radec[1], 0.0, verbose=False)
+            else:
+                deltRA = d*radec[1]
+                deltDEC = d*radec[0]
+                WG.move_telescope(self.telsock,d*radec[1],d*radec[0], verbose=False)
+                self.updateText.emit("\n")
+
+        #Record for guiding checking later
+        f = open('/home/utopea/elliot/guidinglog/'+time.strftime('%Y%m%dT%H')+'.txt', 'a')
+        f.write("%f\t%f\n" % (radec[1],radec[0]))
+        f.close()
+
+        self.plotSignal.emit(imgbox,self.guideTargetText + ' GuideStar')
+
+        return deltRA, deltDEC
+
+
+
+
+
+
+
+
 
 
 
