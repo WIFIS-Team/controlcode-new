@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1022</width>
-    <height>1064</height>
+    <width>1021</width>
+    <height>1041</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1516,7 +1516,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Source Parameters</string>
+           <string>Source &amp; Nod Parameters</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -1553,21 +1553,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="5" rowspan="3">
-         <widget class="Line" name="line_6">
-          <property name="font">
-           <font>
-            <pointsize>13</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
+        <item row="1" column="4">
          <widget class="QLabel" name="label_17">
           <property name="text">
            <string>Nod RA:</string>
@@ -1614,7 +1600,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="3">
+        <item row="3" column="4">
          <widget class="QLabel" name="label_19">
           <property name="text">
            <string>Nod Type:</string>
@@ -1654,7 +1640,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="4">
+        <item row="3" column="5">
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
            <widget class="QRadioButton" name="OffsetNod">
@@ -1686,7 +1672,7 @@
           </item>
          </layout>
         </item>
-        <item row="2" column="3">
+        <item row="2" column="4">
          <widget class="QLabel" name="label_18">
           <property name="text">
            <string>Nod DEC:</string>
@@ -1715,14 +1701,14 @@
         <item row="3" column="1">
          <widget class="QLineEdit" name="DECObj"/>
         </item>
-        <item row="1" column="4">
+        <item row="1" column="5">
          <widget class="QLineEdit" name="NodRAText">
           <property name="text">
            <string>0</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="4">
+        <item row="2" column="5">
          <widget class="QLineEdit" name="NodDecText">
           <property name="text">
            <string>0</string>
@@ -1756,6 +1742,20 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="3" rowspan="3">
+         <widget class="Line" name="line_6">
+          <property name="font">
+           <font>
+            <pointsize>13</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item row="4" column="0">
@@ -1767,38 +1767,6 @@
       </item>
       <item row="5" column="0">
        <layout class="QGridLayout" name="gridLayout_5">
-        <item row="0" column="0" colspan="6">
-         <widget class="QLabel" name="label_13">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>30</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>15</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Exposure Control</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="1">
          <widget class="QLineEdit" name="NRampsText">
           <property name="sizePolicy">
@@ -1914,40 +1882,6 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="2">
-         <widget class="QLabel" name="DetectorStatusLabel">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="baseSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>H2RG Not Connected</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="6" rowspan="5">
          <widget class="QTextEdit" name="OutputText">
           <property name="font">
@@ -2027,6 +1961,72 @@
          <widget class="QLabel" name="label_34">
           <property name="text">
            <string>Exposure Type:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0" colspan="5">
+         <widget class="QLabel" name="label_13">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>15</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Exposure Control</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="5">
+         <widget class="QLabel" name="DetectorStatusLabel">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>H2RG Not Connected</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -2561,7 +2561,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1022</width>
+     <width>1021</width>
      <height>22</height>
     </rect>
    </property>

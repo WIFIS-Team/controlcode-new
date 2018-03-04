@@ -13,21 +13,31 @@ class Formatter(object):
         z = self.im.get_array()[int(y), int(x)]
         return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
-def grabUNSOfield(fl):
+def getAstrometricSoln(fl):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
 
-    data, head, RA, DEC = load_img(fl)
-    
+    data, head, RA, DEC, centroids = load_img(fl)
+    name, rad, ded, rmag, ra_deg, dec_deg, fov_am = grabUNSOfield(RA, DEC)
+
+    radec = [ra_deg, dec_deg]
+    return [name, rad, ded, rmag, data, centroids, radec, fov_am]
+
+def grabUNSOfield(RA, DEC):
+    """Takes an ra and dec as grabbed from the telemetry and returns a field
+    from UNSO for use in solving the guider field"""
+
     coord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
 
     ra_deg = coord.ra.deg
     dec_deg = coord.dec.deg
 
     fov_am = 5
+    print ra_deg - fov_am/2.
+    print dec_deg - fov_am/2.
     name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
     
-    return [name, rad, ded, rmag]
+    return [name, rad, ded, rmag, ra_deg, dec_deg, fov_am]
 
 def load_img(fl):
     f = fits.open(fl)
@@ -37,7 +47,10 @@ def load_img(fl):
     DEC = head['DEC']
     RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
     DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
-    return data, head, RA, DEC
+
+    cresult = centroid_finder(data)
+
+    return data, head, RA, DEC, cresult
 
 def centroid_finder(img, plot = False, verbose=False):
 
