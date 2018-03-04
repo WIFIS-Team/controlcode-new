@@ -57,14 +57,13 @@ def centroid_finder(img, plot = False, verbose=False):
     imgsize = img.shape
 
     #find bright pixels
-    imgmean = np.mean(img)
-    imgstd = np.std(img)
-    nstd = 4.
+    imgmedian = np.median(img)
+    #print "MEDIAN: %f, MEAN: %f" % (imgmedian, np.mean(img))
+    imgstd = np.std(img[img < 63000])
+    nstd = 3.0
+    #print "IMG MEAN: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
 
-    if verbose:
-        print "IMG MEAN: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmean, imgstd,imgmean+nstd*imgstd)
-
-    brightpix = np.where(img >= imgmean + nstd*imgstd)
+    brightpix = np.where(img >= imgmedian + nstd*imgstd)
     new_img = np.zeros(imgsize)
 
     if len(brightpix) == 0:

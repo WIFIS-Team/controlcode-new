@@ -83,9 +83,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideplotwindow = PlotWindow('Guider Plot Window')
         self.guideplotwindow.show()
 
-        guidevals = read_defaults()
-        self.GuideRA.setText(guidevals['GuideRA'])
-        self.GuideDEC.setText(guidevals['GuideDEC'])
+        self.guidevals = read_defaults()
+        self.GuideRA.setText(self.guidevals['GuideRA'])
+        self.GuideDEC.setText(self.guidevals['GuideDEC'])
         self.SetGuideOffset.clicked.connect(self.setGuideOffset)
 
         self.guideroffsets = [self.GuideRA, self.GuideDEC]
@@ -226,10 +226,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def setGuideOffset(self):
         self._handleOutputTextUpdate('SETTING NEW GUIDE OFFSETS...')
-        guidevals['GuideRA'] = self.GuideRA.text()
-        guidevals['GuideDEC'] = self.GuideDEC.text()
+        self.guidevals['GuideRA'] = self.GuideRA.text()
+        self.guidevals['GuideDEC'] = self.GuideDEC.text()
         fl = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','w')
-        for key, val in guidevals.iteritems():
+        for key, val in self.guidevals.iteritems():
             fl.write('%s\t\t%s\n' % (key, val))
         fl.close()
         self._handleOutputTextUpdate('NEW GUIDE OFFSETS SET')
@@ -732,11 +732,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self._handleNoddingProgBar(20,1)
         self.calibexpose.start()
 
-    def checkStartNoding(self):
-        choice = QtGui.QMessageBox.question(self, 'Nodding Sequence?',
+    def checkStartNodding(self):
+        choice = QMessageBox.question(self, 'Nodding Sequence?',
                                             "Start Nodding Sequence?",
-                                            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if choice == QtGui.QMessageBox.Yes:
+                                            QMessageBox.Yes | QMessageBox.No)
+        if choice == QMessageBox.Yes:
             self.startNodding()
         else:
             pass
@@ -844,15 +844,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
 
     def _handleGuidePlotting(self, image, flname):
-        print "IMAGE IS...", image
-
         try:
-            norm = ImageNormalize(image, interval=PercentileInterval(99.5),stretch=LinearStretch())
+            norm = ImageNormalize(image, interval=PercentileInterval(98.5),stretch=LinearStretch())
 
             self.guideplotwindow.figure.clear()
 
             ax = self.guideplotwindow.figure.add_subplot(1,1,1)
-            im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
+            #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
+            im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
             self.guideplotwindow.figure.colorbar(im)
@@ -1089,7 +1088,8 @@ class NoddingExposure(QThread):
         self.updateText.emit("# Doing initial calibrations")
 
         if not self.skipcalib.isChecked():
-            self.progBar.emit(20, self.nrampsval)
+            self.updateText.emit("####### SKIPPING INITIAL CALIBS #######")
+            self.progBar.emit(30, self.nrampsval)
             self.scidet.takecalibrations(self.objnameval)
 
         if self.stopthread:
