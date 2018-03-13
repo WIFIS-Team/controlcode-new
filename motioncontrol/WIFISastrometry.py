@@ -5,6 +5,14 @@ from astropy.io import fits
 from scipy.optimize import curve_fit
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+import wifisguidingfunctions as WG
+from sys import exit
+from scipy.stats import mode
+from numpy.linalg import inv
+
+plate_scale = 0.29125
+#flength = 9206.678
+flength = 9207.218
 
 class Formatter(object):
     def __init__(self, im):
@@ -13,46 +21,356 @@ class Formatter(object):
         z = self.im.get_array()[int(y), int(x)]
         return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
-def getAstrometricSoln(fl):
+def getAstrometricSoln(fl, telSock):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
 
-    data, head, RA, DEC, centroids = load_img(fl)
-    name, rad, ded, rmag, ra_deg, dec_deg, fov_am = grabUNSOfield(RA, DEC)
+    data, head, RA, DEC, centroids = load_img(fl, telSock)
+    xorig = np.array(centroids[0])
+    yorig = np.array(centroids[1])
+    yorigflip = -1*(yorig - 1024)
+    rotangle = float(head['IIS'])
 
-    radec = [ra_deg, dec_deg]
-    return [name, rad, ded, rmag, data, centroids, radec, fov_am]
+    guider_offsets = [-9.0, 361.86]
+    
+    offsets = get_rotation_solution_astrom(rotangle, guider_offsets)
 
-def grabUNSOfield(RA, DEC):
+    name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord= grabUNSOfield(RA, DEC, offsets=offsets)
+
+    cxrot, cyrot, cxrotneg, cyrotneg = rotate_points(rotangle,xorig,yorig)
+
+    cyrotneg_flip = -1*(np.array(cyrotneg) - 1024)
+    x = np.array(cxrotneg)
+    y = np.array(cyrotneg_flip)
+
+    xproj, yproj,X,Y = projected_coords(rad, ded, ra_deg, dec_deg)
+
+    xproj = np.array(xproj)
+    yproj = np.array(yproj)
+
+    if len(rmag[np.isnan(rmag)]) > len(rmag)/2.: 
+        k = rmag != 0
+        print 'lots of nan'
+    else:
+        k = rmag < 17.5
+
+    xmatch, ymatch, xprojmatch, yprojmatch, ramatch, decmatch, xdist, ydist,disti, posi =\
+            compareFields(x, y, xproj, yproj, rad, ded, k)
+
+    disti = np.array(disti)
+
+    Xmatch = []
+    Ymatch = []
+    for i in disti:
+        Xmatch.append(X[k][i])
+        Ymatch.append(Y[k][i])
+    Xmatch = np.array(Xmatch)
+    Ymatch = np.array(Ymatch)
+
+    xorigmatch = []
+    yorigmatch = []
+    for i in posi:
+        xorigmatch.append(xorig[i])
+        yorigmatch.append(yorigflip[i])
+    xorigmatch = np.array(xorigmatch)
+    yorigmatch = np.array(yorigmatch) 
+    
+    #platesolve = solvePlate(xmatch,ymatch,Xmatch,Ymatch)
+    platesolve = solvePlate(xorigmatch,yorigmatch,Xmatch,Ymatch)
+
+    if not platesolve:
+        print "NO SOLVE"
+        return False
+    elif platesolve == 'Offsets':
+        print "NO SOLVE"
+        return False
+    else:
+        print "Solved"
+        xsolve = platesolve[0]
+        ysolve = platesolve[1]
+
+        #print xmatch, ymatch
+        #print xsolve
+        #print ysolve
+        #print rotangle - 90. - 0.26
+        #print np.arccos(xsolve[0] * flength / 0.013) * 180. / np.pi
+        #print 0.013 / np.sqrt(np.abs(xsolve[0]*ysolve[1] - xsolve[1]*ysolve[0]))
+        #print
+
+        Xnew = (flength * (xsolve[0]*xmatch + xsolve[1]*ymatch + xsolve[2]) / 0.013) + 512
+        Ynew = (flength * (ysolve[0]*xmatch + ysolve[1]*ymatch + ysolve[2]) / 0.013) + 512
+
+        decdegrad = dec_deg*np.pi/180.
+        Xcen, Ycen = returnXY(platesolve, 512, 512)
+
+        ra_cen = ra_deg + np.arctan(-Xcen/(np.cos(decdegrad) - (Ycen*np.sin(decdegrad))))*180/np.pi
+        dec_cen = np.arcsin((np.sin(decdegrad) + Ycen*np.cos(decdegrad))/ \
+                (np.sqrt(1 + Xcen**2. + Ycen**2)))*180/np.pi
+
+        #print ra_cen, dec_cen
+        #print newcoord.ra, newcoord.dec
+        solvecenter = SkyCoord(ra_cen, dec_cen, unit='deg')
+        #print "Guessed: ", newcoord.ra.hms, newcoord.dec.dms
+        #print "Solved: ", solvecenter.ra.hms, solvecenter.dec.dms
+
+        fieldoffset = newcoord.spherical_offsets_to(solvecenter)
+        realcenter = [ra_cen, dec_cen]
+
+        #name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord = grabUNSOfield(ra_cen, dec_cen, offsets=False\
+        #      ,deg=True)
+        #xproj, yproj,X,Y = projected_coords(rad, ded, ra_cen, dec_cen)
+
+        #xproj = np.array(xproj)
+        #yproj = np.array(yproj)
+        #mpl.plot(x,y, 'r*')
+        #k = rmag < 17.5
+        #mpl.plot(xproj[k], yproj[k],'b.')
+        #mpl.show()
+
+        return platesolve, fieldoffset, realcenter, solvecenter
+
+def returnXY(platesolve, x, y):
+
+    xsolve = platesolve[0]
+    ysolve = platesolve[1]
+
+    Xnew = xsolve[0]*x + xsolve[1]*y + xsolve[2]
+    Ynew = ysolve[0]*x + ysolve[1]*y + ysolve[2]
+
+    return Xnew, Ynew
+
+def returnRADEC(X,Y,radeg, decdeg):
+
+    decdegrad = decdeg * np.pi / 180.
+
+    ra_solve = radeg + np.arctan(-X/(np.cos(decdegrad) - (Y*np.sin(decdegrad))))*180/np.pi
+    dec_solve = np.arcsin((np.sin(decdegrad) + Y*np.cos(decdegrad))/(np.sqrt(1 + X**2. + Y**2)))*180/np.pi
+
+    return ra_solve, dec_solve
+
+def compareFields(x, y, xp, yp,rad, ded, k):
+
+    distsi = []
+    dists = []
+    xdists = []
+    ydists = []
+    
+    for i in range(len(x)):
+        Xdist = xp[k] - x[i]
+        Ydist = yp[k] - y[i]
+
+        dist = np.sqrt(Xdist**2 + Ydist**2)
+
+        distsi.append(np.argmin(dist))
+        dists.append(dist[distsi[i]])
+        xdists.append(Xdist[distsi[i]])
+        ydists.append(Ydist[distsi[i]])
+
+    if len(dists) < 3:
+        med = np.min(dists)
+    elif (len(dists) % 2) == 0:
+        mediumind = len(dists) / 2
+        med = np.sort(dists)[mediumind]
+    else:
+        med = np.median(dists)
+
+    w = np.where(dists == med)[0]
+
+    xdist = np.array(xdists)[w]
+    ydist = np.array(ydists)[w]
+
+    xnew = x + xdist
+    ynew = y + ydist
+
+    xmatch = []
+    ymatch = []
+    Xmatch = []
+    Ymatch = []
+    ramatch = []
+    decmatch = []
+    distsi = []
+    distsimatch = []
+    posi = []
+
+    for i in range(len(xnew)):
+        Xdist = xp[k] - xnew[i]
+        Ydist = yp[k] - ynew[i]
+
+        dist = np.sqrt(Xdist**2 + Ydist**2)
+        mini = np.argmin(dist)
+
+        distsi.append(mini)
+
+        if dist[mini] < 5:
+            distsimatch.append(mini)
+            posi.append(i)
+            xmatch.append(x[i])
+            ymatch.append(y[i])
+            Xmatch.append(xp[k][mini])
+            Ymatch.append(yp[k][mini])
+            ramatch.append(rad[k][mini])
+            decmatch.append(ded[k][mini])
+
+    return np.array(xmatch), np.array(ymatch), np.array(Xmatch), np.array(Ymatch), \
+            np.array(ramatch), np.array(decmatch), xdist, ydist, distsimatch, posi
+
+def compareFieldsNew(x, y, Iarr, X, Y,rad, ded, k):
+
+    #Find 3 brightest (or fewer) stars in the image.
+
+    #Search in a box with 40 arcsec length sides for all the stars.
+
+    #For each star calculate the offset, move everything there.
+
+    #For each star in the box...
+    pass
+
+
+def solvePlate(x,y, X, Y):
+
+    #Get number of matches/degrees of freedom
+    #If one star is a match just take the calculated offsets with a warning.
+    #If less than 6 stars then maybe just solve for the offsets with a warning
+    #If more than 6 stars then do the full plate solution.
+
+    ndf = len(x)
+
+    if ndf >= 3:
+        ones = np.ones(ndf)
+        A_t = np.array([x,y,ones])
+        A = np.transpose(A_t)
+        
+        A_tA = np.dot(A_t, A)
+        A_tA_inv = inv(A_tA)
+
+        f1 = np.dot(A_tA_inv, A_t)
+        finalX = np.dot(f1,np.transpose(X))
+        finalY = np.dot(f1,np.transpose(Y))
+
+        return finalX, finalY
+        
+    elif ndf > 0:
+        return "Offsets"
+    else:
+        return False
+
+def grabUNSOfield(RA, DEC, offsets=False, deg = False):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
-
-    coord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
+    
+    if deg:
+        coord = SkyCoord(RA, DEC, unit='deg')
+    else:
+        coord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
 
     ra_deg = coord.ra.deg
     dec_deg = coord.dec.deg
 
+    if type(offsets) != bool:
+        ra_deg -= offsets[0]/3600. / np.cos(dec_deg * np.pi / 180.)
+        dec_deg -= offsets[1]/3600.
+
+    newcoord = SkyCoord(ra_deg, dec_deg, unit='deg')
+
     fov_am = 5
-    print ra_deg - fov_am/2.
-    print dec_deg - fov_am/2.
+
     name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
     
-    return [name, rad, ded, rmag, ra_deg, dec_deg, fov_am]
+    return [name, rad, ded, rmag, ra_deg, dec_deg, fov_am, coord, newcoord]
 
-def load_img(fl):
-    f = fits.open(fl)
-    data = f[0].data
-    head = f[0].header
-    RA = head['RA']
-    DEC = head['DEC']
-    RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
-    DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+def unso(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min. import urllib as url
+    
+    #str1 = 'http://webviz.u-strasbg.fr/viz-bin/asu-tsv/?-source=USNO-B1'
+    str1 = 'http://vizier.hia.nrc.ca/viz-bin/asu-tsv/?-source=USNO-B1'
+    str2 = '&-c.ra={:4.6f}&-c.dec={:4.6f}&-c.bm={:4.7f}/{:4.7f}&-out.max=unlimited'.format(\
+            radeg,decdeg,fovam,fovam)
 
-    cresult = centroid_finder(data)
+    # Make sure str2 does not have any spaces or carriage returns/line 
+    #feeds when you # cut and paste into your code
+    URLstr = str1+str2
+    #print URLstr
+
+    f = url.urlopen(URLstr)
+    # Read from the object, storing the page's contents in 's'.
+    s = f.read()
+    f.close()
+   
+    sl = s.splitlines()
+    sl = sl[45:-1]
+    name = np.array([])
+    rad = np.array([])
+    ded = np.array([])
+    rmag = np.array([])
+    for k in sl:
+        kw = k.split('\t')
+        name = np.append(name,kw[0])
+        rad = np.append(rad,float(kw[1]))
+        ded = np.append(ded,float(kw[2]))
+        if kw[12] != '     ': # deal with case where no mag is reported
+            rmag = np.append(rmag,float(kw[12]))
+        else:
+            rmag = np.append(rmag,np.nan) 
+        
+    return name,rad,ded,rmag
+
+def sdss(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min. import urllib as url
+    
+    str1 = 'http://vizier.hia.nrc.ca/viz-bin/asu-tsv/?-source=SDSS-DR12'
+    str2 = '&-c.ra={:4.6f}&-c.dec={:4.6f}&-c.bm={:4.7f}/{:4.7f}&-out.max=unlimited'.format(\
+            radeg,decdeg,fovam,fovam)
+
+    # Make sure str2 does not have any spaces or carriage returns/line feeds when you # cut 
+    #and paste into your code
+    URLstr = str1+str2
+    #print URLstr
+
+    f = url.urlopen(URLstr)
+    # Read from the object, storing the page's contents in 's'.
+    s = f.read()
+    f.close()
+   
+    sl = s.splitlines()
+    sl = sl[54:-1]
+    name = np.array([])
+    rad = np.array([])
+    ded = np.array([])
+    zmag = np.array([])
+    for k in sl:
+        kw = k.split('\t')
+        name = np.append(name,kw[5])
+        rad = np.append(rad,float(kw[0]))
+        ded = np.append(ded,float(kw[1]))
+        if kw[12] != '     ': # deal with case where no mag is reported
+            zmag = np.append(zmag,float(kw[17]))
+        else:
+            zmag = np.append(zmag,np.nan) 
+        
+    return name,rad,ded,zmag
+
+def load_img(fl,telSock):
+    if type(fl) == str:
+        f = fits.open(fl)
+        data = f[0].data
+        head = f[0].header
+        RA = head['RA']
+        DEC = head['DEC']
+        RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
+        DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+
+        cresult = centroid_finder(data)
+    else:
+        data = fl
+        telem = WG.get_telemetry(telSock)
+        RA = telem['RA']
+        DEC = telem['DEC']
+        RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
+        DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+
+        cresult = centroid_finder(data)
 
     return data, head, RA, DEC, cresult
 
-def centroid_finder(img, plot = False, verbose=False):
+def centroid_finder(img):
 
     imgsize = img.shape
 
@@ -131,14 +449,6 @@ def centroid_finder(img, plot = False, verbose=False):
         except:
             width.append(0)
 
-    if plot:
-        fig = mpl.figure()
-        ax = fig.add_subplot(1,1,1)
-        im = ax.imshow(img, cmap = 'gray', interpolation='none', origin='lower')
-        circ = ax.plot(centroidy, centroidx, 'ro', markeredgecolor = 'r', markerfacecolor='none',\
-            markersize = 5)
-        mpl.show()
-
     return [centroidx,centroidy,Iarr, Isat, width]
 
 def explore_region(x,y, img):
@@ -200,39 +510,6 @@ def gaussian_fit(xdata, ydata, p0, gaussian=gaus):
 
     popt, pcov = curve_fit(gaus, xdata, ydata, p0=p0)
     return [popt, pcov]
-
-
-def unso(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min. import urllib as url
-    
-    #str1 = 'http://webviz.u-strasbg.fr/viz-bin/asu-tsv/?-source=USNO-B1'
-    str1 = 'http://vizier.hia.nrc.ca/viz-bin/asu-tsv/?-source=USNO-B1'
-    str2 = '&-c.ra={:4.6f}&-c.dec={:4.6f}&-c.bm={:4.7f}/{:4.7f}&-out.max=unlimited'.format(radeg,decdeg,fovam,fovam)
-
-    # Make sure str2 does not have any spaces or carriage returns/line feeds when you # cut and paste into your code
-    URLstr = str1+str2
-    print URLstr
-    f = url.urlopen(URLstr)
-    # Read from the object, storing the page's contents in 's'.
-    s = f.read()
-    f.close()
-   
-    sl = s.splitlines()
-    sl = sl[45:-1]
-    name = np.array([])
-    rad = np.array([])
-    ded = np.array([])
-    rmag = np.array([])
-    for k in sl:
-        kw = k.split('\t')
-        name = np.append(name,kw[0])
-        rad = np.append(rad,float(kw[1]))
-        ded = np.append(ded,float(kw[2]))
-        if kw[12] != '     ': # deal with case where no mag is reported
-            rmag = np.append(rmag,float(kw[12]))
-        else:
-            rmag = np.append(rmag,np.nan) 
-        
-    return name,rad,ded,rmag
 
 def ra_conv(ra, degrees=True):
 
@@ -305,14 +582,56 @@ def ra_adjust(ra, d_ra, action = 'add'):
     
     return str(new_ra[0]) + str(new_ra[1]) + str(round(new_ra[2],2))
 
+def rotate_points(rotangle, x_points, y_points, arraysize = 1024):
 
-if __name__ == '__main__':
-    import glob
-    fls = glob.glob('/Data/WIFISGuider/20170511/platescale*.fits')
+    normx = np.array(x_points) - (arraysize / 2.)
+    normy = np.array(y_points) - (arraysize / 2.)
+   
+    rotangle = rotangle - 90 - 0.26
+    rotangle_rad = rotangle*np.pi/180.0
+    rotation_matrix = np.array([[np.cos(rotangle_rad),1*np.sin(rotangle_rad)],\
+        [-1*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+    rotation_matrix_neg = np.array([[np.cos(rotangle_rad),-1*np.sin(rotangle_rad)],\
+        [1*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
 
-    for fl in fls:
-        f = fits.open(fl)
-        img = f[0].data
-        print fl
-        print centroid_finder(img) 
-        print "\n"
+    points = np.array([normx, normy])
+
+    offsets = np.dot(rotation_matrix, points)
+    offsets_neg = np.dot(rotation_matrix_neg, points)
+
+    return offsets[0] + (arraysize / 2.), offsets[1] + (arraysize / 2.),\
+            offsets_neg[0] + (arraysize / 2.), offsets_neg[1] + (arraysize / 2.)
+
+
+def projected_coords(ra, dec, ra0, dec0):
+
+    ra = ra * np.pi / 180
+    dec = dec * np.pi / 180
+    ra0 = ra0 * np.pi / 180
+    dec0 = dec0 * np.pi /180
+
+    X = -1*(np.cos(dec) * np.sin(ra - ra0)) / (np.cos(dec0)*np.cos(dec)*np.cos(ra - ra0) \
+            + np.sin(dec)*np.sin(dec0))
+    Y = -1*(np.sin(dec0)*np.cos(dec)*np.cos(ra - ra0) - np.cos(dec0)*np.sin(dec)) / \
+            (np.cos(dec0)*np.cos(dec)*np.cos(ra - ra0) + np.sin(dec)*np.sin(dec0))
+
+    x = (flength * X / 0.013) + 512
+    y = (flength * Y / 0.013) + 512
+
+    return x, y, X, Y
+
+def get_rotation_solution_astrom(rotangle, guideroffsets):
+
+    rotangle = rotangle - 90 - 0.26
+    rotangle_rad = rotangle * np.pi / 180.0
+
+    rotation_matrix = np.array([[np.cos(rotangle_rad),np.sin(rotangle_rad)],\
+                              [-1.*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+
+    rotation_matrix_offsets = np.array([[np.cos(rotangle_rad),-1*np.sin(rotangle_rad)],\
+                                [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+
+    offsets = np.dot(rotation_matrix_offsets, guideroffsets)
+
+    return offsets
+

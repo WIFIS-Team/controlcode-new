@@ -242,7 +242,7 @@ def plotguiderimage(img):
     mpl.imshow(np.log10(img), cmap='gray',interpolation='none',origin='lower')
     mpl.show()
 
-def get_rotation_solution(telSock, rotangle, guideroffsets,forcerot=90):
+def get_rotation_solution(rotangle, guideroffsets,forcerot=90):
 
     x_sol = np.array([0.0, plate_scale])
     y_sol = np.array([plate_scale, 0.0])

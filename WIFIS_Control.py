@@ -271,6 +271,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.CentroidButton.clicked.connect(self.guider.checkCentroids)
             self.SetTempButton.clicked.connect(self.guider.setTemperature)
             self.FilterVal.currentIndexChanged.connect(self.guider.goToFilter)
+            self.doAstrometryButton.connect(self.guider.doAstrometry)
 
         if self.telescope:
             self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
@@ -351,6 +352,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CentroidButton.setStyleSheet(s)
         self.SetTempButton.setStyleSheet(s)
         self.StopGuidingButton.setStyleSheet(s)
+        self.doAstrometryButton.setStyleSheet(s)
 
         self.BKWButton.setEnabled(en)
         self.FWDButton.setEnabled(en)
@@ -362,6 +364,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SetTempButton.setEnabled(en)
         self.FilterVal.setEnabled(en)
         self.StopGuidingButton.setEnabled(en)
+        self.doAstrometryButton.setEnabled(en)
 
     def connectCalibAction(self):
         if self.poweron:

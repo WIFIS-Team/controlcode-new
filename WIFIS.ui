@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1021</width>
-    <height>1041</height>
+    <width>929</width>
+    <height>911</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -312,16 +312,7 @@
             <string>Telescope Control</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_7">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>0</number>
             </property>
             <item row="0" column="0">
@@ -491,16 +482,7 @@
             <string>Power Control</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_9">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>0</number>
             </property>
             <item row="0" column="0">
@@ -778,16 +760,7 @@
             <string>Motor Control</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_12">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>0</number>
             </property>
             <item row="0" column="1">
@@ -1296,16 +1269,7 @@
             <string>Additional Options</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_14">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>0</number>
             </property>
             <item row="0" column="0">
@@ -2110,7 +2074,7 @@
             <height>16777215</height>
            </size>
           </property>
-          <property name="currentText">
+          <property name="currentText" stdset="0">
            <string>Z</string>
           </property>
           <item>
@@ -2467,7 +2431,7 @@
             <height>16777215</height>
            </size>
           </property>
-          <property name="currentText">
+          <property name="currentText" stdset="0">
            <string>Normal</string>
           </property>
           <item>
@@ -2548,6 +2512,13 @@
           </property>
          </widget>
         </item>
+        <item row="4" column="5">
+         <widget class="QPushButton" name="doAstrometryButton">
+          <property name="text">
+           <string>Astrometry</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
      </layout>
@@ -2561,7 +2532,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1021</width>
+     <width>929</width>
      <height>22</height>
     </rect>
    </property>

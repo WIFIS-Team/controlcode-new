@@ -23,6 +23,7 @@ from astropy.visualization import (PercentileInterval,\
                                 LinearStretch, ImageNormalize)
 from PyQt5.QtCore import QThread, QObject, pyqtSignal
 import traceback
+from astropy import units as u
 
 plate_scale = 0.29125
 
@@ -165,7 +166,7 @@ class WIFISGuider(QObject):
     def calcOffset(self):
         #Get rotation solution
         guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
-        offsets,x_rot,y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
+        offsets,x_rot,y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
         yc = float(self.XPos.text())
         xc = float(self.YPos.text())
 
@@ -214,10 +215,7 @@ class WIFISGuider(QObject):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO GUIDER FIELD ###")
             guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
-            print guideroffsets
-            print self.rotangle.text()
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
-            print offsets, x_rot, y_rot
+            offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
             self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to WIFIS',\
@@ -228,7 +226,7 @@ class WIFISGuider(QObject):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO WIFIS FIELD ###")
             guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
+            offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
             self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to Guider',\
@@ -281,13 +279,13 @@ class WIFISGuider(QObject):
             self.foc.step_motor(-1*int(self.focStep.text()))    
 
     ## Camera Functions
-    def saveImage(self):
+    def saveImage(self, dark=True):
 
         if self.cam:
 
             exptime = int(self.expTime.text())
             objtextval = self.ObjText.text()
-            if self.expType.currentText() == 'Dark':
+            if (self.expType.currentText() == 'Dark') and (dark == True):
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='dark')
                 img = self.cam.take_photo()  
@@ -313,6 +311,10 @@ class WIFISGuider(QObject):
 
             self.plotSignal.emit(img, objtextval)
 
+            return img
+
+        return False
+
     def takeImage(self):
         if self.cam and self.foc:
             exptime = int(self.expTime.text())
@@ -329,6 +331,10 @@ class WIFISGuider(QObject):
                 img = self.cam.take_photo()  
    
             self.plotSignal.emit(img, objtextval)
+            
+            return img
+
+        return False
 
     def makeHeader(self, telemDict):
 
@@ -359,9 +365,9 @@ class WIFISGuider(QObject):
             exptime = int(self.expTime.text())
             if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
-                self.cam.set_exposure(exptime, frametype='dark')
-                img = self.cam.take_photo()  
                 self.cam.set_exposure(exptime, frametype='normal')
+                img = self.cam.take_photo()  
+                self.cam.set_exposure(exptime, frametype='dark')
             else:
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='normal')
@@ -371,7 +377,7 @@ class WIFISGuider(QObject):
                 self.plotSignal.emit(img, "Centroids")
                 
             guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
-            offsets, x_rot, y_rot = WG.get_rotation_solution(self.telSock, float(self.rotangle.text()), guideroffsets)
+            offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             
             centroids = WA.centroid_finder(img)
             for a in centroids:
@@ -398,8 +404,8 @@ class WIFISGuider(QObject):
 
                 self.updateText.emit("Y, Y Offset, RA Move: %f, %f" % (centroids[1][b], offsety))
                 self.updateText.emit("X, X Offset, DEC Move: %f, %f" % (centroids[0][b], offsetx))
-		self.updateText.emit("RA Move: %f" % (d*radec[1]))
-		self.updateText.emit("DEC Move: %f" % (d*radec[0]))
+        		self.updateText.emit("RA Move: %f" % (d*radec[1]))
+		        self.updateText.emit("DEC Move: %f" % (d*radec[0]))
                 self.updateText.emit("\n")
 
             b = np.argmax(centroids[2])
@@ -410,6 +416,30 @@ class WIFISGuider(QObject):
             radec = dx + dy
 
         return img, d*radec[1], d*radec[0]
+
+    def doAstrometry(self):
+
+        if self.cam:
+            exptime = int(self.expTime.text())
+            img = self.saveImage(dark=False)
+
+            #if self.expType.currentText() == 'Dark':
+            #    self.cam.end_exposure()
+            #    self.cam.set_exposure(exptime, frametype='normal')
+            #    img = self.cam.take_photo()  
+            #    self.cam.set_exposure(exptime, frametype='dark')
+            #else:
+            #    self.cam.end_exposure()
+            #    self.cam.set_exposure(exptime, frametype='normal')
+            #    img = self.cam.take_photo()  
+
+            self.plotSignal.emit(img, 'Astrometry')
+            platesolve, fieldoffset, realcenter, solvecenter  = WA.getAstrometricSoln(img, self.telSock)
+
+            self.updateText.emit("Real center is RA: %s, DEC: %s" % (solvecenter.ra.hms, solvecenter.dec.dms))
+            self.updateText.emit('Offset (") is RA: %s, DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string()\
+                    ,fieldoffset[1].to(u.arcsec).to_string())
+
 
     def focusCamera(self):
 
@@ -678,7 +708,7 @@ class RunGuiding(QThread):
         #Gets the rotation solution so that we can guide at any instrument rotation angle
         guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
                 
-        offsets, x_rot, y_rot = WG.get_rotation_solution(self.telsock, self.rotangle, guideroffsets)
+        offsets, x_rot, y_rot = WG.get_rotation_solution(self.rotangle, guideroffsets)
 
         #Take image with guider (with shutter open)
         self.cam.set_exposure(self.exptime, frametype="normal")
@@ -811,7 +841,7 @@ class RunGuiding(QThread):
     def checkstarinbox(self, imgbox, boxsize, multistar = False):
 
         guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
-        offsets, x_rot, y_rot = WG.get_rotation_solution(self.telsock, self.rotangle, guideroffsets)
+        offsets, x_rot, y_rot = WG.get_rotation_solution(self.rotangle, guideroffsets)
         
         #Try centroiding
         CFReturns = WA.centroid_finder(imgbox, plot=False)
