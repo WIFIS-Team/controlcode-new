@@ -404,8 +404,8 @@ class WIFISGuider(QObject):
 
                 self.updateText.emit("Y, Y Offset, RA Move: %f, %f" % (centroids[1][b], offsety))
                 self.updateText.emit("X, X Offset, DEC Move: %f, %f" % (centroids[0][b], offsetx))
-        		self.updateText.emit("RA Move: %f" % (d*radec[1]))
-		        self.updateText.emit("DEC Move: %f" % (d*radec[0]))
+                self.updateText.emit("RA Move: %f" % (d*radec[1]))
+                self.updateText.emit("DEC Move: %f" % (d*radec[0]))
                 self.updateText.emit("\n")
 
             b = np.argmax(centroids[2])
@@ -418,7 +418,6 @@ class WIFISGuider(QObject):
         return img, d*radec[1], d*radec[0]
 
     def doAstrometry(self):
-
         if self.cam:
             exptime = int(self.expTime.text())
             img = self.saveImage(dark=False)
@@ -437,9 +436,8 @@ class WIFISGuider(QObject):
             platesolve, fieldoffset, realcenter, solvecenter  = WA.getAstrometricSoln(img, self.telSock)
 
             self.updateText.emit("Real center is RA: %s, DEC: %s" % (solvecenter.ra.hms, solvecenter.dec.dms))
-            self.updateText.emit('Offset (") is RA: %s, DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string()\
-                    ,fieldoffset[1].to(u.arcsec).to_string())
-
+            self.updateText.emit('Offset (") is RA: %s, DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
+                    fieldoffset[1].to(u.arcsec).to_string()))
 
     def focusCamera(self):
 

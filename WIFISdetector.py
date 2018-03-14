@@ -48,19 +48,30 @@ class h2rg(QObject):
         else:
             self.calibon = True
 
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            socket.setdefaulttimeout(5)
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.scideton = True
+        except Exception as e:
+            print e
+            print "DETECTOR SOCKET ERROR"
+            self.scideton = False
         self.connected = False
         self.initialized = False
     
     def connect(self):
-        self.printTxt("#### CONNECTING TO DETECTOR")
-        self.s.connect((self.servername,self.port))
-        self.connected = True
-        self.h2rgstatus.setStyleSheet('color: blue')
-        self.h2rgstatus.setText("H2RG Connected")
-        self.printTxt("#### CONNECTED TO DETECTOR")
+        if self.scideton:
+            self.printTxt("#### CONNECTING TO DETECTOR")
+            self.s.connect((self.servername,self.port))
+            self.connected = True
+            self.h2rgstatus.setStyleSheet('color: blue')
+            self.h2rgstatus.setText("H2RG Connected")
+            self.printTxt("#### CONNECTED TO DETECTOR")
+            return True
+        else:
+            self.printTxt("#### NOT CONNECTED TO DETECTOR...THERE WAS AN ISSUE")
+            return False
 
-        return(True)
     
     def disconnect(self):
         if(self.connected):

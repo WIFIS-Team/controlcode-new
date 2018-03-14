@@ -27,7 +27,8 @@ motors = False
 
 def read_defaults():
 
-    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    #f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
     valuesdict = {}
     for line in f:
         spl = line.split()
@@ -270,8 +271,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.FWDButton.clicked.connect(self.guider.stepForward)
             self.CentroidButton.clicked.connect(self.guider.checkCentroids)
             self.SetTempButton.clicked.connect(self.guider.setTemperature)
+            self.doAstrometryButton.clicked.connect(self.guider.doAstrometry)
             self.FilterVal.currentIndexChanged.connect(self.guider.goToFilter)
-            self.doAstrometryButton.connect(self.guider.doAstrometry)
 
         if self.telescope:
             self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
@@ -442,7 +443,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             
             self.powerSwitch()
-            print "Connected to Power Controllers #####"
+            if (val1 == False) and (val2 == False):
+                print "##### Can't connect to Power Controllers -- Something Failed"
+            elif (val1 == False) and (val2 == True):
+                print "##### Can't connect to Power Controller 1 -- Something Failed"
+            elif (val1 == True) and (val2 == False):
+                print "##### Can't connect to Power Controller 2 -- Something Failed"
+            else:
+                print "Connected to Power Controllers #####"
 
         except Exception as e:
             print "##### Can't connect to Power Controllers -- Something Failed"
@@ -578,12 +586,18 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                         self.calibrationcontrol)
                 self.scidet.updateText.connect(self._handleOutputTextUpdate)
                 self.scidet.plotSignal.connect(self._handlePlotting)
-                self.scideton = True
 
-                self.H2RGToggle(True)
-
-                self.scidetSwitch()
-                print "Connected to Science Array #####"
+                if self.scidet.scideton:
+                    self.scideton = True
+                    self.H2RGToggle(True)
+                    self.scidetSwitch()
+                    print "Connected to Science Array #####"
+                else:
+                    self.scideton = False
+                    print "##### Can't Connect to Science Array -- Something Failed"
+                    print e
+                    print traceback.print_exc()
+                    self.H2RGToggle(False)
             except Exception as e:
                 self.scideton = False
                 print "##### Can't Connect to Science Array -- Something Failed"
@@ -612,6 +626,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExposureButton.setEnabled(val)
         self.TakeCalibButton.setEnabled(val)
         self.NodBeginButton.setEnabled(val)
+        self.CenteringCheck.setEnabled(val)
 
     def connectAllAction(self):
 
