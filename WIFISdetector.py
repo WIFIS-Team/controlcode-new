@@ -62,6 +62,7 @@ class h2rg(QObject):
     def connect(self):
         if self.scideton:
             self.printTxt("#### CONNECTING TO DETECTOR")
+            self.s.settimeout(None)
             self.s.connect((self.servername,self.port))
             self.connected = True
             self.h2rgstatus.setStyleSheet('color: blue')

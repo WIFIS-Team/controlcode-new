@@ -1,34 +1,37 @@
+from wifis import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox
 
-from wifis import Ui_MainWindow
-import wifisguidingfunctions as wg
-import WIFISdetector as wd
-import guiding_functions as gf
-import sys
-from calibration_functions import CalibrationControl
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as mpl
+
 from astropy.visualization import (PercentileInterval, LinearStretch,
                                     ImageNormalize, ZScaleInterval)
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 import WIFISpower as pc
 import WIFISmotor as wm
+from calibration_functions import CalibrationControl
+import wifisguidingfunctions as wg
+import WIFISdetector as wd
+import guiding_functions as gf
+
 import traceback
 import numpy as np
 from get_src_pos import get_src_pos
 import time
+import sys
+from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
 motors = False
 
 def read_defaults():
 
-    #f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
-    f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
     valuesdict = {}
     for line in f:
         spl = line.split()
@@ -316,6 +319,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.guider = gf.WIFISGuider(self.guide_widgets)
             self.guider.updateText.connect(self._handleGuidingTextUpdate)
             self.guider.plotSignal.connect(self._handleGuidePlotting)
+            self.guider.astrometryCalc.connect(self._handleAstrometryCalc)
             self.guideron = True
         except:
             print "##### Can't Connect to Guider ##### -- Something Failed"
@@ -1009,7 +1013,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 #self.motormove.updateText.connect(self._handleMotorText)
                 #self.motormove.start()
 
-                
     def runFocusTest(self):
         self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus, self.calibrationcontrol,\
                 self.FocusPosition)
@@ -1026,6 +1029,100 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #self.motormove.updateText.connect(self._handleMotorText)
         #self.motormove.start()
 
+    def _handleAstrometryCalc(self, solve):
+        solvecenter, guideroffsets, plotting = solve
+        self._handleAstrometricPlotting(plotting)
+
+        RAText = self.RAObj.text()
+        DECText = self.DECObj.text()
+
+        try:
+            float(RAText)
+            float(DECText)
+        except:
+            self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+            self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+            self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+            return
+
+        if (len(RAText) == 0) or (len(DECText) == 0):
+            self._handleOutputTextUpdate('RA or DEC Obj Text Empty!')
+            return
+
+        if (RAText[0] == '+') or (RAText[0] == '-'):
+            RAspl = RAText[1:].split('.')
+            if len(RAspl[0]) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                return
+        else:
+            RAspl = RAText.split('.')
+            if len(RAspl[0]) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                return
+
+        if (DECText[0] == '+') or (DECText[0] == '-'):
+            DECspl = DECText[1:].split('.')
+            if len(DECspl[0]) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                return
+        else:
+            DECspl = DECText.split('.')
+            if len(DECspl) != 6: 
+                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                return
+
+        RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
+        DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
+
+        TargetCoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
+
+        ra_guide = solvecenter.ra.deg
+        dec_guide = solvecenter.dec.deg
+
+        ra_wifis = ra_guide + guideroffsets[0]/3600. / np.cos(dec_guide * np.pi / 180.)
+        dec_wifis = dec_guide + guideroffsets[1]/3600.
+        
+        WIFISCoord = SkyCoord(ra_wifis, dec_wifis, unit='deg')
+        fieldoffset = WIFISCoord.spherical_offsets_to(TargetCoord)
+
+        WIFISCoordhms = self.guider.returnhmsdmsstr(WIFISCoord.ra.hms)
+        WIFISCoorddms = self.guider.returnhmsdmsstr(WIFISCoord.dec.dms)
+
+        self._handleOutputTextUpdate("Real WIFIS Center is: \nRA %s\nDEC: %s" % (WIFISCoordhms, WIFISCoorddms))
+        self._handleOutputTextUpdate('WIFIS Offset (") to Target is: \nRA: %s\nDEC: %s' % \
+                        (fieldoffset[0].to(u.arcsec).to_string(), fieldoffset[1].to(u.arcsec).to_string()))
+
+    def _handleAstrometricPlotting(self, plotting):
+        try:
+            x,y,k,xproj,yproj,image = plotting
+            #norm = ImageNormalize(image, interval=PercentileInterval(98.5),stretch=LinearStretch())
+
+            self.guideplotwindow.figure.clear()
+
+            ax = self.guideplotwindow.figure.add_subplot(1,1,1)
+            #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
+            pl2 = ax.plot(xproj[k], yproj[k], 'ro', label='Catalog Stars')
+            pl1 = ax.plot(x,y,'b.', label='Image Stars')
+            ax.legend()
+            #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
+            #ax.format_coord = Formatter(im)
+            ax.set_title('ASTROMETRIC FIELD')
+            #self.guideplotwindow.figure.colorbar(im)
+
+            self.guideplotwindow.canvas.draw()
+
+        except Exception as e:
+            print e
+            print traceback.print_exc()
+            self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
 
     def closeEvent(self, event):
         

@@ -21,6 +21,18 @@ class Formatter(object):
         z = self.im.get_array()[int(y), int(x)]
         return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
+def read_defaults():
+
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    valuesdict = {}
+    for line in f:
+        spl = line.split()
+        valuesdict[spl[0]] = spl[1]
+    f.close()
+
+    return valuesdict
+
 def getAstrometricSoln(fl, telSock):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
@@ -31,7 +43,8 @@ def getAstrometricSoln(fl, telSock):
     yorigflip = -1*(yorig - 1024)
     rotangle = float(head['IIS'])
 
-    guider_offsets = [-9.0, 361.86]
+    valuesdict = read_defaults()
+    guider_offsets = [float(valuesdict['GuideRA']), float(valuesdict['GuideDEC'])]
     
     offsets = get_rotation_solution_astrom(rotangle, guider_offsets)
 
@@ -52,10 +65,10 @@ def getAstrometricSoln(fl, telSock):
         k = rmag != 0
         print 'lots of nan'
     else:
-        k = rmag < 17.5
+        k = rmag < 19
 
     xmatch, ymatch, xprojmatch, yprojmatch, ramatch, decmatch, xdist, ydist,disti, posi =\
-            compareFields(x, y, xproj, yproj, rad, ded, k)
+            compareFieldsNew(x, y, xproj, yproj, rad, ded, k)
 
     disti = np.array(disti)
 
@@ -75,15 +88,14 @@ def getAstrometricSoln(fl, telSock):
     xorigmatch = np.array(xorigmatch)
     yorigmatch = np.array(yorigmatch) 
     
-    #platesolve = solvePlate(xmatch,ymatch,Xmatch,Ymatch)
     platesolve = solvePlate(xorigmatch,yorigmatch,Xmatch,Ymatch)
 
     if not platesolve:
         print "NO SOLVE"
-        return False
+        return [False]
     elif platesolve == 'Offsets':
-        print "NO SOLVE"
-        return False
+        print "TOO FEW STARS"
+        return [xdist, ydist]
     else:
         print "Solved"
         xsolve = platesolve[0]
@@ -116,18 +128,18 @@ def getAstrometricSoln(fl, telSock):
         fieldoffset = newcoord.spherical_offsets_to(solvecenter)
         realcenter = [ra_cen, dec_cen]
 
-        #name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord = grabUNSOfield(ra_cen, dec_cen, offsets=False\
-        #      ,deg=True)
-        #xproj, yproj,X,Y = projected_coords(rad, ded, ra_cen, dec_cen)
+        name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord = grabUNSOfield(ra_cen, dec_cen, offsets=False\
+              ,deg=True)
+        xproj, yproj,X,Y = projected_coords(rad, ded, ra_cen, dec_cen)
 
-        #xproj = np.array(xproj)
-        #yproj = np.array(yproj)
+        xproj = np.array(xproj)
+        yproj = np.array(yproj)
         #mpl.plot(x,y, 'r*')
-        #k = rmag < 17.5
+        k = rmag < 19
         #mpl.plot(xproj[k], yproj[k],'b.')
         #mpl.show()
 
-        return platesolve, fieldoffset, realcenter, solvecenter
+        return [platesolve, fieldoffset, realcenter, solvecenter, offsets,[x,y,k,xproj,yproj]]
 
 def returnXY(platesolve, x, y):
 
@@ -214,17 +226,84 @@ def compareFields(x, y, xp, yp,rad, ded, k):
     return np.array(xmatch), np.array(ymatch), np.array(Xmatch), np.array(Ymatch), \
             np.array(ramatch), np.array(decmatch), xdist, ydist, distsimatch, posi
 
-def compareFieldsNew(x, y, Iarr, X, Y,rad, ded, k):
+def compareFieldsNew(x, y, xp, yp,rad, ded, k):
 
-    #Find 3 brightest (or fewer) stars in the image.
+    distsi = []
+    dists = []
+    xdists = []
+    ydists = []
+    
+    for i in range(len(x)):
+        Xdist = xp[k] - x[i]
+        Ydist = yp[k] - y[i]
 
-    #Search in a box with 40 arcsec length sides for all the stars.
+        dist = np.sqrt(Xdist**2 + Ydist**2)
+        amdist = np.argmin(dist)
 
-    #For each star calculate the offset, move everything there.
+        distsi.append(amdist)
+        dists.append(dist[amdist])
+        xdists.append(Xdist[amdist])
+        ydists.append(Ydist[amdist])
 
-    #For each star in the box...
-    pass
+    nsmalls = []
+    for j in range(len(xdists)):
+        xnew = x + xdists[j]
+        ynew = y + ydists[j]
 
+        sumdist = 0
+        nsmall = 0
+        mindists = []
+        for i in range(len(xnew)):
+            Xdist = np.abs(xp[k] - xnew[i])
+            Ydist = np.abs(yp[k] - ynew[i])
+            dist = np.sqrt(Xdist**2. + Ydist**2.)
+            mini = np.argmin(dist)
+
+            if (Xdist[mini] < 15) and (Ydist[mini] < 15):
+                nsmall += 1
+            sumdist += dist[mini]
+            mindists.append(dist[mini])
+        nsmalls.append(nsmall)
+
+    amnsmall = np.argmax(nsmalls)
+
+    xdist = xdists[amnsmall]
+    ydist = ydists[amnsmall]
+
+    xnew = x + xdist
+    ynew = y + ydist
+
+    xmatch = []
+    ymatch = []
+    Xmatch = []
+    Ymatch = []
+    ramatch = []
+    decmatch = []
+    distsi = []
+    distsimatch = []
+    posi = []
+
+    for i in range(len(xnew)):
+        Xdist = np.abs(xp[k] - xnew[i])
+        Ydist = np.abs(yp[k] - ynew[i])
+
+        dist = np.sqrt(Xdist**2 + Ydist**2)
+        mini = np.argmin(dist)
+
+        distsi.append(mini)
+
+        if (Xdist[mini] < 15) and (Ydist[mini] < 15):
+            distsimatch.append(mini)
+            posi.append(i)
+            xmatch.append(x[i])
+            ymatch.append(y[i])
+            Xmatch.append(xp[k][mini])
+            Ymatch.append(yp[k][mini])
+            ramatch.append(rad[k][mini])
+            decmatch.append(ded[k][mini])
+
+    return np.array(xmatch), np.array(ymatch), np.array(Xmatch), np.array(Ymatch), \
+            np.array(ramatch), np.array(decmatch), xdist, ydist, distsimatch, posi
 
 def solvePlate(x,y, X, Y):
 
@@ -236,6 +315,7 @@ def solvePlate(x,y, X, Y):
     ndf = len(x)
 
     if ndf >= 3:
+        print "THERE ARE ", ndf, "STARS"
         ones = np.ones(ndf)
         A_t = np.array([x,y,ones])
         A = np.transpose(A_t)
@@ -365,20 +445,21 @@ def load_img(fl,telSock):
         DEC = telem['DEC']
         RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
         DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+        head = telem
 
         cresult = centroid_finder(data)
 
     return data, head, RA, DEC, cresult
 
-def centroid_finder(img):
+def centroid_finder(img, plot=False):
 
     imgsize = img.shape
 
     #find bright pixels
     imgmedian = np.median(img)
     #print "MEDIAN: %f, MEAN: %f" % (imgmedian, np.mean(img))
-    imgstd = np.std(img[img < 63000])
-    nstd = 3.0
+    imgstd = np.std(img[img < 5000])
+    nstd = 4.0
     #print "IMG MEAN: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
 
     brightpix = np.where(img >= imgmedian + nstd*imgstd)

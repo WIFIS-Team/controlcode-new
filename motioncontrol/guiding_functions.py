@@ -129,6 +129,7 @@ class WIFISGuider(QObject):
 
     updateText = pyqtSignal(str)
     plotSignal = pyqtSignal(np.ndarray,str)
+    astrometryCalc = pyqtSignal(list)
 
     def __init__(self, guidevariables):
         '''Initialize the GUI and load the Devices into memory'''
@@ -433,11 +434,22 @@ class WIFISGuider(QObject):
             #    img = self.cam.take_photo()  
 
             self.plotSignal.emit(img, 'Astrometry')
-            platesolve, fieldoffset, realcenter, solvecenter  = WA.getAstrometricSoln(img, self.telSock)
+            results = WA.getAstrometricSoln(img, self.telSock)
+            if len(results) < 3:
+                self.updateText.emit("NO ASTROMETRIC SOLUTION...NOT ENOUGH STARS? >=3")
+            else:
+                platesolve, fieldoffset, realcenter, solvecenter, guideroffsets,plotting = results
+                plotting.append(img)
+                self.updateText.emit("Real Guider Center is: \nRA %s\n DEC: %s" % \
+                        (self.returnhmsdmsstr(solvecenter.ra.hms), self.returnhmsdmsstr(solvecenter.dec.dms)))
+                self.updateText.emit('Guider Offset (") is: \nRA: %s\n DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
+                        fieldoffset[1].to(u.arcsec).to_string()))
+                self.astrometryCalc.emit([solvecenter, guideroffsets, plotting])
 
-            self.updateText.emit("Real center is RA: %s, DEC: %s" % (solvecenter.ra.hms, solvecenter.dec.dms))
-            self.updateText.emit('Offset (") is RA: %s, DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
-                    fieldoffset[1].to(u.arcsec).to_string()))
+    def returnhmsdmsstr(self,angle):
+
+        return str(int(angle[0])) + ' '+ str(int(angle[1])) + ' ' + str(float(angle[2]))
+
 
     def focusCamera(self):
 
@@ -741,6 +753,8 @@ class RunGuiding(QThread):
 
             if len(lines) > 1:
                 inbox = self.numstarsinbox(centroidxold, centroidyold, starx1old, stary1old, boxsize_f)
+            else:
+                inbox = []
 
             if len(inbox) > 0:
                 #Create box around star and check if star is in box. If star, correct it. If no star, reinitialize guiding
