@@ -125,10 +125,10 @@ def getAstrometricSoln(fl, telSock):
         #print "Guessed: ", newcoord.ra.hms, newcoord.dec.dms
         #print "Solved: ", solvecenter.ra.hms, solvecenter.dec.dms
 
-        fieldoffset = newcoord.spherical_offsets_to(solvecenter)
+        fieldoffset = solvecenter.spherical_offsets_to(newcoord)
         realcenter = [ra_cen, dec_cen]
 
-        name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord = grabUNSOfield(ra_cen, dec_cen, offsets=False\
+        name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,ncoord, nnewcoord = grabUNSOfield(ra_cen, dec_cen, offsets=False\
               ,deg=True)
         xproj, yproj,X,Y = projected_coords(rad, ded, ra_cen, dec_cen)
 
@@ -139,7 +139,7 @@ def getAstrometricSoln(fl, telSock):
         #mpl.plot(xproj[k], yproj[k],'b.')
         #mpl.show()
 
-        return [platesolve, fieldoffset, realcenter, solvecenter, offsets,[x,y,k,xproj,yproj]]
+        return [platesolve, fieldoffset, realcenter, solvecenter, offsets,[x,y,k,xproj,yproj,data,head,coord]]
 
 def returnXY(platesolve, x, y):
 

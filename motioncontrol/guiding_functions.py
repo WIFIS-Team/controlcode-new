@@ -442,8 +442,8 @@ class WIFISGuider(QObject):
                 plotting.append(img)
                 self.updateText.emit("Real Guider Center is: \nRA %s\n DEC: %s" % \
                         (self.returnhmsdmsstr(solvecenter.ra.hms), self.returnhmsdmsstr(solvecenter.dec.dms)))
-                self.updateText.emit('Guider Offset (") is: \nRA: %s\n DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
-                        fieldoffset[1].to(u.arcsec).to_string()))
+                #self.updateText.emit('Guider Offset (") is: \nRA: %s\n DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
+                #        fieldoffset[1].to(u.arcsec).to_string()))
                 self.astrometryCalc.emit([solvecenter, guideroffsets, plotting])
 
     def returnhmsdmsstr(self,angle):
