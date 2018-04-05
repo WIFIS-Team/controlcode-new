@@ -316,12 +316,12 @@ class WIFISGuider(QObject):
 
         return False
 
-    def takeImage(self):
+    def takeImage(self, dark = True):
         if self.cam and self.foc:
             exptime = int(self.expTime.text())
             objtextval = self.ObjText.text()
 
-            if self.expType.currentText() == 'Dark':
+            if (self.expType.currentText() == 'Dark') and (dark == True):
                 self.cam.end_exposure()
                 self.cam.set_exposure(exptime, frametype='dark')
                 img = self.cam.take_photo()  
@@ -421,30 +421,28 @@ class WIFISGuider(QObject):
     def doAstrometry(self):
         if self.cam:
             exptime = int(self.expTime.text())
-            img = self.saveImage(dark=False)
-
-            #if self.expType.currentText() == 'Dark':
-            #    self.cam.end_exposure()
-            #    self.cam.set_exposure(exptime, frametype='normal')
-            #    img = self.cam.take_photo()  
-            #    self.cam.set_exposure(exptime, frametype='dark')
-            #else:
-            #    self.cam.end_exposure()
-            #    self.cam.set_exposure(exptime, frametype='normal')
-            #    img = self.cam.take_photo()  
+            self.updateText.emit("TAKING ASTROMETRIC IMAGE")
+            img = self.takeImage(dark=False)
 
             self.plotSignal.emit(img, 'Astrometry')
-            results = WA.getAstrometricSoln(img, self.telSock)
-            if len(results) < 3:
-                self.updateText.emit("NO ASTROMETRIC SOLUTION...NOT ENOUGH STARS? >=3")
-            else:
-                platesolve, fieldoffset, realcenter, solvecenter, guideroffsets,plotting = results
-                plotting.append(img)
-                self.updateText.emit("Real Guider Center is: \nRA %s\n DEC: %s" % \
-                        (self.returnhmsdmsstr(solvecenter.ra.hms), self.returnhmsdmsstr(solvecenter.dec.dms)))
-                #self.updateText.emit('Guider Offset (") is: \nRA: %s\n DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
-                #        fieldoffset[1].to(u.arcsec).to_string()))
-                self.astrometryCalc.emit([solvecenter, guideroffsets, plotting])
+            self.updateText.emit("STARTING ASTROMETRIC DERIVATION")
+            try:
+                results = WA.getAstrometricSoln(img, self.telSock)
+                if len(results) < 3:
+                    self.updateText.emit("NO ASTROMETRIC SOLUTION...NOT ENOUGH STARS? >=3")
+                else:
+                    platesolve, fieldoffset, realcenter, solvecenter, guideroffsets,plotting = results
+                    self.updateText.emit("Real Guider Center is: \nRA:\t%s\n DEC:\t%s" % \
+                            (self.returnhmsdmsstr(solvecenter.ra.hms), self.returnhmsdmsstr(solvecenter.dec.dms)))
+                    #self.updateText.emit('Guider Offset (") is: \nRA: %s\n DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
+                    #        fieldoffset[1].to(u.arcsec).to_string()))
+                    self.astrometryCalc.emit([solvecenter, guideroffsets, plotting])
+            except Exception as e:
+                print e
+                print traceback.print_exc()
+                self.updateText.emit("SOMETHING WENT WRONG WITH ASTROMETRY....\nCHECK TERMINAL")
+
+
 
     def returnhmsdmsstr(self,angle):
 
@@ -907,16 +905,16 @@ class RunGuiding(QThread):
 
         else:
             diffxold, diffyold, inbox = multistar
-            inbox_xold, inboxy_old = [], []
+            inbox_xold, inbox_yold = [], []
             for i in inbox:
                 inbox_xold.append(diffxold[i])
-                inboy_xold.append(diffyold[i])
+                inbox_yold.append(diffyold[i])
 
             try:
                 #If centroid worked, great
                 new_loc = np.argmax(Iarr)
             except:
-                #If centroid didn't work, exit and restart gudding
+                #If centroid didn't work, exit and restart guiding
                 return False, False
 
             newx = centroidx[new_loc]

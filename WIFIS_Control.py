@@ -11,6 +11,7 @@ from astropy.visualization import (PercentileInterval, LinearStretch,
                                     ImageNormalize, ZScaleInterval)
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.io import fits
 
 import WIFISpower as pc
 import WIFISmotor as wm
@@ -76,7 +77,7 @@ class PlotWindow(QDialog):
 class DoublePlotWindow(QDialog):
 
     def __init__(self, title, parent=None):
-        super(PlotWindow, self).__init__(parent)
+        super(DoublePlotWindow, self).__init__(parent)
        
         self.setWindowTitle(title)
         self.objfigure = mpl.figure()
@@ -103,7 +104,6 @@ class DoublePlotWindow(QDialog):
             event.ignore()
         else:
             event.accept()
-
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
@@ -1099,43 +1099,54 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         if (len(RAText) == 0) or (len(DECText) == 0):
             self._handleOutputTextUpdate('RA or DEC Obj Text Empty!')
-            worked = False
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
+            return
 
-        if (RAText[0] == '+') or (RAText[0] == '-'):
-            RAspl = RAText[1:].split('.')
-            if len(RAspl[0]) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                worked = False
-        else:
-            RAspl = RAText.split('.')
-            if len(RAspl[0]) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                worked = False
+        try:
+            if (RAText[0] == '+') or (RAText[0] == '-'):
+                RAspl = RAText[1:].split('.')
+                if len(RAspl[0]) != 6: 
+                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
+            else:
+                RAspl = RAText.split('.')
+                if len(RAspl[0]) != 6: 
+                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
 
-        if (DECText[0] == '+') or (DECText[0] == '-'):
-            DECspl = DECText[1:].split('.')
-            if len(DECspl[0]) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                worked = False
-        else:
-            DECspl = DECText.split('.')
-            if len(DECspl) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                worked = False
+            if (DECText[0] == '+') or (DECText[0] == '-'):
+                DECspl = DECText[1:].split('.')
+                if len(DECspl[0]) != 6: 
+                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
+            else:
+                DECspl = DECText.split('.')
+                if len(DECspl) != 6: 
+                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
+        except Exception as e:
+            print e
+            self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT LIKELY')
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
+            return
 
         if worked == False:
+            self._handleOutputTextUpdate('NO Object RA and DEC...Cant compute offset')
             self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
             return
         else:
-            RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
+            if (RAText[0] == '+') or (RAText[0] == '-'):
+                RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
+            else:
+                RA = RAText[0:2] + ' ' + RAText[2:4] + ' ' + RAText[4:]
             DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
             self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC)
 
@@ -1145,12 +1156,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         FOffsetdms = fieldoffset[1].to(u.arcsec).to_string()
 
         GOffsetCoord = solvecenter.spherical_offsets_to(TargetCoord)
-        GOffsethms = GOffsetsCood[0].to(u.arcsec).to_string()
-        GOffsetdms = GOffsetsCood[1].to(u.arcsec).to_string()
+        GOffsethms = GOffsetCoord[0].to(u.arcsec).to_string()
+        GOffsetdms = GOffsetCoord[1].to(u.arcsec).to_string()
 
-        self._handleOutputTextUpdate('WIFIS Offset (") to Target is: \nRA: %s\nDEC: %s' % \
+        self._handleOutputTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s' % \
                         (FOffsethms, FOffsetdms))
-        self._handleOutputTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA: %s\nDEC: %s" % \
+        self._handleOutputTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s" % \
                 (GOffsethms,GOffsetdms))
 
     def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC):
@@ -1181,7 +1192,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         hdr['FOffRA'] = (FOffsethms, '//Arcsec from Telescope to WIFIS')
         hdr['FOffDEC'] = (FOffsetdms, '//Arcsec from Telescope to WIFIS')
         
-        fits.writeto('/home/utopea/elliot/wifisoffsets/'+self.todaydate+'T'+\
+        fits.writeto('/home/utopea/elliot/wifisoffsets/'+todaydate+'T'+\
                         time.strftime('%H%M%S')+'.fits', image, hdr, clobber=True)
 
     def _handleAstrometricPlotting(self, plotting):

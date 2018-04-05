@@ -118,6 +118,9 @@ def query_telescope(telSock, reqString, verbose=True, telem=False):
             else:
                 test = False
         respspl = resp.split()
+        #print 'respspl ', respspl
+        if telem and (len(respspl) < 4):
+            continue
         if not telem:
             break
         elif telem and respspl[3] != 'OK':
@@ -293,7 +296,7 @@ def wifis_simple_guiding_setup(telSock, cam, exptime, gfls, rotangle, goffsets):
     #Checks to see if there exists a guiding star for this target
     if gfls[1] and (gfls[0] != ''):
         #Sets the larger boxsize for guiding setup
-        boxsize_f = 50
+        boxsize_f = 25
         
         #Get the original guidestar coordinates.
         f = open(gfls[0], 'r')
