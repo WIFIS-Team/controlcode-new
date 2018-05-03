@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>929</width>
+    <width>979</width>
     <height>911</height>
    </rect>
   </property>
@@ -118,6 +118,45 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_10">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Telescope Parameters</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="DECLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
           <item row="4" column="0">
            <widget class="QLabel" name="label_5">
             <property name="maximumSize">
@@ -150,45 +189,6 @@
             </property>
             <property name="text">
              <string>TextLabel</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="DECLabel">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>200</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0" colspan="2">
-           <widget class="QLabel" name="label_10">
-            <property name="font">
-             <font>
-              <pointsize>15</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Telescope Parameters</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -305,14 +305,23 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
             <string>Telescope Control</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_7">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
              <number>0</number>
             </property>
             <item row="0" column="0">
@@ -482,7 +491,16 @@
             <string>Power Control</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_9">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
              <number>0</number>
             </property>
             <item row="0" column="0">
@@ -760,7 +778,16 @@
             <string>Motor Control</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_12">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
              <number>0</number>
             </property>
             <item row="0" column="1">
@@ -1269,7 +1296,16 @@
             <string>Additional Options</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_14">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
              <number>0</number>
             </property>
             <item row="0" column="0">
@@ -1364,24 +1400,31 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QLabel" name="label_47">
+              <item row="3" column="4">
+               <widget class="QPushButton" name="SetGuideOffset">
                 <property name="text">
-                 <string>Force IIS</string>
+                 <string>Set Guide Offset</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="2">
+              <item row="2" column="1">
+               <widget class="QLabel" name="label_47">
+                <property name="text">
+                 <string>Force IIS Val</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
                <widget class="QLineEdit" name="ForceIISEntry">
                 <property name="text">
                  <string>90</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="4">
-               <widget class="QPushButton" name="SetGuideOffset">
+              <item row="3" column="2">
+               <widget class="QCheckBox" name="EnableForceIIS">
                 <property name="text">
-                 <string>Set Guide Offset</string>
+                 <string>Enable Force IIS</string>
                 </property>
                </widget>
               </item>
@@ -1731,6 +1774,20 @@
       </item>
       <item row="5" column="0">
        <layout class="QGridLayout" name="gridLayout_5">
+        <item row="0" column="6" rowspan="4">
+         <widget class="QTextEdit" name="OutputText">
+          <property name="font">
+           <font>
+            <family>Helvetica</family>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="overwriteMode">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="1">
          <widget class="QLineEdit" name="NRampsText">
           <property name="sizePolicy">
@@ -1806,13 +1863,6 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="4" rowspan="4">
-         <widget class="Line" name="line_10">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="5">
          <widget class="QCheckBox" name="SkipCalib">
           <property name="text">
@@ -1846,26 +1896,12 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="6" rowspan="5">
-         <widget class="QTextEdit" name="OutputText">
-          <property name="font">
-           <font>
-            <family>Helvetica</family>
-            <pointsize>10</pointsize>
-            <italic>true</italic>
-           </font>
-          </property>
-          <property name="overwriteMode">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="2">
          <widget class="QPushButton" name="TakeCalibButton">
           <property name="font">
            <font>
-            <weight>50</weight>
-            <bold>false</bold>
+            <weight>75</weight>
+            <bold>true</bold>
            </font>
           </property>
           <property name="text">
@@ -1997,11 +2033,41 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="4" rowspan="3">
+         <widget class="Line" name="line_10">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item row="7" column="0">
-       <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0,0,0,0,0,0,0,0">
-        <item row="5" column="2">
+       <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,0,0,0,0,0,0,0">
+        <item row="0" column="7" rowspan="7">
+         <widget class="QTextEdit" name="GuidingText">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>250</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Helvetica</family>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+           </font>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
          <widget class="QLineEdit" name="FocStep">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -2020,7 +2086,7 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="1">
+        <item row="2" column="0">
          <widget class="QLabel" name="label_23">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -2041,7 +2107,7 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="2">
+        <item row="2" column="1">
          <widget class="QLabel" name="FocPosition">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2060,7 +2126,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="2">
+        <item row="1" column="1">
          <widget class="QComboBox" name="FilterVal">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -2074,7 +2140,7 @@
             <height>16777215</height>
            </size>
           </property>
-          <property name="currentText" stdset="0">
+          <property name="currentText">
            <string>Z</string>
           </property>
           <item>
@@ -2104,7 +2170,7 @@
           </item>
          </widget>
         </item>
-        <item row="5" column="1">
+        <item row="3" column="0">
          <widget class="QLabel" name="label_24">
           <property name="font">
            <font>
@@ -2119,7 +2185,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
+        <item row="1" column="0">
          <widget class="QLabel" name="label_22">
           <property name="font">
            <font>
@@ -2134,7 +2200,7 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1" colspan="7">
+        <item row="0" column="0" colspan="7">
          <widget class="QLabel" name="label_29">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
@@ -2163,7 +2229,7 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="1" colspan="2">
+        <item row="4" column="0" colspan="2">
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QPushButton" name="BKWButton">
@@ -2217,7 +2283,7 @@
           </item>
          </layout>
         </item>
-        <item row="3" column="7">
+        <item row="1" column="6">
          <widget class="QPushButton" name="StartGuidingButton">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -2230,7 +2296,7 @@
           </property>
          </widget>
         </item>
-        <item row="7" column="1">
+        <item row="5" column="0">
          <widget class="QLabel" name="label_28">
           <property name="font">
            <font>
@@ -2245,14 +2311,14 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="4">
+        <item row="2" column="3">
          <widget class="QPushButton" name="CentroidButton">
           <property name="text">
            <string>Centroid Stars</string>
           </property>
          </widget>
         </item>
-        <item row="7" column="2">
+        <item row="5" column="1">
          <widget class="QLineEdit" name="SetTempValue">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -2271,7 +2337,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="5">
+        <item row="1" column="4">
          <widget class="QPushButton" name="SaveImageButton">
           <property name="font">
            <font>
@@ -2284,14 +2350,14 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="7">
+        <item row="3" column="6">
          <widget class="QCheckBox" name="OverGuideStar">
           <property name="text">
            <string>Overwrite Guide Star</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="3" rowspan="6">
+        <item row="1" column="2" rowspan="6">
          <widget class="Line" name="line_5">
           <property name="font">
            <font>
@@ -2305,7 +2371,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="4">
+        <item row="1" column="3">
          <widget class="QPushButton" name="TakeImageButton">
           <property name="font">
            <font>
@@ -2318,44 +2384,21 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="6" rowspan="6">
+        <item row="1" column="5" rowspan="6">
          <widget class="Line" name="line_7">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
          </widget>
         </item>
-        <item row="8" column="1" colspan="2">
+        <item row="6" column="0" colspan="2">
          <widget class="QPushButton" name="SetTempButton">
           <property name="text">
            <string>Set Temp</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="8" rowspan="7">
-         <widget class="QTextEdit" name="GuidingText">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>250</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <family>Helvetica</family>
-            <pointsize>10</pointsize>
-            <italic>true</italic>
-           </font>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="7">
+        <item row="2" column="6">
          <widget class="QPushButton" name="StopGuidingButton">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -2368,7 +2411,7 @@
           </property>
          </widget>
         </item>
-        <item row="8" column="4">
+        <item row="6" column="3">
          <widget class="QLabel" name="label_27">
           <property name="font">
            <font>
@@ -2383,7 +2426,7 @@
           </property>
          </widget>
         </item>
-        <item row="8" column="5">
+        <item row="6" column="4">
          <widget class="QLabel" name="CCDTemp">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -2402,7 +2445,7 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="4">
+        <item row="3" column="3">
          <widget class="QLabel" name="label_26">
           <property name="font">
            <font>
@@ -2417,7 +2460,7 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="5">
+        <item row="3" column="4">
          <widget class="QComboBox" name="ExpType">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -2431,7 +2474,7 @@
             <height>16777215</height>
            </size>
           </property>
-          <property name="currentText" stdset="0">
+          <property name="currentText">
            <string>Normal</string>
           </property>
           <item>
@@ -2446,7 +2489,7 @@
           </item>
          </widget>
         </item>
-        <item row="6" column="4">
+        <item row="4" column="3">
          <widget class="QLabel" name="label_33">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -2467,7 +2510,7 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="5">
+        <item row="4" column="4">
          <widget class="QLineEdit" name="ExpTime">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -2486,7 +2529,7 @@
           </property>
          </widget>
         </item>
-        <item row="7" column="4">
+        <item row="5" column="3">
          <widget class="QPushButton" name="FocusCameraButton">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -2505,14 +2548,14 @@
           </property>
          </widget>
         </item>
-        <item row="7" column="5">
+        <item row="5" column="4">
          <widget class="QPushButton" name="StopFocus">
           <property name="text">
            <string>Stop Focus</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="5">
+        <item row="2" column="4">
          <widget class="QPushButton" name="doAstrometryButton">
           <property name="text">
            <string>Astrometry</string>
@@ -2532,7 +2575,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>929</width>
+     <width>979</width>
      <height>22</height>
     </rect>
    </property>
@@ -2552,7 +2595,7 @@
    </widget>
    <widget class="QMenu" name="menuConnect">
     <property name="title">
-     <string>Connect</string>
+     <string>Enable</string>
     </property>
     <addaction name="ConnectGuider"/>
     <addaction name="ConnectCalib"/>
