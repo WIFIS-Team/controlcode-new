@@ -364,7 +364,6 @@ class WIFISGuider(QObject):
     def checkCentroids(self, auto=False):
 
         if self.cam and self.foc:
-            try:
             exptime = int(self.expTime.text())
             if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
