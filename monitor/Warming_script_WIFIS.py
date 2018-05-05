@@ -13,8 +13,8 @@
 temperature_limit = 293.0  #heaters will turn off when the detector is above this temperature regardless of all other conditions
 setpoint_ceiling = 290.0 #setpoint will not increase beyond this temperature
 interval = 5.0 #time between each batch of sensor reading in seconds, should not be less than 5
-max_warming_gradient = +0.5 #if temperature rate of change is larger than this number, turn off heaters, in k/min, should be postive
-warming_gradient = +0.3 #target warming gradient (should be slower than max_warming_gradient), positive number
+max_warming_gradient = +0.60 #if temperature rate of change is larger than this number, turn off heaters, in k/min, should be postive
+warming_gradient = +0.35 #target warming gradient (should be slower than max_warming_gradient), positive number
 setpoint_update_interval = 60.0 #seconds between setpoint updates
 dt_above_worksurface = 3.0
 PID = '10,50,0'#PID control parameters to use, first value is P, second value is I, 3rd value is D
@@ -78,6 +78,8 @@ def warming_setpoints(): #dynamically generate setpoints for cooling
     mout_set = False
     actual_setpoint_update_interval = setpoint_update_interval
     last_website_upload_time = time.time()
+
+    dTdtcount = 0
     
     while True: #Will run until interrupted by the user. Will read the sensors at regular intervals as set in the 'interval' variable, and command the temperature controller to change setpoint every 'setpoint_update_interval' 
 
@@ -115,7 +117,7 @@ def warming_setpoints(): #dynamically generate setpoints for cooling
         write_html(current_read) #upload readings to website
         record_readings_to_file(current_read) #record the readings to file
         if time_now - last_website_upload_time >= website_update_frequency:
-            upload_html_and_plots() #upload readings to website
+#            upload_html_and_plots() #upload readings to website
             last_website_upload_time = time.time()
 
         if Td > temperature_limit:
@@ -136,18 +138,23 @@ def warming_setpoints(): #dynamically generate setpoints for cooling
             continue #skip the rest of the loop
         
         if average_dT_dt > max_warming_gradient: #If temperature is increasing faster than rate set in 'max_gradient', turn off the heaters
-            turn_off_heaters()
-            heater_off = True
-            print 'HEATERS Turned OFF'
-            wait_time(interval-(time.time()-time_now))
+            dTdtcount += 1
+            print "GRADIENT HIGHER THAN MAXIMUM, INCREMENTING"
+            if dTdtcount >= 5:
+                dTdtcount = 0
+                turn_off_heaters()
+                heater_off = True
+                print 'HEATERS Turned OFF'
+                wait_time(interval-(time.time()-time_now))
 #            print 'Trigger 3' #====Testing
-            continue #skip the rest of the loop
+                continue #skip the rest of the loop
         else:
             if heater_off: #If heaters has been turned off in previous loop, turn it back on
                 turn_on_heaters()
                 heater_off = False
                 print 'HEATERS Turned ON'
 #                print 'Trigger 1' #====Testing
+            dTdtcount = 0
         
         if average_dT_dt < warming_gradient: #warming slower than specified, update setpoint to follow the real temperature
             stored_Temperature = Td
@@ -179,7 +186,7 @@ def warming_setpoints(): #dynamically generate setpoints for cooling
             
 #            print 'Trigger 6' #====Testing
             
-
+        print 'N times above dTdt limit: ', dTdtcount
         print 'execution time: ',  time.time()-time_now #====Testing
         wait_time(interval-(time.time()-time_now)) #sleep for the remaining time left in interval
 

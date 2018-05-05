@@ -93,7 +93,8 @@ def cooling_setpoints(): #dynamically generate setpoints for cooling
         dT_dt_A = dT_A/(dt/60.0)
         dT_dt_B = dT_B/(dt/60.0) #convert to K/min
         
-        average_dT_dt = (dT_dt_A+dT_dt_B)/2.0 #average the reading across both sensors
+        #average_dT_dt = (dT_dt_A+dT_dt_B)/2.0 #average the reading across both sensors
+        average_dT_dt = dT_dt_B #average the reading across both sensors
         g_dT_dt = average_dT_dt
         
         print 'DT/dt: ',  average_dT_dt
@@ -106,7 +107,7 @@ def cooling_setpoints(): #dynamically generate setpoints for cooling
         write_html(current_read) #upload readings to website
         record_readings_to_file(current_read) #record the readings to file
         if time_now - last_website_upload_time >= website_update_frequency:
-            upload_html_and_plots() #upload readings to website
+            #upload_html_and_plots() #upload readings to website
             last_website_upload_time = time.time()
         
         
@@ -401,7 +402,7 @@ def upload_html_and_plots():
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         #ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh", "known_hosts")))
         #server = 'jiyoon.astro.utoronto.ca'
-        server = 'thor.dunlap.utoronto.ca'
+        #server = 'thor.dunlap.utoronto.ca'
         ssh.connect(server, username='fool', password='')
         sftp = ssh.open_sftp()
         localpath = 't_stream.html'

@@ -125,6 +125,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self.guideroffsets = [self.GuideRA, self.GuideDEC]
 
+        self.labelsThread = False
+        self.motoraction = False
+
         #Defining GUI Variables to feed into different control classes
         #Important that the classes only read the variables and never try to adjust them.
         self.guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
@@ -157,6 +160,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 print "Connecting to motors..."
                 self.motorclient.connect()
 
+                motorlabels = [self.FocusPosition, self.FilterPosition, self.GratingPosition,\
+                    self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusStep,\
+                    self.FilterStep, self.GratingStep]
+
                 self.motorcontrol = wm.MotorControl(self.motorclient) 
                 self.motorcontrol.updateText.connect(self._handleMotorText)
                 self.motorson = True
@@ -166,26 +173,25 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.motorcontrol = None
             self.motorson = False
 
-        self.m1running = 0
-        self.m2running = 0
-        self.m3running = 0
-
         #Turn on label thread
         if self.telescope:
             updatevals = [self.RAObj, self.DECObj]
             if not self.updateon:
-                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals)
+                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
                 self.labelsThread.start()
                 self.updateon = True
             else:
                 if self.labelsThread.isrunning:
                     self.labelsThread.stop()
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
                 else:
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
         
@@ -223,8 +229,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         #Defining actions for Motor Control CURRENTLY DISABLED
         if motors:
-            self.motorcontrol.update_status()
-            self.motorcontrol.get_position() 
+            #self.motorcontrol.update_status()
+            #self.motorcontrol.get_position() 
 
             self.FocusGoTo.clicked.connect(self.motorcontrol.m1_step)
             self.FilterGoTo.clicked.connect(self.motorcontrol.m2_step)
@@ -327,18 +333,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if self.telescope:
             updatevals = [self.RAObj, self.DECObj]
             if not self.updateon:
-                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
+                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
                 self.labelsThread.start()
                 self.updateon = True
             else:
                 if self.labelsThread.isrunning:
                     self.labelsThread.stop()
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
                 else:
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron, updatevals)
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
 
@@ -573,7 +582,18 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         try:
             self.telsock = wg.connect_to_telescope()
             telemDict = wg.get_telemetry(self.telsock, verbose=False)
-            self.IISLabel.setText(telemDict['IIS']) #Set IIS early because certain functions rely on this value
+            if self.EnableForceIIS.isChecked():
+                if self.ForceIISEntry.text() != '':
+                    try:
+                        float(self.ForceIISEntry.text())
+                        self.IISLabel.setText(self.ForceIISEntry.text())
+                    except:
+                        self._handleOutputTextUpdate('#### FORCED IIS NOT A FLOAT')
+                        self.IISLabel.setText(telemDict['IIS']) 
+            else:
+                #Set IIS early because certain functions rely on this value
+                self.IISLabel.setText(telemDict['IIS']) 
+
             self.telescope = True
 
             self.telescopeToggle(True)
@@ -861,7 +881,18 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.DECLabel.setText(DECText[0:3]+':'+DECText[3:5]+':'+DECText[5:])
         self.AZLabel.setText(telemDict['AZ'])
         self.ELLabel.setText(telemDict['EL'])
-        self.IISLabel.setText(telemDict['IIS'])
+        #self.IISLabel.setText(telemDict['IIS'])
+        if self.EnableForceIIS.isChecked():
+            if self.ForceIISEntry.text() != '':
+                try:
+                    float(self.ForceIISEntry.text())
+                    self.IISLabel.setText(self.ForceIISEntry.text())
+                except:
+                    self._handleOutputTextUpdate('#### FORCED IIS NOT A FLOAT')
+                    self.IISLabel.setText(telemDict['IIS']) 
+        else:
+            #Set IIS early because certain functions rely on this value
+            self.IISLabel.setText(telemDict['IIS']) 
         self.HALabel.setText(telemDict['HA'])
         self.FocPosition.setText(steppos)
         self.CCDTemp.setText(ccdtemp)
@@ -977,72 +1008,52 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def _handleMotorText(self, s, labeltype, motnum):
         
-        if labeltype == 'Position':
-            if motnum == 0:
-                self.FocusPosition.setText(s)
-            elif motnum == 1:
-                self.FilterPosition.setText(s)
-            elif motnum == 2:
-                self.GratingPosition.setText(s)
-                
-        if labeltype == 'Status':
-            if motnum == 0:
-                self.FocusStatus.setText(s)
-            elif motnum == 1:
-                self.FilterStatus.setText(s)
-            elif motnum == 2:
-                self.GratingStatus.setText(s)
+        if labeltype in ['Position', 'Status']:
+            if labeltype == 'Position':
+                if motnum == 0:
+                    self.FocusPosition.setText(s)
+                elif motnum == 1:
+                    self.FilterPosition.setText(s)
+                elif motnum == 2:
+                    self.GratingPosition.setText(s)
+                    
+            if labeltype == 'Status':
+                if motnum == 0:
+                    self.FocusStatus.setText(s)
+                elif motnum == 1:
+                    self.FilterStatus.setText(s)
+                elif motnum == 2:
+                    self.GratingStatus.setText(s)
+        else:
+            while self.labelsThread.updatemotors:
+                pass
+            
+            self.motoraction = True
+            if labeltype == 'Step':
+                if motnum == 0:
+                    self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
+                elif motnum == 1:
+                    self.motorcontrol.stepping_operation(self.FilterStep.text(), unit=0x02)
+                elif motnum == 2:
+                    self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
 
-        if labeltype == 'Step':
-            if motnum == 0:
-                self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FocusStep.text())
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
-            elif motnum == 1:
-                self.motorcontrol.stepping_operation(self.FilterStep.text(), unit=0x02)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.FilterStep.text())
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
-            elif motnum == 2:
-                self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, self.GratingStep.text())
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
+            if (labeltype == 'Step') and (len(s) != 0):
+                if motnum == 0:
+                    self.motorcontrol.stepping_operation(s, unit=0x01)
+                elif motnum == 1:
+                    self.motorcontrol.stepping_operation(s, unit=0x02)
+                elif motnum == 2:
+                    self.motorcontrol.stepping_operation(s, unit=0x03)
 
-        if (labeltype == 'Step') and (len(s) != 0):
-            if motnum == 0:
-                self.motorcontrol.stepping_operation(s, unit=0x01)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
-            elif motnum == 1:
-                self.motorcontrol.stepping_operation(s, unit=0x02)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
-            elif motnum == 2:
-                self.motorcontrol.stepping_operation(s, unit=0x03)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, s)
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
+            if labeltype == 'Home':
+                if motnum == 0:
+                    self.motorcontrol.homing_operation(0x01)
+                elif motnum == 1:
+                    self.motorcontrol.homing_operation(0x02)
+                elif motnum == 2:
+                    self.motorcontrol.homing_operation(0x03)
 
-        if labeltype == 'Home':
-            if motnum == 0:
-                self.motorcontrol.homing_operation(0x01)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
-            elif motnum == 1:
-                self.motorcontrol.homing_operation(0x02)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
-            elif motnum == 2:
-                self.motorcontrol.homing_operation(0x03)
-                #self.motormove = wm.MotorThread(self.motorcontrol, motnum, 0)
-                #self.motormove.updateText.connect(self._handleMotorText)
-                #self.motormove.start()
+            self.motoraction = False
 
     def runFocusTest(self):
         self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus, self.calibrationcontrol,\
@@ -1084,7 +1095,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         WIFISCoordhms = self.guider.returnhmsdmsstr(WIFISCoord.ra.hms)
         WIFISCoorddms = self.guider.returnhmsdmsstr(WIFISCoord.dec.dms)
 
-        self._handleOutputTextUpdate("Real WIFIS Field Center is: \nRA %s\nDEC: %s" % (WIFISCoordhms, WIFISCoorddms))
+        self._handleGuidingTextUpdate("Real WIFIS Field Center is: \nRA %s\nDEC: %s" % (WIFISCoordhms, WIFISCoorddms))
 
         #Checking if the RA and DEC values are okay
         worked = True
@@ -1092,13 +1103,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             float(RAText)
             float(DECText)
         except:
-            self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-            self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-            self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+            self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
+            self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+            self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
             worked = False
 
         if (len(RAText) == 0) or (len(DECText) == 0):
-            self._handleOutputTextUpdate('RA or DEC Obj Text Empty!')
+            self._handleGuidingTextUpdate('RA or DEC Obj Text Empty!')
             self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
             return
 
@@ -1106,40 +1117,40 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             if (RAText[0] == '+') or (RAText[0] == '-'):
                 RAspl = RAText[1:].split('.')
                 if len(RAspl[0]) != 6: 
-                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
             else:
                 RAspl = RAText.split('.')
                 if len(RAspl[0]) != 6: 
-                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
 
             if (DECText[0] == '+') or (DECText[0] == '-'):
                 DECspl = DECText[1:].split('.')
                 if len(DECspl[0]) != 6: 
-                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
             else:
                 DECspl = DECText.split('.')
                 if len(DECspl) != 6: 
-                    self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                    self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
         except Exception as e:
             print e
-            self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT LIKELY')
+            self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT LIKELY')
             self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
             return
 
         if worked == False:
-            self._handleOutputTextUpdate('NO Object RA and DEC...Cant compute offset')
+            self._handleGuidingTextUpdate('NO Object RA and DEC...Cant compute offset')
             self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
             return
         else:
@@ -1159,9 +1170,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         GOffsethms = GOffsetCoord[0].to(u.arcsec).to_string()
         GOffsetdms = GOffsetCoord[1].to(u.arcsec).to_string()
 
-        self._handleOutputTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s' % \
+        self._handleGuidingTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s' % \
                         (FOffsethms, FOffsetdms))
-        self._handleOutputTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s" % \
+        self._handleGuidingTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s" % \
                 (GOffsethms,GOffsetdms))
 
     def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC):
@@ -1191,7 +1202,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         hdr['OBJDEC'] = (DEC, '//Entered Object DEC')
         hdr['FOffRA'] = (FOffsethms, '//Arcsec from Telescope to WIFIS')
         hdr['FOffDEC'] = (FOffsetdms, '//Arcsec from Telescope to WIFIS')
-        
+        hdr['GRAOff'] = self.guideroffsets[0].text()
+        hdr['GDECOff'] = self.guideroffsets[1].text()
         fits.writeto('/home/utopea/elliot/wifisoffsets/'+todaydate+'T'+\
                         time.strftime('%H%M%S')+'.fits', image, hdr, clobber=True)
 
@@ -1353,7 +1365,8 @@ class UpdateLabels(QThread):
 
     updateText = pyqtSignal(list)
 
-    def __init__(self, guider, motorcontrol, guideron,updatevals):
+    def __init__(self, guider, motorcontrol, guideron,updatevals, EnableForceIIS,\
+            ForceIISEntry, motoraction):
         QThread.__init__(self)
 
         self.guider = guider
@@ -1362,6 +1375,10 @@ class UpdateLabels(QThread):
         self.RAObj, self.DECObj = updatevals
         self.stopthread = False
         self.isrunning = False
+        self.EnableForceIIS = EnableForceIIS
+        self.ForceIISEntry = ForceIISEntry
+        self.updatemotors = False
+        self.motoraction = motoraction
 
     def __del__(self):
         self.wait()
@@ -1376,8 +1393,17 @@ class UpdateLabels(QThread):
             self.isrunning = True
             try:
                 telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
+                if self.EnableForceIIS.isChecked():
+                    if self.ForceIISEntry.text() != '':
+                        try:
+                            float(self.ForceIISEntry.text())
+                            telemDict['IIS'] = self.ForceIISEntry.text()
+                        except:
+                            self._handleOutputTextUpdate('#### FORCED IIS NOT A FLOAT')
+
                 telemDict['RAObj'] = self.RAObj.text()
                 telemDict['DECObj'] = self.DECObj.text()
+
                 wg.write_telemetry(telemDict)
 
                 if self.guideron:
@@ -1387,13 +1413,16 @@ class UpdateLabels(QThread):
                     steppos = "N/A"
                     ccdTemp = "N/A"
                 
-                if motors:
+                if motors and not self.motoraction:
+                    self.updatemotors = True
                     self.motorcontrol.update_status()
                     self.motorcontrol.get_position()
 
+                self.updatemotors = False
+
                 self.updateText.emit([telemDict,steppos,ccdTemp])
 
-                self.sleep(4)
+                self.sleep(5)
 
             except Exception as e:
                 print "############################"
@@ -1408,6 +1437,7 @@ class FocusTest(QThread):
     updateText = pyqtSignal(str)
     moveMotor = pyqtSignal(str,str,int)
 
+
     def __init__(self, motorcontrol, scidet, focusstatus, calibcontrol, focvalue):
         QThread.__init__(self)
 
@@ -1419,6 +1449,7 @@ class FocusTest(QThread):
         self.focstatus = focusstatus
         self.calibcontrol = calibcontrol
         self.focvalue = focvalue
+        self.motorson = False
 
     def __del__(self):
         self.wait()
@@ -1426,6 +1457,7 @@ class FocusTest(QThread):
     def stop(self):
         self.updateText.emit("STOPPING FOCUS THREAD ASAP")
         self.stopthread = True
+
 
     def run(self):
 

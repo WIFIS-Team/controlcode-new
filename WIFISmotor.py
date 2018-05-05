@@ -47,6 +47,8 @@ class MotorControl(QObject):
                         self.motor_position -= 2**32
                     self.updateText.emit(str(self.motor_position), 'Position', i)
             except SerialException:
+                print traceback.print_exc()
+                print "Unit: ", unit
                 print "Serial Exception (get_position)..."
 
     def update_status(self):
@@ -55,7 +57,6 @@ class MotorControl(QObject):
         #Focus, Filter, Grating
 
         try:
-
             for unit in range(1,4):
                 resp = self.client.read_holding_registers(0x0020,1, unit=unit)
                 if resp != None:
@@ -72,6 +73,7 @@ class MotorControl(QObject):
                         self.updateText.emit("UNKN",'Status',unit-1)
 
         except SerialException:
+            print traceback.print_exc()
             print "Serial Exception (Update Status)..."
 
 
@@ -88,6 +90,9 @@ class MotorControl(QObject):
             self.client.write_register(0x001E, 0x2101, unit=unit)
             self.client.write_register(0x001E, 0x2001, unit=unit)
         except SerialException:
+            print traceback.print_exc()
+            print "Value: ", value
+            print "Unit: ", unit
             print "Serial Exception (stepping operation)..."
 
     def homing_operation(self, unit):
@@ -111,17 +116,19 @@ class MotorControl(QObject):
             self.client.write_register(0x001E, 0x2800, unit=unit)
             self.client.write_register(0x001E, 0x2000, unit=unit)
         except SerialException:
+            print traceback.print_exc()
+            print "Unit: ", unit
             print "Serial Exception (Homing Operation)..."
 
     #Actions
     def gotoTB(self):
         self.m2_step(action='20000')
-        time.sleep(1)
-        self.m3_step(action='-200')
+        #time.sleep(3)
+        self.m3_step(action='-180')
 
     def gotoH(self):
         self.m2_step(action='40000')
-        time.sleep(1)
+        #time.sleep(3)
         self.m3_step(action='360')
 
     def gotoBlank(self):
@@ -213,6 +220,76 @@ class MotorControl(QObject):
 
     def m3_off(self):
         self.client.write_register(0x001E, 0x0000, unit=0x03)
+
+class HandleMotors(QThread):
+
+    updateText = pyqtSignal(list)
+
+    def __init__(self, motorcontrol, motorlabels):
+        QThread.__init__(self)
+
+        self.motorcontrol = motorcontrol
+        self.FocusPosition, self.FilterPosition, self.GratingPosition,\
+                    self.FocusStatus, self.FilterStatus, self.GratingStatus,\
+                    self.FocusStep, self.FilterStep, self.GratingStep= motorlabels
+        self.stopthread = False
+        self.isrunning = False
+        self.action = False
+        self.update = False
+
+    def __del__(self):
+        self.wait()
+
+    def stop(self):
+        self.stopthread = True
+        self.isrunning = False
+
+    def movemotor1(self):
+        self.action = True
+        while self.update:
+            pass
+        self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
+        self.sleep(1)
+        self.action = False
+
+    def movemotor2(self):
+        self.action = True
+        while self.update:
+            pass
+        self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
+        self.sleep(1)
+        self.action = False
+
+    def movemotor3(self):
+        self.action = True
+        while self.update:
+            pass
+        self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
+        self.sleep(1)
+        self.action = False
+
+    def run(self):
+
+        while not self.stopthread:
+            self.isrunning = True
+            try:
+                self.update = True
+
+                if self.update and not self.action:
+                    self.motorcontrol.update_status()
+                    self.motorcontrol.get_position()
+                
+                self.update = False
+
+                self.sleep(5)
+
+            except Exception as e:
+                print "############################"
+                print "ERROR IN LABEL UPDATE THREAD"
+                print traceback.print_exc()
+                print e
+                print "############################"
+        self.isrunning = False
 
 
 class MotorThread(QThread):

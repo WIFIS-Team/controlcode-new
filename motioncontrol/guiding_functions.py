@@ -297,6 +297,7 @@ class WIFISGuider(QObject):
                 img = self.cam.take_photo()  
 
             telemDict = WG.get_telemetry(self.telSock)
+            telemDict['IIS'] = self.rotangle.text()
             hduhdr = self.makeHeader(telemDict)
 
             if objtextval == "":
@@ -363,6 +364,7 @@ class WIFISGuider(QObject):
     def checkCentroids(self, auto=False):
 
         if self.cam and self.foc:
+            try:
             exptime = int(self.expTime.text())
             if self.expType.currentText() == 'Dark':
                 self.cam.end_exposure()
@@ -390,9 +392,10 @@ class WIFISGuider(QObject):
             barr = np.argsort(centroids[2])[::-1]
             b = np.argmax(centroids[2])
       
-            self.updateText.emit("X pixelscale: %f, %f" % (x_rot[0], x_rot[1]))
-            self.updateText.emit("Y pixelscale: %f, %f" % (y_rot[0], y_rot[1]))
+            #self.updateText.emit("X pixelscale: %f, %f" % (x_rot[0], x_rot[1]))
+            #self.updateText.emit("Y pixelscale: %f, %f" % (y_rot[0], y_rot[1]))
 
+            self.updateText.emit("PRINTING THE CENTROIDS FOR THE\nFOUR BRIGHTEST STARS IN THE IMAGE")
             d = -1
             for i,b in enumerate(barr):  
                 if i > 3:
@@ -403,10 +406,12 @@ class WIFISGuider(QObject):
                 dy = offsety * y_rot
                 radec = dx + dy
 
-                self.updateText.emit("Y, Y Offset, RA Move: %f, %f" % (centroids[1][b], offsety))
-                self.updateText.emit("X, X Offset, DEC Move: %f, %f" % (centroids[0][b], offsetx))
+                self.updateText.emit("#### STAR %i ####" % (i+1))
+                self.updateText.emit("X, X Offset: %f, %f" % (centroids[0][b], offsetx))
+                self.updateText.emit("Y, Y Offset: %f, %f" % (centroids[1][b], offsety))
                 self.updateText.emit("RA Move: %f" % (d*radec[1]))
                 self.updateText.emit("DEC Move: %f" % (d*radec[0]))
+                self.updateText.emit("#################")
                 self.updateText.emit("\n")
 
             b = np.argmax(centroids[2])
@@ -415,6 +420,7 @@ class WIFISGuider(QObject):
             dx = offsetx * x_rot
             dy = offsety * y_rot
             radec = dx + dy
+            self.updateText.emit("#### FINISHED CHECK CENTROIDS")
 
         return img, d*radec[1], d*radec[0]
 
@@ -427,9 +433,10 @@ class WIFISGuider(QObject):
             self.plotSignal.emit(img, 'Astrometry')
             self.updateText.emit("STARTING ASTROMETRIC DERIVATION")
             try:
-                results = WA.getAstrometricSoln(img, self.telSock)
+                results = WA.getAstrometricSoln(img, self.telSock, self.rotangle.text())
                 if len(results) < 3:
                     self.updateText.emit("NO ASTROMETRIC SOLUTION...NOT ENOUGH STARS? >=3")
+                    self.updateText.emit("Try increasing exp time, or moving to a different field")
                 else:
                     platesolve, fieldoffset, realcenter, solvecenter, guideroffsets,plotting = results
                     self.updateText.emit("Real Guider Center is: \nRA:\t%s\n DEC:\t%s" % \

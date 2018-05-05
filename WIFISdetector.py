@@ -18,6 +18,25 @@ serverport = 5000
 path_to_watch = "/Data/WIFIS/H2RG-G17084-ASIC-08-319/"
 buffersize = 1024
 
+#def channelrefcorrect(data,channel=32):
+#    corrfactor = np.zeros(channel)
+#    
+#    for i in range(channel):
+#         csize = 64*32/channel
+#         corrfactor[i] = np.mean(np.concatenate([data[0:4,i*csize:i*csize+csize],data[2044:2048,i*csize:i*csize+csize]]))
+#         data[:,i*csize:i*csize+csize] = data[:,i*csize:i*csize+csize] - corrfactor[i]
+
+def read_gc_defaults():
+
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    valuesdict = {}
+    for line in f:
+        spl = line.split()
+        valuesdict[spl[0]] = spl[1]
+    f.close()
+
+    return valuesdict
  
 class Formatter(object):
     def __init__(self, im):
@@ -61,58 +80,82 @@ class h2rg(QObject):
     
     def connect(self):
         if self.scideton:
+            if self.connected == True:
+                self.printTxt("#### DETECTOR ALREADY CONNECTED")
+                return True
             self.printTxt("#### CONNECTING TO DETECTOR")
-            self.s.settimeout(None)
-            self.s.connect((self.servername,self.port))
-            self.connected = True
-            self.h2rgstatus.setStyleSheet('color: blue')
-            self.h2rgstatus.setText("H2RG Connected")
-            self.printTxt("#### CONNECTED TO DETECTOR")
+            try:
+                self.s.settimeout(None)
+                self.s.connect((self.servername,self.port))
+                self.connected = True
+                self.h2rgstatus.setStyleSheet('color: blue')
+                self.h2rgstatus.setText("H2RG Connected")
+                self.printTxt("#### CONNECTED TO DETECTOR")
+            except Exception as e:
+                self.printTxt("#### THERE WAS AN ISSUE CONNECTING THE DETECTOR....\nCHECK TERMINAL")
+                print e
+                print traceback.print_exc()
+                return False
             return True
         else:
-            self.printTxt("#### NOT CONNECTED TO DETECTOR...THERE WAS AN ISSUE")
+            self.printTxt("#### NOT CONNECTED TO DETECTOR...IT APPEARS OFF\nCHECK THE CONNECTION")
             return False
 
     
     def disconnect(self):
-        if(self.connected):
-            self.printTxt("#### DISCONNECTING FROM THE DETECTOR")
-            self.s.close() 
-            self.connected = False
-            self.initialized = False 
-            self.printTxt("#### DISCONNECTED")
-            self.h2rgstatus.setStyleSheet('color: red')
-            self.h2rgstatus.setText("H2RG Disconnected")
-            return(True)
+        if (self.connected):
+            try:
+                self.printTxt("#### DISCONNECTING FROM THE DETECTOR")
+                self.s.close() 
+                self.connected = False
+                self.initialized = False 
+                self.printTxt("#### DISCONNECTED")
+                self.h2rgstatus.setStyleSheet('color: red')
+                self.h2rgstatus.setText("H2RG Disconnected")
+                return(True)
+            except Exception as e:
+                self.printTxt("#### SOMETHING WENT WRONG WHILE DISCONNECTING FROM THE DETECTOR")
+                return False
         
         return(False)
         
     def initialize(self):
-        if(self.connected):
-            self.printTxt("#### INITIALIZING")
-            self.s.send("INITIALIZE1")
-            response = self.s.recv(self.buffersize)
-            self.printTxt(response)
+        if(self.connected) and (self.initialized == False):
+            if self.initialized == True:
+                self.printTxt("#### DETECTOR ALREADY INITIALIZED") 
 
-            self.s.send("SETGAIN(12)")
-            self.printTxt("#### Setting Gain")
-            response = self.s.recv(buffersize)
-            self.printTxt(response)
+            try:
+                self.printTxt("#### INITIALIZING")
+                self.s.send("INITIALIZE1")
+                response = self.s.recv(self.buffersize)
+                self.printTxt(response)
 
-            self.s.send("SETDETECTOR(2,32)")
-            self.printTxt("#### Setting Detector Channels")
-            response = self.s.recv(buffersize)
-            self.printTxt(response)
+                self.s.send("SETGAIN(12)")
+                self.printTxt("#### Setting Gain")
+                response = self.s.recv(buffersize)
+                self.printTxt(response)
 
-            self.s.send("SETENHANCEDCLK(1)")
-            self.printTxt("#### Setting Clocking")
-            response = self.s.recv(buffersize)
-            self.printTxt(response)
+                self.s.send("SETDETECTOR(2,32)")
+                self.printTxt("#### Setting Detector Channels")
+                response = self.s.recv(buffersize)
+                self.printTxt(response)
 
-            self.printTxt("#### INITIALIZED")
-            self.initialized = True            
-            self.h2rgstatus.setStyleSheet('color: green')
-            return(True)
+                self.s.send("SETENHANCEDCLK(1)")
+                self.printTxt("#### Setting Clocking")
+                response = self.s.recv(buffersize)
+                self.printTxt(response)
+
+                self.printTxt("#### INITIALIZED")
+                self.initialized = True            
+                self.h2rgstatus.setStyleSheet('color: green')
+                return(True)
+            except Exception as e:
+                self.printTxt("#### SOMETHING WENT WRONG DURING INITIALIZATION...CHECK TERMINAL") 
+                print e
+                print traceback.print_exc()
+                return(False)
+        else:
+            self.printTxt("#### DETECTOR NOT CONNECTED..CANNOT INITIALIZE") 
         
         return(False)
         
@@ -135,17 +178,20 @@ class h2rg(QObject):
         return(False)
       
     def writeObsData(self,directory,obsType,sourceName):
-            f = open(directory+"/obsinfo.dat","w")
-            f.write("Obs Type: "+obsType+"\n")
-            f.write("Source: "+sourceName+"\n")
+        f = open(directory+"/obsinfo.dat","w")
+        f.write("Obs Type: "+obsType+"\n")
+        f.write("Source: "+sourceName+"\n")
 
-            telemf = open("/home/utopea/WIFIS-Team/controlcode/BokTelemetry.txt","r")
+        telemf = open("/home/utopea/WIFIS-Team/controlcode/BokTelemetry.txt","r")
+        defaults = read_gc_defaults()
 
-            for line in telemf:
-                f.write(line)
+        for line in telemf:
+            f.write(line)
+        f.write('GCRAOff\t'+defaults['GuideRA']+'\n')
+        f.write('GCDECOff\t'+defaults['GuideDEC']+'\n')
 
-            telemf.close()
-            f.close()
+        telemf.close()
+        f.close()
                 
     def exposeSF(self, sourceName):
         self.printTxt("ACQUIRING SINGLE FRAME")

@@ -33,11 +33,13 @@ def read_defaults():
 
     return valuesdict
 
-def getAstrometricSoln(fl, telSock):
+def getAstrometricSoln(fl, telSock, rotangleget):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
 
     data, head, RA, DEC, centroids = load_img(fl, telSock)
+    if type(fl) != str:
+        head['IIS'] = rotangleget
     xorig = np.array(centroids[0])
     yorig = np.array(centroids[1])
     yorigflip = -1*(yorig - 1024)
@@ -67,8 +69,11 @@ def getAstrometricSoln(fl, telSock):
     else:
         k = rmag < 19
 
-    xmatch, ymatch, xprojmatch, yprojmatch, ramatch, decmatch, xdist, ydist,disti, posi =\
-            compareFieldsNew(x, y, xproj, yproj, rad, ded, k)
+    compareresults = compareFieldsNew(x, y, xproj, yproj, rad, ded, k)
+    if compareresults == None:
+        return [False]
+    else:
+        xmatch, ymatch, xprojmatch, yprojmatch, ramatch, decmatch, xdist, ydist,disti, posi = compareresults
 
     disti = np.array(disti)
 
@@ -264,6 +269,8 @@ def compareFieldsNew(x, y, xp, yp,rad, ded, k):
             sumdist += dist[mini]
             mindists.append(dist[mini])
         nsmalls.append(nsmall)
+    if len(nsmalls) == 0:
+        return None
 
     amnsmall = np.argmax(nsmalls)
 

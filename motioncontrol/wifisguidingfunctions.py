@@ -159,6 +159,7 @@ def get_telemetry(telSock, verbose=True):
     for key in keyList:
         telemDict[key] = cleanResp[II]
         II += 1
+    #telemDict['IIS'] = '90.0'
 
     return telemDict
 
