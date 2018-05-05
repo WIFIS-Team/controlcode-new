@@ -218,6 +218,18 @@ def open_serial_port():
     else:
         print 'Unable to open serial port - Pressure'
 
+def open_pressure_port():
+    global ser_pressure
+    ser_pressure.port = '/dev/pressure'
+    ser_pressure.baudrate = 9600
+    ser_pressure.timeout=0
+    ser_pressure.open()
+    time.sleep(5)
+    if ser_pressure.isOpen():
+        print 'Serial port opened - Pressure'
+    else:
+        print 'Unable to open serial port - Pressure'
+
 def close_serial_port():
     global ser
     global ser_pressure
@@ -234,8 +246,12 @@ def readPressure():
         pressure = result[7:15]
 
         ser_pressure.flush()
-    except:
-        pass
+    except Exception as e:
+        print e
+        print "Cant communicate with pressure sensor...attempting to reconnect"
+        open_pressure_port()
+        pressure = '99'
+
 
     return pressure
 
