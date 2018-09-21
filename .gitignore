@@ -1,2 +1,6 @@
 *.pyc
 *.swp
+monitor/*.csv
+monitor/*.png
+monitor/*.jpg
+quick_reduction

@@ -350,6 +350,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                         self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
+            #self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
+            #self.WIFISMoveButton.clicked.connect(self.guider.offsetToWIFIS)
+            #self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
+            #self.MoveBackButton.clicked.connect(self.guider.moveTelescopeBack)
+            #self.CalOffsetButton.clicked.connect(self.guider.calcOffset)
 
 
     def connectGuiderAction(self):
