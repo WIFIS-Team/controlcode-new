@@ -4,3 +4,6 @@ monitor/*.csv
 monitor/*.png
 monitor/*.jpg
 quick_reduction
+exposurecontrol/*.lst
+exposurecontrol/get_arc_width_map.py
+exposurecontrol/get_src_pos.py

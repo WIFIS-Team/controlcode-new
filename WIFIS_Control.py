@@ -27,7 +27,7 @@ import time
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
-motors = False
+motors = True
 
 def read_defaults():
 
@@ -160,9 +160,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 print "Connecting to motors..."
                 self.motorclient.connect()
 
-                motorlabels = [self.FocusPosition, self.FilterPosition, self.GratingPosition,\
-                    self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusStep,\
-                    self.FilterStep, self.GratingStep]
+                #motorlabels = [self.FocusPosition, self.FilterPosition, self.GratingPosition,\
+                #    self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusStep,\
+                #    self.FilterStep, self.GratingStep]
 
                 self.motorcontrol = wm.MotorControl(self.motorclient) 
                 self.motorcontrol.updateText.connect(self._handleMotorText)
@@ -789,7 +789,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
      
         return1 = wg.set_next_radec(self.telsock,RAText,DECText)
         self._handleOutputTextUpdate(return1)
-            
 
     def initExposure(self):
         self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect.currentText(),\
@@ -797,9 +796,18 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 sourceName=self.ObjText.text())
         self.scidetexpose.updateText.connect(self._handleOutputTextUpdate)
         self.scidetexpose.finished.connect(self._handleExpFinished)
+        self.scidetexpose.startProgBar.connect(self._startProgBar)
         self.scidetexpose.start()
+
+    def _startProgBar(self):
         self.progbar = wd.h2rgProgressThread(self.ExpTypeSelect.currentText(),\
                 nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()))
+        self.progbar.updateBar.connect(self._handleProgressBar)
+        self.progbar.finished.connect(self._handleExpFinished)
+        self.progbar.start()
+
+    def _startNoddingProgBar(self):
+        self.progbar = wd.h2rgProgressThread('Ramp',nreads=42,nramps=1)
         self.progbar.updateBar.connect(self._handleProgressBar)
         self.progbar.finished.connect(self._handleExpFinished)
         self.progbar.start()
@@ -809,13 +817,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()),\
                 sourceName=self.ObjText.text())
         self.calibexpose.updateText.connect(self._handleOutputTextUpdate)
-        self._handleNoddingProgBar(20,1)
+        self.calibexpose.startProgBar.connect(self._startNoddingProgBar)
         self.calibexpose.start()
 
     def checkStartNodding(self):
-        choice = QMessageBox.question(self, 'Nodding Sequence?',
-                                            "Start Nodding Sequence?",
-                                            QMessageBox.Yes | QMessageBox.No)
+        choice = QMessageBox.question(self,\
+                'Nodding Sequence?',\
+                "Start Nodding Sequence?",\
+                QMessageBox.Yes | QMessageBox.No)
         if choice == QMessageBox.Yes:
             self.startNodding()
         else:
@@ -1014,6 +1023,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
 
     def _handleMotorText(self, s, labeltype, motnum):
+        #print "HANDLING MOTOR UPDATE"
         
         if labeltype in ['Position', 'Status']:
             if labeltype == 'Position':
@@ -1032,10 +1042,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 elif motnum == 2:
                     self.GratingStatus.setText(s)
         else:
-            while self.labelsThread.updatemotors:
-                pass
-            
-            self.motoraction = True
+            #while self.labelsThread.updatemotors:
+            #    pass
+            #self.motoraction = True
+
             if labeltype == 'Step':
                 if motnum == 0:
                     self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
@@ -1060,7 +1070,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 elif motnum == 2:
                     self.motorcontrol.homing_operation(0x03)
 
-            self.motoraction = False
+            #self.motoraction = False
 
     def runFocusTest(self):
         self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus, self.calibrationcontrol,\
@@ -1372,7 +1382,7 @@ class UpdateLabels(QThread):
 
     updateText = pyqtSignal(list)
 
-    def __init__(self, guider, motorcontrol, guideron,updatevals, EnableForceIIS,\
+    def __init__(self, guider, motorcontrol, guideron, updatevals, EnableForceIIS,\
             ForceIISEntry, motoraction):
         QThread.__init__(self)
 
@@ -1420,12 +1430,12 @@ class UpdateLabels(QThread):
                     steppos = "N/A"
                     ccdTemp = "N/A"
                 
-                if motors and not self.motoraction:
-                    self.updatemotors = True
+                if self.motorcontrol != None:
+                    #self.updatemotors = True
                     self.motorcontrol.update_status()
                     self.motorcontrol.get_position()
 
-                self.updatemotors = False
+                #self.updatemotors = False
 
                 self.updateText.emit([telemDict,steppos,ccdTemp])
 

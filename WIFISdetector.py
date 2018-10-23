@@ -349,23 +349,16 @@ class h2rgExposeThread(QThread):
 
     finished = pyqtSignal()
     updateText = pyqtSignal(str)
+    startProgBar = pyqtSignal()
 
     def __init__(self,detector,exposureType,nreads=2,nramps=1,sourceName=""):
         QThread.__init__(self)
 
         self.detector = detector
         self.exposureType = exposureType
-        #if exposureType == "Calibrations":
-        #    self.exposureTypeText = "Calibrations"
-        #else:
-        #    self.exposureTypeText = self.exposureType.currentText()
         self.nreads = nreads
-        #self.nreadsText = int(self.nreads.text())
         self.nramps = nramps
-        #self.nrampsText = int(self.nramps.text())
         self.sourceName = sourceName
-        #self.sourceNameText = self.sourceName.text()
-        #self.progressbar = progressbar
         
     def __del__(self):
         self.wait()
@@ -379,17 +372,13 @@ class h2rgExposeThread(QThread):
                 return
 
             self.printTxt("####### STARTING EXPOSURE")
-            #if self.exposureTypeText != "Calibrations":
-            #    self.exposureTypeText = self.exposureType.currentText()
-            #self.nreadsText = int(self.nreads.text())
-            #self.nrampsText = int(self.nramps.text())
-            #self.sourceNameText = self.sourceName.text()
 
             self.nreadsText = self.nreads
             self.nrampsText = self.nramps
             self.sourceNameText = self.sourceName
             self.exposureTypeText = self.exposureType
 
+            self.startProgBar.emit()
             if(self.exposureTypeText == "Single Frame"):
                 output = self.detector.exposeSF(self.sourceNameText)
             elif(self.exposureTypeText == "CDS"):
@@ -426,26 +415,17 @@ class h2rgProgressThread(QThread):
         QThread.__init__(self)
 
         self.nreads = nreads
-        #self.nreadsText = int(self.nreads.text())
         self.nramps = nramps
-        #self.nrampsText = int(self.nramps.text())
         self.exposureType = exposureType
 
-        #if self.exposureType != "Calibrations":
-        #    self.exposureTypeText = self.exposureType.currentText()
-        
     def __del__(self):
         self.wait()
         
     def run(self):
-        #if self.exposureType != "Calibrations":
-        #    self.exposureTypeText = self.exposureType.currentText()
-        #else:
-        #    return
         if self.exposureType in ["Calibrations", "Single Frame","CDS"]:
             return
        
-        self.sleep(4)
+        self.sleep(1)
         t1 = time()
         n_seconds = self.nreads * self.nramps * 1.5
         while (time() - t1) < n_seconds:

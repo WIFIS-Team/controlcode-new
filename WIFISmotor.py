@@ -41,11 +41,16 @@ class MotorControl(QObject):
             unit = i + 1
             try:
                 temp = self.client.read_holding_registers(0x0118, 2, unit=unit)
+                #print "temp ", temp
                 if temp != None:
                     self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
                     if self.motor_position >= 2**31:
                         self.motor_position -= 2**32
                     self.updateText.emit(str(self.motor_position), 'Position', i)
+            #except Exception as e:
+            #    print traceback.print_exc()
+            #    print e
+            #    print "EXCEPTION (UPDATE STATUS)"
             except SerialException:
                 print traceback.print_exc()
                 print "Unit: ", unit
@@ -59,6 +64,7 @@ class MotorControl(QObject):
         try:
             for unit in range(1,4):
                 resp = self.client.read_holding_registers(0x0020,1, unit=unit)
+                #print "resp ", resp
                 if resp != None:
                     bin_resp = '{0:016b}'.format(resp.registers[0])
                     if bin_resp[5] == '1' and bin_resp[2] == '0':
@@ -73,7 +79,9 @@ class MotorControl(QObject):
                         self.updateText.emit("UNKN",'Status',unit-1)
 
         except SerialException:
+        #except Exception as e:
             print traceback.print_exc()
+            #print "EXCEPTION (UPDATE STATUS)"
             print "Serial Exception (Update Status)..."
 
 
@@ -123,12 +131,12 @@ class MotorControl(QObject):
     #Actions
     def gotoTB(self):
         self.m2_step(action='20000')
-        #time.sleep(3)
+        time.sleep(3)
         self.m3_step(action='-180')
 
     def gotoH(self):
         self.m2_step(action='40000')
-        #time.sleep(3)
+        time.sleep(3)
         self.m3_step(action='360')
 
     def gotoBlank(self):
