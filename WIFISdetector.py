@@ -425,7 +425,7 @@ class h2rgProgressThread(QThread):
         if self.exposureType in ["Calibrations", "Single Frame","CDS"]:
             return
        
-        self.sleep(1)
+        self.sleep(4)
         t1 = time()
         n_seconds = self.nreads * self.nramps * 1.5
         while (time() - t1) < n_seconds:

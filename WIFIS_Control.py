@@ -138,6 +138,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                         self.Power28]
         self.caliblabels = [self.CalibModeButton,self.ObsModeButton,self.ArclampModeButton,self.ISphereModeButton]
 
+        self.WIFISTabWidget.setCurrentIndex(0)
+
         self.updateon = False
 
         self.connectTelescopeAction()
@@ -357,7 +359,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
             #self.MoveBackButton.clicked.connect(self.guider.moveTelescopeBack)
             #self.CalOffsetButton.clicked.connect(self.guider.calcOffset)
-
 
     def connectGuiderAction(self):
         #Connecting to Guider
@@ -1099,6 +1100,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #RA and DEC of Guider center in deg
         ra_guide = solvecenter.ra.deg
         dec_guide = solvecenter.dec.deg
+        GUIDERCoordhms = self.guider.returnhmsdmsstr(solvecenter.ra.hms)
+        GUIDERCoorddms = self.guider.returnhmsdmsstr(solvecenter.dec.dms)
 
         #Performing the calculation to get the RA and DEC of the WIFIS field using the guider offsets
         #Note this assumes the offsets are true
@@ -1111,6 +1114,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Getting nice formatted strings for printout
         WIFISCoordhms = self.guider.returnhmsdmsstr(WIFISCoord.ra.hms)
         WIFISCoorddms = self.guider.returnhmsdmsstr(WIFISCoord.dec.dms)
+
+        coordvalues = [GUIDERCoordhms, GUIDERCoorddms, WIFISCoordhms, WIFISCoorddms]
 
         self._handleGuidingTextUpdate("Real WIFIS Field Center is: \nRA %s\nDEC: %s" % (WIFISCoordhms, WIFISCoorddms))
 
@@ -1127,7 +1132,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         if (len(RAText) == 0) or (len(DECText) == 0):
             self._handleGuidingTextUpdate('RA or DEC Obj Text Empty!')
-            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked)
             return
 
         try:
@@ -1163,12 +1168,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         except Exception as e:
             print e
             self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT LIKELY')
-            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked)
             return
 
         if worked == False:
             self._handleGuidingTextUpdate('NO Object RA and DEC...Cant compute offset')
-            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet')
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked)
             return
         else:
             if (RAText[0] == '+') or (RAText[0] == '-'):
@@ -1176,7 +1181,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             else:
                 RA = RAText[0:2] + ' ' + RAText[2:4] + ' ' + RAText[4:]
             DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
-            self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC)
 
         TargetCoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
         fieldoffset = WIFISCoord.spherical_offsets_to(TargetCoord)
@@ -1186,14 +1190,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         GOffsetCoord = solvecenter.spherical_offsets_to(TargetCoord)
         GOffsethms = GOffsetCoord[0].to(u.arcsec).to_string()
         GOffsetdms = GOffsetCoord[1].to(u.arcsec).to_string()
+            
+        self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC, coordvalues, worked)
 
         self._handleGuidingTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s' % \
                         (FOffsethms, FOffsetdms))
         self._handleGuidingTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s" % \
                 (GOffsethms,GOffsetdms))
 
-    def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC):
+    def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC, coordvalues, worked):
         x,y,k,xproj,yproj,image,head,coord = plotting
+
         fieldoffset = coord.spherical_offsets_to(WIFISCoord)
         FOffsethms = fieldoffset[0].to(u.arcsec).to_string()
         FOffsetdms = fieldoffset[1].to(u.arcsec).to_string()
@@ -1217,11 +1224,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         hdr['OBJ'] = objtext
         hdr['OBJRA'] = (RA, '//Entered Object RA')
         hdr['OBJDEC'] = (DEC, '//Entered Object DEC')
+        hdr['WRA'] = (coordvalues[2], '//Calculated WIFIS Field RA')
+        hdr['WDEC'] = (coordvalues[3], '//Calculated WIFIS Field DEC')
+        hdr['GRA'] = (coordvalues[0], '//Calculated Guider Field RA')
+        hdr['GDEC'] = (coordvalues[1], '//Calculated Guider Field DEC')
         hdr['FOffRA'] = (FOffsethms, '//Arcsec from Telescope to WIFIS')
         hdr['FOffDEC'] = (FOffsetdms, '//Arcsec from Telescope to WIFIS')
-        hdr['GRAOff'] = self.guideroffsets[0].text()
-        hdr['GDECOff'] = self.guideroffsets[1].text()
-        fits.writeto('/home/utopea/elliot/wifisoffsets/'+todaydate+'T'+\
+        hdr['GRAOff'] = (self.guideroffsets[0].text(), '//Guider RA Offset')
+        hdr['GDECOff'] = (self.guideroffsets[1].text(), '//Guider DEC Offset')
+        fits.writeto('/Data/WIFISGuider/astrometry/'+todaydate+'T'+\
                         time.strftime('%H%M%S')+'.fits', image, hdr, clobber=True)
 
     def _handleAstrometricPlotting(self, plotting):
@@ -1328,7 +1339,7 @@ class NoddingExposure(QThread):
 
         if not self.skipcalib.isChecked():
             self.updateText.emit("####### SKIPPING INITIAL CALIBS #######")
-            self.progBar.emit(30, self.nrampsval)
+            self.progBar.emit(42, self.nrampsval)
             self.scidet.takecalibrations(self.objnameval)
 
         if self.stopthread:

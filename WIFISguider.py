@@ -443,6 +443,7 @@ class WIFISGuider(QObject):
                     #self.updateText.emit('Guider Offset (") is: \nRA: %s\n DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
                     #        fieldoffset[1].to(u.arcsec).to_string()))
                     self.astrometryCalc.emit([solvecenter, guideroffsets, plotting])
+
             except Exception as e:
                 print e
                 print traceback.print_exc()
