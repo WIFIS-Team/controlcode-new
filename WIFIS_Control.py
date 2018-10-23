@@ -15,10 +15,10 @@ from astropy.io import fits
 
 import WIFISpower as pc
 import WIFISmotor as wm
-from calibration_functions import CalibrationControl
-import wifisguidingfunctions as wg
+import WIFIStelescope as wg
 import WIFISdetector as wd
-import guiding_functions as gf
+import WIFISguider as gf
+from WIFIScalibration import CalibrationControl
 
 import traceback
 import numpy as np
@@ -167,7 +167,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.motorcontrol = wm.MotorControl(self.motorclient) 
                 self.motorcontrol.updateText.connect(self._handleMotorText)
                 self.motorson = True
-            except:
+            except Exception as e:
+                print "Something went wrong connecting to the motors...."
+                print e
                 self.motorson = False
         else:
             self.motorcontrol = None

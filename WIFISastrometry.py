@@ -5,7 +5,7 @@ from astropy.io import fits
 from scipy.optimize import curve_fit
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-import wifisguidingfunctions as WG
+import WIFIStelescope as WG
 from sys import exit
 from scipy.stats import mode
 from numpy.linalg import inv
