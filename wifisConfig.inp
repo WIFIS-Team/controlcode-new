@@ -153,9 +153,14 @@ waveTempResultsFile = '/home/utopea/WIFIS-Team/pipeline/external_data/waveTempla
 #spatGridPropsFile = '/home/utopea/quickreduce/calibfls/20170831211259_ronchi_spatGridProps.dat'
 
 #Jan/Feb
-distMapFile = '/home/utopea/elliot/20180201211831_ronchi_distMap.fits'
-distMapLimitsFile = '/home/utopea/elliot/20180201212213_flat_limits.fits'
-spatGridPropsFile = '/home/utopea/elliot/20180201211831_ronchi_spatGridProps.dat'
+#distMapFile = '/home/utopea/elliot/20180201211831_ronchi_distMap.fits'
+#distMapLimitsFile = '/home/utopea/elliot/20180201212213_flat_limits.fits'
+#spatGridPropsFile = '/home/utopea/elliot/20180201211831_ronchi_spatGridProps.dat'
+
+#Jun18Cal
+distMapFile =       '/home/utopea/cals/jun18cal/processed/20180201211831_ronchi_distMap.fits'
+distMapLimitsFile = '/home/utopea/cals/jun18cal/processed/20180201212213_flat_limits.fits'
+spatGridPropsFile = '/home/utopea/cals/jun18cal/processed/20180201211831_ronchi_spatGridProps.dat'
 
 
 # calibration files
@@ -364,7 +369,8 @@ obsCoords = [-111.600444444,31.9629166667,2071]
 #from third commissioning run, better alignment
 
 #if left-most slice is properly on the detector
-centGuess = [25, 138, 252, 366, 479, 594, 706, 820, 935, 1048, 1163, 1278, 1390, 1506, 1620, 1735, 1849, 1965, 2044]
+#centGuess = [25, 138, 252, 366, 479, 594, 706, 820, 935, 1048, 1163, 1278, 1390, 1506, 1620, 1735, 1849, 1965, 2044]
+centGuess = [18, 125, 240, 354, 468, 586, 696, 809, 924, 1037, 1152, 1267, 1379, 1495, 1609, 1724, 1838, 1954, 2044]
 
 #if left-most slice is cutoff (might be pushed further to left, so adjust as necessary). Should have 1 less entry than if 18 slices present
 #centGuess = [88, 202, 316, 429, 544, 656, 770, 885, 998, 1113, 1228, 1340, 1456, 1570, 1685, 1799, 1915, 2044]

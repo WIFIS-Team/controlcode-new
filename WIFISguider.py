@@ -11,19 +11,23 @@
 #
 
 import numpy as np
-from astropy.io import fits
 import matplotlib.pyplot as mpl
 import Tkinter as _tk
 import WIFISastrometry as WA
+import WIFIStelescope as WG
+
 from sys import exit
 import os, time, threading, Queue
 from glob import glob
+import traceback
+
+from PyQt5.QtCore import QThread, QObject, pyqtSignal
+
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+from astropy.io import fits
 from astropy.visualization import (PercentileInterval,\
                                 LinearStretch, ImageNormalize)
-from PyQt5.QtCore import QThread, QObject, pyqtSignal
-import traceback
-from astropy import units as u
-import WIFIStelescope as WG
 
 plate_scale = 0.29125
 
@@ -137,7 +141,7 @@ class WIFISGuider(QObject):
         super(WIFISGuider, self).__init__()
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
-                self.YPos, self.rotangle, self.guideroffsets = guidevariables
+                self.YPos, self.rotangle, self.coords, self.guideroffsets = guidevariables
 
         self.deltRA = 0
         self.deltDEC = 0
@@ -166,7 +170,10 @@ class WIFISGuider(QObject):
 
     def calcOffset(self):
         #Get rotation solution
-        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+        currentcoord = self.getSkyCoord()
+        decdeg = currentcoord.dec.deg
+        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
         offsets,x_rot,y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
         yc = float(self.XPos.text())
         xc = float(self.YPos.text())
@@ -180,6 +187,18 @@ class WIFISGuider(QObject):
         self.updateText.emit("### MOVE ###\nRA:\t%f\nDEC:\t%f\n" % (-1*radec[1], -1*radec[0]))
 
         return
+
+    def getSkyCoord(self):
+
+        RA = self.coords[0].text()
+        DEC = self.coords[1].text()
+
+        RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
+        DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+
+        currentcoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
+
+        return currentcoord
 
     def moveTelescope(self):
         if self.telSock:
@@ -215,7 +234,11 @@ class WIFISGuider(QObject):
     def offsetToGuider(self):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO GUIDER FIELD ###")
-            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+
+            currentcoord = self.getSkyCoord()
+            decdeg = currentcoord.dec.deg
+            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
             self.updateText.emit(result)
@@ -226,7 +249,11 @@ class WIFISGuider(QObject):
     def offsetToWIFIS(self):
         if self.telSock:
             self.updateText.emit("### OFFSETTING TO WIFIS FIELD ###")
-            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+
+            currentcoord = self.getSkyCoord()
+            decdeg = currentcoord.dec.deg
+            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
             self.updateText.emit(result)
@@ -377,8 +404,11 @@ class WIFISGuider(QObject):
 
             if not auto:
                 self.plotSignal.emit(img, "Centroids")
+
+            currentcoord = self.getSkyCoord()
+            decdeg = currentcoord.dec.deg
+            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
                 
-            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             
             centroids = WA.centroid_finder(img)
@@ -556,7 +586,7 @@ class RunGuiding(QThread):
     plotSignal = pyqtSignal(np.ndarray, str)
     endNodding = pyqtSignal(bool)
 
-    def __init__(self, telsock, cam, guideTargetVar, rotangle, guideexp, overguidestar, guideroffsets, sky=False):
+    def __init__(self, telsock, cam, guideTargetVar, rotangle, guideexp, overguidestar, guideroffsets, coords, sky=False):
         QThread.__init__(self)
         self.telsock = telsock
         self.guideTargetVar = guideTargetVar
@@ -569,6 +599,7 @@ class RunGuiding(QThread):
         self.rotangle = float(rotangle.text())
         self.overguidestar = overguidestar
         self.guideroffsets = guideroffsets
+        self.coords = coords
 
 
     def __del__(self):
@@ -576,6 +607,18 @@ class RunGuiding(QThread):
 
     def stop(self):
         self.stopThread = True
+
+    def getSkyCoord(self):
+
+        RA = self.coords[0].text()
+        DEC = self.coords[1].text()
+
+        RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
+        DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+
+        currentcoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
+
+        return currentcoord
 
     def run(self):
     
@@ -721,7 +764,9 @@ class RunGuiding(QThread):
     def wifis_simple_guiding_setup(self, gfls):
 
         #Gets the rotation solution so that we can guide at any instrument rotation angle
-        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+        currentcoord = self.getSkyCoord()
+        decdeg = currentcoord.dec.deg
+        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
                 
         offsets, x_rot, y_rot = WG.get_rotation_solution(self.rotangle, guideroffsets)
 
@@ -857,7 +902,10 @@ class RunGuiding(QThread):
 
     def checkstarinbox(self, imgbox, boxsize, multistar = False):
 
-        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text())]
+        currentcoord = self.getSkyCoord()
+        decdeg = currentcoord.dec.deg
+        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
         offsets, x_rot, y_rot = WG.get_rotation_solution(self.rotangle, guideroffsets)
         
         #Try centroiding

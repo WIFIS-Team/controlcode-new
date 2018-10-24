@@ -270,6 +270,8 @@ def get_rotation_solution(rotangle, guideroffsets,forcerot=90):
     x_rot = np.dot(rotation_matrix, x_sol)
     y_rot = np.dot(rotation_matrix, y_sol)
 
+    offsets[0] = offsets[0] * np.cos(guideroffsets[2] * np.pi / 180.)
+
     return offsets, x_rot, y_rot
 
 def wifis_simple_guiding_setup(telSock, cam, exptime, gfls, rotangle, goffsets):

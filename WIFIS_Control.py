@@ -105,6 +105,33 @@ class DoublePlotWindow(QDialog):
         else:
             event.accept()
 
+class SubPlotWindow(QDialog):
+
+    def __init__(self, title, parent=None):
+        super(PlotWindow, self).__init__(parent)
+       
+        self.setWindowTitle(title)
+        self.figure = mpl.figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+
+        # set the layout
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.toolbar)
+        self.layout.addWidget(self.canvas)
+        self.setLayout(self.layout)
+        self.fullclose = False
+
+    def closeEvent(self, event):
+        
+        if not self.fullclose:
+            reply = QMessageBox.question(self, "Message", "Close the main window to exit the GUI.\nClosing this window will break plotting.", QMessageBox.Cancel)
+
+            event.ignore()
+        else:
+            event.accept()
+
+
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
@@ -118,6 +145,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideplotwindow = PlotWindow('Guider Plot Window')
         self.guideplotwindow.show()
 
+        #self.doubleplotwindow = DoublePlotWindow("WIFIS Plot Window")
+        #self.doubleplotwindow.show()
+
         self.guidevals = read_defaults()
         self.GuideRA.setText(self.guidevals['GuideRA'])
         self.GuideDEC.setText(self.guidevals['GuideDEC'])
@@ -127,11 +157,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self.labelsThread = False
         self.motoraction = False
+        self.coords = [self.RALabel, self.DECLabel]
 
         #Defining GUI Variables to feed into different control classes
         #Important that the classes only read the variables and never try to adjust them.
         self.guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
-                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel, self.guideroffsets]
+                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel,\
+                self.coords, self.guideroffsets]
         self.power_widgets = [self.Power11, self.Power12, self.Power13, self.Power14, self.Power15,\
                         self.Power16, self.Power17, self.Power18, self.Power21, self.Power22,\
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
@@ -271,8 +303,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def setGuideOffset(self):
         self._handleOutputTextUpdate('SETTING NEW GUIDE OFFSETS...')
-        self.guidevals['GuideRA'] = self.GuideRA.text()
+        coord = SkyCoord(self.RALabel.text(), self.DECLabel.text(), unit=(u.hourangle, u.deg))
+        dec_deg = coord.dec.deg
+
+        #self.guidevals['DEC'] = str(dec_deg)
+        self.guidevals['GuideRA'] = str(float(self.GuideRA.text()) / np.cos(dec_deg))
         self.guidevals['GuideDEC'] = self.GuideDEC.text()
+
+
         fl = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','w')
         for key, val in self.guidevals.iteritems():
             fl.write('%s\t\t%s\n' % (key, val))
@@ -714,7 +752,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def startGuiding(self):
         self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets)
+                self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, self.coords)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
@@ -853,10 +891,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def _handleNoddingGuide(self, s):
         if s == 'Sky':
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, sky=True)
+                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, self.coords, sky=True)
         else:
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, sky=False)
+                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, self.coords, sky=False)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
@@ -1105,7 +1143,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         #Performing the calculation to get the RA and DEC of the WIFIS field using the guider offsets
         #Note this assumes the offsets are true
-        ra_wifis = ra_guide + guideroffsets[0]/3600. / np.cos(dec_guide * np.pi / 180.)
+        ra_wifis = ra_guide + guideroffsets[0]/3600. #/ np.cos(dec_guide * np.pi / 180.)
         dec_wifis = dec_guide + guideroffsets[1]/3600.
         
         #Coord object for WIFIS Center

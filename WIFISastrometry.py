@@ -33,7 +33,7 @@ def read_defaults():
 
     return valuesdict
 
-def getAstrometricSoln(fl, telSock, rotangleget):
+def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'unso'):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
 
@@ -42,21 +42,28 @@ def getAstrometricSoln(fl, telSock, rotangleget):
         head['IIS'] = rotangleget
     xorig = np.array(centroids[0])
     yorig = np.array(centroids[1])
+    Iarr = np.array(centroids[2])
+
     yorigflip = -1*(yorig - 1024)
     rotangle = float(head['IIS'])
 
     valuesdict = read_defaults()
     guider_offsets = [float(valuesdict['GuideRA']), float(valuesdict['GuideDEC'])]
     
-    offsets = get_rotation_solution_astrom(rotangle, guider_offsets)
+    coord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
+    ra_deg = coord.ra.deg
+    dec_deg = coord.dec.deg
 
-    name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord= grabUNSOfield(RA, DEC, offsets=offsets)
+    offsets = get_rotation_solution_astrom(rotangle, guider_offsets, dec_deg)
+
+    name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord= grabUNSOfield(RA, DEC, offsets=offsets, catalog = catalog)
 
     cxrot, cyrot, cxrotneg, cyrotneg = rotate_points(rotangle,xorig,yorig)
 
     cyrotneg_flip = -1*(np.array(cyrotneg) - 1024)
     x = np.array(cxrotneg)
     y = np.array(cyrotneg_flip)
+    #y = np.array(cyrotneg)
 
     xproj, yproj,X,Y = projected_coords(rad, ded, ra_deg, dec_deg)
 
@@ -69,7 +76,9 @@ def getAstrometricSoln(fl, telSock, rotangleget):
     else:
         k = rmag < 19
 
-    compareresults = compareFieldsNew(x, y, xproj, yproj, rad, ded, k)
+    #compareresults = compareFieldsNew(x, y, xproj, yproj, rad, ded, k)
+    compareresults = compareFields3(x, y, xproj, yproj, rad, ded, k, Iarr)
+
     if compareresults == None:
         return [False]
     else:
@@ -143,8 +152,11 @@ def getAstrometricSoln(fl, telSock, rotangleget):
         k = rmag < 19
         #mpl.plot(xproj[k], yproj[k],'b.')
         #mpl.show()
-
-        return [platesolve, fieldoffset, realcenter, solvecenter, offsets,[x,y,k,xproj,yproj,data,head,coord]]
+        
+        if verbose:
+            return [platesolve, fieldoffset, realcenter, solvecenter, offsets,[x,y,k,xproj,yproj,data,head,coord],[xorig, yorig, cxrot, cyrot, cxrotneg, cyrotneg, Iarr]]
+        else:
+            return [platesolve, fieldoffset, realcenter, solvecenter, offsets,[x,y,k,xproj,yproj,data,head,coord]]
 
 def returnXY(platesolve, x, y):
 
@@ -311,6 +323,99 @@ def compareFieldsNew(x, y, xp, yp,rad, ded, k):
 
     return np.array(xmatch), np.array(ymatch), np.array(Xmatch), np.array(Ymatch), \
             np.array(ramatch), np.array(decmatch), xdist, ydist, distsimatch, posi
+            
+def compareFields3(x, y, xp, yp,rad, ded, k, Iarr):
+
+    brighti = np.argsort(Iarr)[::-1]
+    if len(brighti) > 5:
+        xb = x[brighti[:5]]
+        yb = y[brighti[:5]]
+    else:
+        xb = x
+        yb = y
+
+    distsi = []
+    dists = []
+    xdists = []
+    ydists = []
+    
+    nsmalls_total = []
+    nsmalls_max = []
+    nsmalls_imax = []
+    #Loop over brightest stars
+    for i in range(len(xb)):
+        #Calculate distance to each catalog star
+        Xdist = xp[k] - xb[i]
+        Ydist = yp[k] - yb[i]
+
+        dist = np.sqrt(Xdist**2 + Ydist**2)
+        amdist = np.argsort(dist)
+
+        distsi.append(amdist)
+        dists.append(dist[amdist])
+        xdists.append(Xdist[amdist])
+        ydists.append(Ydist[amdist])
+
+        nsmalls = []
+        #Loops through each catalog star distance
+        for l in range(len(Xdist[amdist])):
+            xnew = x + Xdist[amdist][l]
+            ynew = y + Ydist[amdist][l]
+
+            nsmall = 0
+            for j in range(len(xp[k])):
+                Xdistnew = np.abs(xp[k][j] - xnew)
+                Ydistnew = np.abs(yp[k][j] - ynew)
+                dist = np.sqrt(Xdistnew**2. + Ydistnew**2.)
+                mini = np.argmin(dist)
+
+                if (Xdistnew[mini] < 15) and (Ydistnew[mini] < 15):
+                    nsmall += 1
+            nsmalls.append(nsmall)
+        nsmalls_max.append(np.max(nsmalls))
+        nsmalls_imax.append(np.argmax(nsmalls))
+
+        nsmalls_total.append(nsmalls)
+
+    supermax = np.argmax(nsmalls_max)
+    superimax = nsmalls_imax[supermax]
+    xdist = xdists[supermax][superimax]
+    ydist = ydists[supermax][superimax]
+
+    xnew = x + xdist
+    ynew = y + ydist
+
+    xmatch = []
+    ymatch = []
+    Xmatch = []
+    Ymatch = []
+    ramatch = []
+    decmatch = []
+    distsi = []
+    distsimatch = []
+    posi = []
+
+    for i in range(len(xnew)):
+        Xdist = np.abs(xp[k] - xnew[i])
+        Ydist = np.abs(yp[k] - ynew[i])
+
+        dist = np.sqrt(Xdist**2 + Ydist**2)
+        mini = np.argmin(dist)
+
+        distsi.append(mini)
+
+        if (Xdist[mini] < 15) and (Ydist[mini] < 15):
+            distsimatch.append(mini)
+            posi.append(i)
+            xmatch.append(x[i])
+            ymatch.append(y[i])
+            Xmatch.append(xp[k][mini])
+            Ymatch.append(yp[k][mini])
+            ramatch.append(rad[k][mini])
+            decmatch.append(ded[k][mini])
+
+    return np.array(xmatch), np.array(ymatch), np.array(Xmatch), np.array(Ymatch), \
+            np.array(ramatch), np.array(decmatch), xdist, ydist, distsimatch, posi
 
 def solvePlate(x,y, X, Y):
 
@@ -341,7 +446,7 @@ def solvePlate(x,y, X, Y):
     else:
         return False
 
-def grabUNSOfield(RA, DEC, offsets=False, deg = False):
+def grabUNSOfield(RA, DEC, offsets=False, deg = False, catalog = 'unso'):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
     
@@ -354,14 +459,17 @@ def grabUNSOfield(RA, DEC, offsets=False, deg = False):
     dec_deg = coord.dec.deg
 
     if type(offsets) != bool:
-        ra_deg -= offsets[0]/3600. / np.cos(dec_deg * np.pi / 180.)
+        ra_deg -= offsets[0]/3600. #/ np.cos(dec_deg * np.pi / 180.)
         dec_deg -= offsets[1]/3600.
 
     newcoord = SkyCoord(ra_deg, dec_deg, unit='deg')
 
     fov_am = 5
 
-    name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
+    if catalog == 'unso':
+        name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
+    else:
+        name, rad, ded, rmag = sdss(ra_deg,dec_deg, fov_am)
     
     return [name, rad, ded, rmag, ra_deg, dec_deg, fov_am, coord, newcoord]
 
@@ -465,8 +573,8 @@ def centroid_finder(img, plot=False):
     #find bright pixels
     imgmedian = np.median(img)
     #print "MEDIAN: %f, MEAN: %f" % (imgmedian, np.mean(img))
-    imgstd = np.std(img[img < 5000])
-    nstd = 4.0
+    imgstd = np.std(img[img < 1500])
+    nstd = 3.0
     #print "IMG MEAN: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
 
     brightpix = np.where(img >= imgmedian + nstd*imgstd)
@@ -708,7 +816,7 @@ def projected_coords(ra, dec, ra0, dec0):
 
     return x, y, X, Y
 
-def get_rotation_solution_astrom(rotangle, guideroffsets):
+def get_rotation_solution_astrom(rotangle, guideroffsets, DEC):
 
     rotangle = rotangle - 90 - 0.26
     rotangle_rad = rotangle * np.pi / 180.0
@@ -720,6 +828,7 @@ def get_rotation_solution_astrom(rotangle, guideroffsets):
                                 [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
 
     offsets = np.dot(rotation_matrix_offsets, guideroffsets)
+    offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
 
     return offsets
 
