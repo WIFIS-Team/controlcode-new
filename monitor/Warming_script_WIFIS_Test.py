@@ -67,6 +67,7 @@ ser = serial.Serial()
 ser_pressure = serial.Serial()
 g_dT_dt = 0.0 #global variable containing the current DT/dt
 image_generated = False #did the script produce history plots of temperatures?
+serial_tries = 0
 
 #=====================================Cooling Algorithm is contained in this function ========================================================
 def warming_setpoints(): #dynamically generate setpoints for cooling
@@ -219,7 +220,9 @@ def open_serial_port():
         print 'Unable to open serial port - Pressure'
 
 def open_pressure_port():
-    global ser_pressure
+    global ser_pressure 
+    ser_pressure.close()
+    ser_pressure = serial.Serial()
     ser_pressure.port = '/dev/pressure'
     ser_pressure.baudrate = 9600
     ser_pressure.timeout=0
@@ -239,6 +242,7 @@ def close_serial_port():
 
 
 def readPressure():
+    global serial_tries
     try:
         ser_pressure.write('@253PR4?;FF')
         time.sleep(0.5)
@@ -246,12 +250,15 @@ def readPressure():
         pressure = result[7:15]
 
         ser_pressure.flush()
+        serial_tries = 0
     except Exception as e:
-        print e
-        print "Cant communicate with pressure sensor...attempting to reconnect"
-        open_pressure_port()
-        pressure = '99'
-
+        print "Cant communicate with pressure sensor..."
+        if serial_tries % 5 == 0:
+            print "...attempting to reconnect to pressure sensor"
+            print e
+            open_pressure_port()
+            pressure = '99'
+        serial_tries += 1
 
     return pressure
 

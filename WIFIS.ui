@@ -305,7 +305,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -1587,7 +1587,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Set Object as Next</string>
+           <string>Set Coords as Next</string>
           </property>
           <property name="default">
            <bool>false</bool>
@@ -1760,6 +1760,13 @@
           </property>
           <property name="orientation">
            <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QPushButton" name="PullCoordsButton">
+          <property name="text">
+           <string>Pull Coords</string>
           </property>
          </widget>
         </item>
