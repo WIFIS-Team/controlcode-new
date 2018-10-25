@@ -828,7 +828,7 @@ def get_rotation_solution_astrom(rotangle, guideroffsets, DEC):
                                 [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
 
     offsets = np.dot(rotation_matrix_offsets, guideroffsets)
-    offsets[0] = offsets[0] / np.cos(float(DEC)*np.pi / 180.)
+    offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
 
     return offsets
 

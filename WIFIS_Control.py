@@ -275,6 +275,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ConnectAll.triggered.connect(self.connectAllAction)
         
         self.SetNextButton.clicked.connect(self.setNextRADEC)
+        self.MoveNextButton.clicked.connect(self.moveNext)
 
     def setGuideOffset(self):
         self._handleOutputTextUpdate('SETTING NEW GUIDE OFFSETS...')
@@ -282,7 +283,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         dec_deg = coord.dec.deg
 
         #self.guidevals['DEC'] = str(dec_deg)
-        self.guidevals['GuideRA'] = str(float(self.GuideRA.text()) / np.cos(dec_deg))
+        self.guidevals['GuideRA'] = str(float(self.GuideRA.text()) / np.cos(dec_deg * np.pi / 180.))
         self.guidevals['GuideDEC'] = self.GuideDEC.text()
 
 
@@ -747,6 +748,16 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         else:
             if objtxt[-3:] == 'Sky':
                 self.ObjText.setText(objtxt[:-3])
+
+    def moveNext(self):
+        reply = QMessageBox.question(self, "Message", \
+                "Are you sure you want to move to Next?\nOnly use this for minor moves.", \
+                QMessageBox.Yes | QMessageBox.Cancel)
+
+        if reply == QMessageBox.Yes:
+            wg.move_next(self.telsock)
+        else:
+            return
 
     def setNextRADEC(self):
 
@@ -1348,12 +1359,13 @@ class NoddingExposure(QThread):
             self.stopthread = False
 
         self.updateText.emit("####### STARTING NODDING SEQUENCE #######")
-        self.updateText.emit("# Doing initial calibrations")
 
         if not self.skipcalib.isChecked():
-            self.updateText.emit("####### SKIPPING INITIAL CALIBS #######")
+            self.updateText.emit("# Doing initial calibrations")
             self.progBar.emit(42, self.nrampsval)
             self.scidet.takecalibrations(self.objnameval)
+        else:
+            self.updateText.emit("####### SKIPPING INITIAL CALIBS #######")
 
         if self.stopthread:
             self.updateText.emit("####### STOPPED NODDING SEQUENCE #######")

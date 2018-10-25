@@ -206,6 +206,14 @@ def move_telescope(telSock,ra_adj, dec_adj, verbose=True):
     result = "MOVED TELESCOPE RA: %s, DEC: %s" % (str(ra_adj), str(dec_adj))
     return result 
 
+def move_next(telSock, verbose=True):
+
+    reqString = "%s TCS %i MOVNEXT" % (TELID, REF_NUM)
+    resp = query_telescope(telSock, reqString, verbose=verbose)
+    time.sleep(1)
+
+    result = "### Moved to NEXT"
+    return result 
 
 def set_next_radec(telSock,ra, dec, verbose=True):
    
@@ -271,7 +279,7 @@ def get_rotation_solution(rotangle, guideroffsets,forcerot=90):
     x_rot = np.dot(rotation_matrix, x_sol)
     y_rot = np.dot(rotation_matrix, y_sol)
 
-    #offsets[0] = offsets[0] * np.cos(guideroffsets[2] * np.pi / 180.)
+    offsets[0] = offsets[0] * np.cos(guideroffsets[2] * np.pi / 180.)
 
     return offsets, x_rot, y_rot
 
