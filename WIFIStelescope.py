@@ -206,6 +206,7 @@ def move_telescope(telSock,ra_adj, dec_adj, verbose=True):
     result = "MOVED TELESCOPE RA: %s, DEC: %s" % (str(ra_adj), str(dec_adj))
     return result 
 
+
 def set_next_radec(telSock,ra, dec, verbose=True):
    
     reqString = "%s TCS %i MANUAL" % (TELID, REF_NUM)
