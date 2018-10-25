@@ -43,6 +43,18 @@ class Formatter(object):
         z = self.im.get_array()[int(y), int(x)]
         return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
+def read_defaults():
+
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    valuesdict = {}
+    for line in f:
+        spl = line.split()
+        valuesdict[spl[0]] = spl[1]
+    f.close()
+
+    return valuesdict
+
 ###########################################################
 def load_FLIDevices():
     '''Loads the FLI devices into variables and sets the 
@@ -141,7 +153,7 @@ class WIFISGuider(QObject):
         super(WIFISGuider, self).__init__()
         self.RAMoveBox, self.DECMoveBox,self.focStep,self.expType,self.expTime,\
                 self.ObjText,self.SetTempValue,self.FilterVal, self.XPos,\
-                self.YPos, self.rotangle, self.coords, self.guideroffsets = guidevariables
+                self.YPos, self.rotangle, self.coords = guidevariables
 
         self.deltRA = 0
         self.deltDEC = 0
@@ -172,7 +184,9 @@ class WIFISGuider(QObject):
         #Get rotation solution
         currentcoord = self.getSkyCoord()
         decdeg = currentcoord.dec.deg
-        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
+        guidevals = read_defaults()
+        guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
 
         offsets,x_rot,y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
         yc = float(self.XPos.text())
@@ -193,8 +207,8 @@ class WIFISGuider(QObject):
         RA = self.coords[0].text()
         DEC = self.coords[1].text()
 
-        RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
-        DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+        RA = RA[0:2] + ' ' + RA[3:5] + ' ' + RA[6:]
+        DEC = DEC[0:3] + ' ' + DEC[4:6] + ' ' + DEC[7:]
 
         currentcoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
 
@@ -237,7 +251,9 @@ class WIFISGuider(QObject):
 
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
-            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
+            guidevals = read_defaults()
+            guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
 
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
@@ -252,7 +268,9 @@ class WIFISGuider(QObject):
 
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
-            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
+            guidevals = read_defaults()
+            guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
 
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             result = WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
@@ -407,7 +425,9 @@ class WIFISGuider(QObject):
 
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
-            guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
+            guidevals = read_defaults()
+            guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
                 
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
             
@@ -586,7 +606,7 @@ class RunGuiding(QThread):
     plotSignal = pyqtSignal(np.ndarray, str)
     endNodding = pyqtSignal(bool)
 
-    def __init__(self, telsock, cam, guideTargetVar, rotangle, guideexp, overguidestar, guideroffsets, coords, sky=False):
+    def __init__(self, telsock, cam, guideTargetVar, rotangle, guideexp, overguidestar, coords, sky=False):
         QThread.__init__(self)
         self.telsock = telsock
         self.guideTargetVar = guideTargetVar
@@ -598,9 +618,8 @@ class RunGuiding(QThread):
         self.sky = sky
         self.rotangle = float(rotangle.text())
         self.overguidestar = overguidestar
-        self.guideroffsets = guideroffsets
         self.coords = coords
-
+        self.guidevals = read_defaults()
 
     def __del__(self):
         self.wait()
@@ -613,8 +632,8 @@ class RunGuiding(QThread):
         RA = self.coords[0].text()
         DEC = self.coords[1].text()
 
-        RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
-        DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
+        RA = RA[0:2] + ' ' + RA[3:5] + ' ' + RA[6:]
+        DEC = DEC[0:3] + ' ' + DEC[4:6] + ' ' + DEC[7:]
 
         currentcoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
 
@@ -766,8 +785,9 @@ class RunGuiding(QThread):
         #Gets the rotation solution so that we can guide at any instrument rotation angle
         currentcoord = self.getSkyCoord()
         decdeg = currentcoord.dec.deg
-        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
-                
+
+        guideroffsets = [float(self.guidevals['GuideRA']), float(self.guidevals['GuideDEC']), decdeg]
+
         offsets, x_rot, y_rot = WG.get_rotation_solution(self.rotangle, guideroffsets)
 
         #Take image with guider (with shutter open)
@@ -904,7 +924,8 @@ class RunGuiding(QThread):
 
         currentcoord = self.getSkyCoord()
         decdeg = currentcoord.dec.deg
-        guideroffsets = [float(self.guideroffsets[0].text()), float(self.guideroffsets[1].text()), decdeg]
+
+        guideroffsets = [float(self.guidevals['GuideRA']), float(self.guidevals['GuideDEC']), decdeg]
 
         offsets, x_rot, y_rot = WG.get_rotation_solution(self.rotangle, guideroffsets)
         

@@ -1,5 +1,5 @@
 from wifis import Ui_MainWindow
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDesktopWidget
 from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox
 
@@ -88,11 +88,13 @@ class DoublePlotWindow(QDialog):
         self.guidetoolbar = NavigationToolbar(self.guidecanvas, self)
 
         # set the layout
+        screen = QDesktopWidget().screenGeometry()
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.objtoolbar)
         self.layout.addWidget(self.objcanvas)
         self.layout.addWidget(self.guidetoolbar)
         self.layout.addWidget(self.guidecanvas)
+        self.setGeometry(0,0,screen.width()/3, screen.height()-60)
         self.setLayout(self.layout)
         self.fullclose = False
 
@@ -104,33 +106,6 @@ class DoublePlotWindow(QDialog):
             event.ignore()
         else:
             event.accept()
-
-class SubPlotWindow(QDialog):
-
-    def __init__(self, title, parent=None):
-        super(PlotWindow, self).__init__(parent)
-       
-        self.setWindowTitle(title)
-        self.figure = mpl.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
-        # set the layout
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.toolbar)
-        self.layout.addWidget(self.canvas)
-        self.setLayout(self.layout)
-        self.fullclose = False
-
-    def closeEvent(self, event):
-        
-        if not self.fullclose:
-            reply = QMessageBox.question(self, "Message", "Close the main window to exit the GUI.\nClosing this window will break plotting.", QMessageBox.Cancel)
-
-            event.ignore()
-        else:
-            event.accept()
-
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
 
@@ -140,20 +115,20 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         #Create the plotting windows
-        self.plotwindow = PlotWindow('WIFIS Plot Window')
-        self.plotwindow.show()
-        self.guideplotwindow = PlotWindow('Guider Plot Window')
-        self.guideplotwindow.show()
+        #self.plotwindow = PlotWindow('WIFIS Plot Window')
+        #self.plotwindow.show()
+        #self.guideplotwindow = PlotWindow('Guider Plot Window')
+        #self.guideplotwindow.show()
 
-        #self.doubleplotwindow = DoublePlotWindow("WIFIS Plot Window")
-        #self.doubleplotwindow.show()
+        self.plotwindow = DoublePlotWindow("WIFIS Plot Window")
+        self.plotwindow.show()
 
         self.guidevals = read_defaults()
         self.GuideRA.setText(self.guidevals['GuideRA'])
         self.GuideDEC.setText(self.guidevals['GuideDEC'])
         self.SetGuideOffset.clicked.connect(self.setGuideOffset)
 
-        self.guideroffsets = [self.GuideRA, self.GuideDEC]
+        #self.guideroffsets = [self.GuideRA, self.GuideDEC]
 
         self.labelsThread = False
         self.motoraction = False
@@ -163,7 +138,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Important that the classes only read the variables and never try to adjust them.
         self.guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
                 self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel,\
-                self.coords, self.guideroffsets]
+                self.coords]
         self.power_widgets = [self.Power11, self.Power12, self.Power13, self.Power14, self.Power15,\
                         self.Power16, self.Power17, self.Power18, self.Power21, self.Power22,\
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
@@ -752,7 +727,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def startGuiding(self):
         self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, self.coords)
+                self.GuiderExpTime.text(), self.OverGuideStar, self.coords)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
@@ -891,10 +866,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def _handleNoddingGuide(self, s):
         if s == 'Sky':
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, self.coords, sky=True)
+                    self.GuiderExpTime.text(), self.OverGuideStar, self.coords, sky=True)
         else:
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
-                    self.GuiderExpTime.text(), self.OverGuideStar, self.guideroffsets, self.coords, sky=False)
+                    self.GuiderExpTime.text(), self.OverGuideStar, self.coords, sky=False)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidePlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
@@ -968,15 +943,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         try:
             norm = ImageNormalize(image, interval=PercentileInterval(99.5),stretch=LinearStretch())
 
-            self.plotwindow.figure.clear()
+            self.plotwindow.objfigure.clear()
 
-            ax = self.plotwindow.figure.add_subplot(1,1,1)
+            ax = self.plotwindow.objfigure.add_subplot(1,1,1)
             im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
-            self.plotwindow.figure.colorbar(im)
+            self.plotwindow.objfigure.colorbar(im)
 
-            self.plotwindow.canvas.draw()
+            self.plotwindow.objcanvas.draw()
         except Exception as e:
             print e
             print traceback.print_exc()
@@ -986,16 +961,16 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         try:
             norm = ImageNormalize(image, interval=PercentileInterval(98.5),stretch=LinearStretch())
 
-            self.guideplotwindow.figure.clear()
+            self.plotwindow.guidefigure.clear()
 
-            ax = self.guideplotwindow.figure.add_subplot(1,1,1)
+            ax = self.plotwindow.guidefigure.add_subplot(1,1,1)
             #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
             im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
-            self.guideplotwindow.figure.colorbar(im)
+            self.plotwindow.guidefigure.colorbar(im)
 
-            self.guideplotwindow.canvas.draw()
+            self.plotwindow.guidecanvas.draw()
 
         except Exception as e:
             print e
@@ -1011,8 +986,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #WCS, dataImg, hdr
 
             print('Plotting FIELD REC data')
-            self.plotwindow.figure.clear()
-            ax = self.plotwindow.figure.add_subplot(111, projection=WCS)
+            self.plotwindow.objfigure.clear()
+            ax = self.plotwindow.objfigure.add_subplot(111, projection=WCS)
 
             scaling = 'normal'
             if scaling=='zscale':
@@ -1024,7 +999,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             #if colorbar:
             #    plt.colorbar()
-            self.plotwindow.figure.colorbar(im)
+            self.plotwindow.objfigure.colorbar(im)
                 
             r = np.arange(360)*np.pi/180.
             fwhmX = np.abs(2.3548*gFit.x_stddev*xScale)
@@ -1055,7 +1030,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #ax.tight_layout()
             #plt.savefig('quick_reduction/'+rampFolder+'_quickRedImg.png', dpi=300)
 
-            self.plotwindow.canvas.draw()
+            self.plotwindow.objcanvas.draw()
         except Exception as e:
             print e
             print traceback.print_exc()
@@ -1170,7 +1145,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         if (len(RAText) == 0) or (len(DECText) == 0):
             self._handleGuidingTextUpdate('RA or DEC Obj Text Empty!')
-            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked)
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
             return
 
         try:
@@ -1206,12 +1181,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         except Exception as e:
             print e
             self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT LIKELY')
-            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked)
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
             return
 
         if worked == False:
             self._handleGuidingTextUpdate('NO Object RA and DEC...Cant compute offset')
-            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked)
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
             return
         else:
             if (RAText[0] == '+') or (RAText[0] == '-'):
@@ -1229,14 +1204,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         GOffsethms = GOffsetCoord[0].to(u.arcsec).to_string()
         GOffsetdms = GOffsetCoord[1].to(u.arcsec).to_string()
             
-        self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC, coordvalues, worked)
+        self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC, coordvalues, worked, guideroffsets)
 
-        self._handleGuidingTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s' % \
-                        (FOffsethms, FOffsetdms))
-        self._handleGuidingTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s" % \
+        self._handleGuidingTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s\n" % \
                 (GOffsethms,GOffsetdms))
+        self._handleGuidingTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s\n' % \
+                        (FOffsethms, FOffsetdms))
 
-    def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC, coordvalues, worked):
+    def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC, coordvalues, worked, guideroffsets):
         x,y,k,xproj,yproj,image,head,coord = plotting
 
         fieldoffset = coord.spherical_offsets_to(WIFISCoord)
@@ -1268,8 +1243,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         hdr['GDEC'] = (coordvalues[1], '//Calculated Guider Field DEC')
         hdr['FOffRA'] = (FOffsethms, '//Arcsec from Telescope to WIFIS')
         hdr['FOffDEC'] = (FOffsetdms, '//Arcsec from Telescope to WIFIS')
-        hdr['GRAOff'] = (self.guideroffsets[0].text(), '//Guider RA Offset')
-        hdr['GDECOff'] = (self.guideroffsets[1].text(), '//Guider DEC Offset')
+        hdr['GRAOff'] = (str(guideroffsets[0]), '//Guider RA Offset')
+        hdr['GDECOff'] = (str(guideroffsets[1]), '//Guider DEC Offset')
         fits.writeto('/Data/WIFISGuider/astrometry/'+todaydate+'T'+\
                         time.strftime('%H%M%S')+'.fits', image, hdr, clobber=True)
 
@@ -1278,9 +1253,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             x,y,k,xproj,yproj,image,head,coord = plotting
             #norm = ImageNormalize(image, interval=PercentileInterval(98.5),stretch=LinearStretch())
 
-            self.guideplotwindow.figure.clear()
+            self.plotwindow.guidefigure.clear()
 
-            ax = self.guideplotwindow.figure.add_subplot(1,1,1)
+            ax = self.plotwindow.guidefigure.add_subplot(1,1,1)
             #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
             pl2 = ax.plot(xproj[k], yproj[k], 'ro', label='Catalog Stars')
             pl1 = ax.plot(x,y,'b.', label='Image Stars')
@@ -1290,7 +1265,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             ax.set_title('ASTROMETRIC FIELD')
             #self.guideplotwindow.figure.colorbar(im)
 
-            self.guideplotwindow.canvas.draw()
+            self.plotwindow.guidecanvas.draw()
 
         except Exception as e:
             print e
@@ -1304,10 +1279,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if reply == QMessageBox.Close:
             event.accept()
             self.plotwindow.fullclose = True
-            self.guideplotwindow.fullclose = True
+            #self.guideplotwindow.fullclose = True
 
             self.plotwindow.close()
-            self.guideplotwindow.close()
+            #self.guideplotwindow.close()
         else:
             event.ignore()
 

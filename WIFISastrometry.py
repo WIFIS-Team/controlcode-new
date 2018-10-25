@@ -573,7 +573,7 @@ def centroid_finder(img, plot=False):
     #find bright pixels
     imgmedian = np.median(img)
     #print "MEDIAN: %f, MEAN: %f" % (imgmedian, np.mean(img))
-    imgstd = np.std(img[img < 1500])
+    imgstd = np.std(img[img < 3000])
     nstd = 3.0
     #print "IMG MEAN: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
 
@@ -828,7 +828,7 @@ def get_rotation_solution_astrom(rotangle, guideroffsets, DEC):
                                 [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
 
     offsets = np.dot(rotation_matrix_offsets, guideroffsets)
-    offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
+    offsets[0] = offsets[0] / np.cos(float(DEC)*np.pi / 180.)
 
     return offsets
 
