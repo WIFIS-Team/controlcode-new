@@ -335,13 +335,10 @@
               <property name="horizontalSpacing">
                <number>-1</number>
               </property>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_9">
+              <item row="0" column="2">
+               <widget class="QPushButton" name="GuiderMoveButton">
                 <property name="text">
-                 <string>DEC Move (&quot;)</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 <string>Move To Guider</string>
                 </property>
                </widget>
               </item>
@@ -365,20 +362,10 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
-               <widget class="QPushButton" name="WIFISMoveButton">
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="RAMoveBox">
                 <property name="text">
-                 <string>Move to WIFIS</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="4">
-               <widget class="QLabel" name="label_35">
-                <property name="text">
-                 <string>Y Pos</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 <string>0</string>
                 </property>
                </widget>
               </item>
@@ -407,17 +394,58 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QLineEdit" name="RAMoveBox">
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="DECMoveBox">
                 <property name="text">
                  <string>0</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="2">
-               <widget class="QPushButton" name="GuiderMoveButton">
+              <item row="1" column="4">
+               <widget class="QLabel" name="label_35">
                 <property name="text">
-                 <string>Move To Guider</string>
+                 <string>Y Pos</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QPushButton" name="WIFISMoveButton">
+                <property name="text">
+                 <string>Move to WIFIS</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3" rowspan="4">
+               <widget class="Line" name="line_8">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QPushButton" name="MoveBackButton">
+                <property name="text">
+                 <string>Move Back</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_9">
+                <property name="text">
+                 <string>DEC Move (&quot;)</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5">
+               <widget class="QLineEdit" name="XPos">
+                <property name="text">
+                 <string>0</string>
                 </property>
                </widget>
               </item>
@@ -447,35 +475,14 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="5">
-               <widget class="QLineEdit" name="XPos">
-                <property name="text">
-                 <string>0</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QLineEdit" name="DECMoveBox">
-                <property name="text">
-                 <string>0</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3" rowspan="4">
-               <widget class="Line" name="line_8">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="MoveBackButton">
-                <property name="text">
-                 <string>Move Back</string>
-                </property>
-               </widget>
-              </item>
               <item row="2" column="2">
+               <widget class="QPushButton" name="pushButton">
+                <property name="text">
+                 <string>Move Next</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
                <widget class="QPushButton" name="CenteringCheck">
                 <property name="text">
                  <string>Centering Check</string>
