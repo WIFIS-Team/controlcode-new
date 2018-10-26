@@ -14,7 +14,9 @@ from astropy.io import fits
 from sys import exit
 from PyQt5.QtCore import QThread
 
-plate_scale = 0.29125
+#plate_scale = 0.29125
+plate_scale = 0.2979146
+#platescalex = 
 
 #guideroffsets = np.array([-9.,361.86])
 
@@ -250,12 +252,14 @@ def set_next_radec(telSock,ra, dec, verbose=True):
     result = "### SET NEXT RA: %s, DEC: %s" % (str(ra), str(dec))
     return result 
         
-def plotguiderimage(img):
-
-    mpl.imshow(np.log10(img), cmap='gray',interpolation='none',origin='lower')
-    mpl.show()
+#def plotguiderimage(img):
+#
+#    mpl.imshow(np.log10(img), cmap='gray',interpolation='none',origin='lower')
+#    mpl.show()
 
 def get_rotation_solution(rotangle, guideroffsets,forcerot=90):
+
+    print guideroffsets, rotangle
 
     x_sol = np.array([0.0, plate_scale])
     y_sol = np.array([plate_scale, 0.0])
@@ -264,7 +268,7 @@ def get_rotation_solution(rotangle, guideroffsets,forcerot=90):
     if forcerot == True:
         rotangle = 90
 
-    rotangle = rotangle - 90 - 0.26
+    rotangle = rotangle - 90. - 0.21#0.26
     rotangle_rad = rotangle*np.pi/180.0
     rotation_matrix = np.array([[np.cos(rotangle_rad),1*np.sin(rotangle_rad)],\
         [-1*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
@@ -279,9 +283,13 @@ def get_rotation_solution(rotangle, guideroffsets,forcerot=90):
     x_rot = np.dot(rotation_matrix, x_sol)
     y_rot = np.dot(rotation_matrix, y_sol)
 
-    offsets[0] = offsets[0] * np.cos(guideroffsets[2] * np.pi / 180.)
+    #offsets[0] = offsets[0] * np.cos(guideroffsets[2] * np.pi / 180.)
 
     return offsets, x_rot, y_rot
+
+###########################################################
+################ LEGACY GUIDING CODE BELOW ################
+###########################################################
 
 def wifis_simple_guiding_setup(telSock, cam, exptime, gfls, rotangle, goffsets):
 

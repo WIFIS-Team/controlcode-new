@@ -254,8 +254,11 @@ class WIFISGuider(QObject):
 
             guidevals = read_defaults()
             guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
+            print guideroffsets
 
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
+            print offsets
+
             result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
             self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to WIFIS',\
@@ -439,7 +442,13 @@ class WIFISGuider(QObject):
                 return
                 
             barr = np.argsort(centroids[2])[::-1]
-            b = np.argmax(centroids[2])
+
+            try:
+                b = np.argmax(centroids[2])
+            except:
+                self.updateText.emit("NO STARS FOUND -- TRY INCREASING EXP TIME")
+                return
+                
       
             #self.updateText.emit("X pixelscale: %f, %f" % (x_rot[0], x_rot[1]))
             #self.updateText.emit("Y pixelscale: %f, %f" % (y_rot[0], y_rot[1]))
@@ -498,8 +507,6 @@ class WIFISGuider(QObject):
                 print e
                 print traceback.print_exc()
                 self.updateText.emit("SOMETHING WENT WRONG WITH ASTROMETRY....\nCHECK TERMINAL")
-
-
 
     def returnhmsdmsstr(self,angle):
 

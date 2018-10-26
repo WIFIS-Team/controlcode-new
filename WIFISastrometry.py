@@ -74,7 +74,7 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'uns
         k = rmag != 0
         print 'lots of nan'
     else:
-        k = rmag < 19
+        k = rmag < 17
 
     #compareresults = compareFieldsNew(x, y, xproj, yproj, rad, ded, k)
     compareresults = compareFields3(x, y, xproj, yproj, rad, ded, k, Iarr)
@@ -116,8 +116,8 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'uns
         ysolve = platesolve[1]
 
         #print xmatch, ymatch
-        #print xsolve
-        #print ysolve
+        print xsolve
+        print ysolve
         #print rotangle - 90. - 0.26
         #print np.arccos(xsolve[0] * flength / 0.013) * 180. / np.pi
         #print 0.013 / np.sqrt(np.abs(xsolve[0]*ysolve[1] - xsolve[1]*ysolve[0]))
@@ -149,7 +149,7 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'uns
         xproj = np.array(xproj)
         yproj = np.array(yproj)
         #mpl.plot(x,y, 'r*')
-        k = rmag < 19
+        k = rmag < 17
         #mpl.plot(xproj[k], yproj[k],'b.')
         #mpl.show()
         
@@ -459,7 +459,7 @@ def grabUNSOfield(RA, DEC, offsets=False, deg = False, catalog = 'unso'):
     dec_deg = coord.dec.deg
 
     if type(offsets) != bool:
-        ra_deg -= offsets[0]/3600. #/ np.cos(dec_deg * np.pi / 180.)
+        ra_deg -= (offsets[0]/3600. / np.cos(dec_deg * np.pi / 180.))
         dec_deg -= offsets[1]/3600.
 
     newcoord = SkyCoord(ra_deg, dec_deg, unit='deg')
@@ -828,7 +828,7 @@ def get_rotation_solution_astrom(rotangle, guideroffsets, DEC):
                                 [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
 
     offsets = np.dot(rotation_matrix_offsets, guideroffsets)
-    offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
+    #offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
 
     return offsets
 

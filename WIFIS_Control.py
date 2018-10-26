@@ -283,7 +283,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         dec_deg = coord.dec.deg
 
         #self.guidevals['DEC'] = str(dec_deg)
-        self.guidevals['GuideRA'] = str(float(self.GuideRA.text()) / np.cos(dec_deg * np.pi / 180.))
+        self.guidevals['GuideRA'] = self.GuideRA.text() #str(float(self.GuideRA.text()) / np.cos(dec_deg * np.pi / 180.))
         self.guidevals['GuideDEC'] = self.GuideDEC.text()
 
 
@@ -1129,7 +1129,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         #Performing the calculation to get the RA and DEC of the WIFIS field using the guider offsets
         #Note this assumes the offsets are true
-        ra_wifis = ra_guide + guideroffsets[0]/3600. #/ np.cos(dec_guide * np.pi / 180.)
+        ra_wifis = ra_guide + (guideroffsets[0]/3600. / np.cos(dec_guide * np.pi / 180.))
         dec_wifis = dec_guide + guideroffsets[1]/3600.
         
         #Coord object for WIFIS Center
