@@ -101,7 +101,9 @@ class DoublePlotWindow(QDialog):
     def closeEvent(self, event):
         
         if not self.fullclose:
-            reply = QMessageBox.question(self, "Message", "Close the main window to exit the GUI.\nClosing this window will break plotting.", QMessageBox.Cancel)
+            reply = QMessageBox.question(self, "Message",\
+                    "Close the main window to exit the GUI.\nClosing this window will break plotting.",\
+                    QMessageBox.Cancel)
 
             event.ignore()
         else:
@@ -212,7 +214,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExpProgressBar.setValue(0)
         
         #Starting function to update labels and telescope controls
-        #self.telescopeSwitch(True)
 
         #Defining actions for Exposure Control
         #self.scidetSwitch()
@@ -276,6 +277,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         
         self.SetNextButton.clicked.connect(self.setNextRADEC)
         self.MoveNextButton.clicked.connect(self.moveNext)
+        self.PullCoordsButton.clicked.connect(self.pullCoords)
+
+    def pullCoords(self):
+        RA = self.RALabel.text()
+        DEC = self.DECLabel.text()
+
+        NEWRA = RA[:2] + RA[3:5] + RA[6:]
+        NEWDEC = DEC[:3] + DEC[4:6] + DEC[7:]
+
+        self.RAObj.text() = NEWRA
+        self.DECObj.text() = NEWDEC
 
     def setGuideOffset(self):
         self._handleOutputTextUpdate('SETTING NEW GUIDE OFFSETS...')
@@ -346,33 +358,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.actionInitialize.triggered.connect(self.scidet.initialize)
             self.actionDisconnect.triggered.connect(self.scidet.disconnect)
             self.scidet.connect()
-
-    def telescopeSwitch(self):
-        if self.telescope:
-            updatevals = [self.RAObj, self.DECObj]
-            if not self.updateon:
-                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
-                self.labelsThread.updateText.connect(self._handleUpdateLabels)
-                self.labelsThread.start()
-                self.updateon = True
-            else:
-                if self.labelsThread.isrunning:
-                    self.labelsThread.stop()
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
-                    self.labelsThread.updateText.connect(self._handleUpdateLabels)
-                    self.labelsThread.start()
-                else:
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
-                    self.labelsThread.updateText.connect(self._handleUpdateLabels)
-                    self.labelsThread.start()
-            #self.GuiderMoveButton.clicked.connect(self.guider.offsetToGuider)
-            #self.WIFISMoveButton.clicked.connect(self.guider.offsetToWIFIS)
-            #self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
-            #self.MoveBackButton.clicked.connect(self.guider.moveTelescopeBack)
-            #self.CalOffsetButton.clicked.connect(self.guider.calcOffset)
 
     def connectGuiderAction(self):
         #Connecting to Guider
@@ -620,7 +605,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             self.telescopeToggle(True)
 
-            #self.telescopeSwitch()
             print "Connected to Telescope #####"
 
         except Exception as e:
@@ -646,6 +630,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.MoveBackButton.setStyleSheet(s)
         self.CalOffsetButton.setStyleSheet(s)
         self.SetNextButton.setStyleSheet(s)
+        self.MoveNextButton.setStyleSheet(s)
+        self.PullCoordsButton.setStyleSheet(s)
 
         self.GuiderMoveButton.setEnabled(val)
         self.WIFISMoveButton.setEnabled(val)
@@ -653,6 +639,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.MoveBackButton.setEnabled(val)
         self.CalOffsetButton.setEnabled(val)
         self.SetNextButton.setEnabled(val)
+        self.MoveNextButton.setEnabled(val)
+        self.PullCoordsButton.setEnabled(val)
 
     def connectH2RGAction(self):
         #Connecting to Detector
@@ -1150,7 +1138,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             float(DECText)
         except:
             self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-            self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+            self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
             self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
             worked = False
 
@@ -1164,14 +1152,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 RAspl = RAText[1:].split('.')
                 if len(RAspl[0]) != 6: 
                     self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
                     self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
             else:
                 RAspl = RAText.split('.')
                 if len(RAspl[0]) != 6: 
                     self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
                     self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
 
@@ -1179,14 +1167,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 DECspl = DECText[1:].split('.')
                 if len(DECspl[0]) != 6: 
                     self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
                     self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
             else:
                 DECspl = DECText.split('.')
-                if len(DECspl) != 6: 
+                if len(DECspl[0]) != 6: 
                     self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
+                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
                     self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
                     worked = False
         except Exception as e:
