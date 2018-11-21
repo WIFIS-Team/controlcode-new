@@ -333,7 +333,7 @@
                <number>0</number>
               </property>
               <property name="horizontalSpacing">
-               <number>-1</number>
+               <number>6</number>
               </property>
               <item row="0" column="2">
                <widget class="QPushButton" name="GuiderMoveButton">
@@ -1317,7 +1317,28 @@
             </property>
             <item row="0" column="0">
              <layout class="QGridLayout" name="gridLayout_13">
-              <item row="0" column="4">
+              <item row="0" column="3" rowspan="4">
+               <widget class="Line" name="line_9">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4">
+               <widget class="QLabel" name="label_49">
+                <property name="text">
+                 <string>Guider DEC Offset</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="CalibModeButton">
+                <property name="text">
+                 <string>Calib Mode</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5">
                <widget class="QLineEdit" name="GuiderExpTime">
                 <property name="text">
                  <string>1500</string>
@@ -1331,18 +1352,8 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="4">
-               <widget class="QLineEdit" name="GuideDEC"/>
-              </item>
-              <item row="1" column="4">
+              <item row="1" column="5">
                <widget class="QLineEdit" name="GuideRA"/>
-              </item>
-              <item row="2" column="3">
-               <widget class="QLabel" name="label_49">
-                <property name="text">
-                 <string>Guider DEC Offset</string>
-                </property>
-               </widget>
               </item>
               <item row="0" column="2">
                <widget class="QPushButton" name="ObsModeButton">
@@ -1351,7 +1362,7 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="3">
+              <item row="1" column="4">
                <widget class="QLabel" name="label_48">
                 <property name="text">
                  <string>Guider RA Offset</string>
@@ -1379,17 +1390,10 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="3">
+              <item row="0" column="4">
                <widget class="QLabel" name="label_11">
                 <property name="text">
                  <string>Guider ExpTime (ms)</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="CalibModeButton">
-                <property name="text">
-                 <string>Calib Mode</string>
                 </property>
                </widget>
               </item>
@@ -1407,7 +1411,7 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="4">
+              <item row="3" column="5">
                <widget class="QPushButton" name="SetGuideOffset">
                 <property name="text">
                  <string>Set Guide Offset</string>
@@ -1434,6 +1438,9 @@
                  <string>Enable Force IIS</string>
                 </property>
                </widget>
+              </item>
+              <item row="2" column="5">
+               <widget class="QLineEdit" name="GuideDEC"/>
               </item>
              </layout>
             </item>
@@ -2616,6 +2623,7 @@
     <addaction name="ConnectTelescope"/>
     <addaction name="ConnectPower"/>
     <addaction name="ConnectH2RG"/>
+    <addaction name="ConnectMotors"/>
     <addaction name="ConnectAll"/>
    </widget>
    <addaction name="menuFile"/>
@@ -2684,6 +2692,11 @@
   <action name="ConnectH2RG">
    <property name="text">
     <string>H2RG</string>
+   </property>
+  </action>
+  <action name="ConnectMotors">
+   <property name="text">
+    <string>Motors</string>
    </property>
   </action>
  </widget>
