@@ -1,7 +1,7 @@
 from wifis import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDesktopWidget
 from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox, QHBoxLayout,QLabel
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -68,8 +68,9 @@ class PlotWindow(QDialog):
     def closeEvent(self, event):
         
         if not self.fullclose:
-            reply = QMessageBox.question(self, "Message", "Close the main window to exit the GUI.\nClosing this window will break plotting.", QMessageBox.Cancel)
-
+            reply = QMessageBox.question(self, "Message", \
+                    "Close the main window to exit the GUI.\nClosing this window will break plotting.",\
+                    QMessageBox.Cancel)
             event.ignore()
         else:
             event.accept()
@@ -86,15 +87,32 @@ class DoublePlotWindow(QDialog):
         self.guidefigure = mpl.figure()
         self.guidecanvas = FigureCanvas(self.guidefigure)
         self.guidetoolbar = NavigationToolbar(self.guidecanvas, self)
+        self.ObjPlotLabel = QLabel()
+        self.ObjPlotLabel.setText("Detector Plot")
+        self.GuidePlotLabel = QLabel()
+        self.GuidePlotLabel.setText("Guider Plot")
+
+        self.objtoolbar.setStyleSheet("QToolBar { border: 0px }")
+        self.guidetoolbar.setStyleSheet("QToolBar { border: 0px }")
 
         # set the layout
-        screen = QDesktopWidget().screenGeometry()
         self.layout = QVBoxLayout()
-        self.layout.addWidget(self.objtoolbar)
+        self.objtoolbarlayout = QHBoxLayout()
+        self.guidetoolbarlayout = QHBoxLayout()
+
+        self.layout.addLayout(self.objtoolbarlayout)
+        self.objtoolbarlayout.addWidget(self.objtoolbar)
+        self.objtoolbarlayout.addWidget(self.ObjPlotLabel)
         self.layout.addWidget(self.objcanvas)
-        self.layout.addWidget(self.guidetoolbar)
+        self.layout.addLayout(self.guidetoolbarlayout)
+        self.guidetoolbarlayout.addWidget(self.guidetoolbar)
+        self.guidetoolbarlayout.addWidget(self.GuidePlotLabel)
+        #self.layout.addWidget(self.guidetoolbar)
         self.layout.addWidget(self.guidecanvas)
-        self.setGeometry(0,0,screen.width()/3, screen.height()-60)
+
+        screen = QDesktopWidget().screenGeometry()
+        self.setGeometry(0,0,screen.width()/2.5, screen.height()-60)
+
         self.setLayout(self.layout)
         self.fullclose = False
 
@@ -286,8 +304,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         NEWRA = RA[:2] + RA[3:5] + RA[6:]
         NEWDEC = DEC[:3] + DEC[4:6] + DEC[7:]
 
-        self.RAObj.text() = NEWRA
-        self.DECObj.text() = NEWDEC
+        self.RAObj.setText(NEWRA)
+        self.DECObj.setText(NEWDEC)
 
     def setGuideOffset(self):
         self._handleOutputTextUpdate('SETTING NEW GUIDE OFFSETS...')
@@ -469,6 +487,25 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.TakeCalibButton.setEnabled(val)
         self.ExpTypeSelect.model().item(3).setEnabled(val)
         self.ExpTypeSelect.model().item(4).setEnabled(val)
+
+    def connectMotorAction(self):
+        try:
+            self.motorclient = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
+            bytesize=8, parity='E', baudrate=9600, timeout=0.1)
+            print "Connecting to motors..."
+            self.motorclient.connect()
+
+            #motorlabels = [self.FocusPosition, self.FilterPosition, self.GratingPosition,\
+            #    self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusStep,\
+            #    self.FilterStep, self.GratingStep]
+
+            self.motorcontrol = wm.MotorControl(self.motorclient) 
+            self.motorcontrol.updateText.connect(self._handleMotorText)
+            self.motorson = True
+        except Exception as e:
+            print "Something went wrong connecting to the motors...."
+            print e
+            self.motorson = False
 
     def connectPowerAction(self):
         try:
@@ -949,6 +986,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
             self.plotwindow.objfigure.colorbar(im)
+            self.plotwindow.objfigure.tight_layout()
 
             self.plotwindow.objcanvas.draw()
         except Exception as e:
@@ -968,6 +1006,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
             self.plotwindow.guidefigure.colorbar(im)
+            self.plotwindow.guidefigure.tight_layout()
 
             self.plotwindow.guidecanvas.draw()
 
@@ -999,6 +1038,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #if colorbar:
             #    plt.colorbar()
             self.plotwindow.objfigure.colorbar(im)
+            self.plotwindow.objfigure.tight_layout()
                 
             r = np.arange(360)*np.pi/180.
             fwhmX = np.abs(2.3548*gFit.x_stddev*xScale)
@@ -1172,7 +1212,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                     worked = False
             else:
                 DECspl = DECText.split('.')
-                if len(DECspl[0]) != 6: 
+                if len(DECspl) != 6: 
                     self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
                     self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
                     self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
@@ -1263,6 +1303,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #ax.format_coord = Formatter(im)
             ax.set_title('ASTROMETRIC FIELD')
             #self.guideplotwindow.figure.colorbar(im)
+            self.plotwindow.guidefigure.tight_layout()
 
             self.plotwindow.guidecanvas.draw()
 
