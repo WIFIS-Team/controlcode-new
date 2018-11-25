@@ -247,7 +247,7 @@ class WIFISGuider(QObject):
 
     def offsetToGuider(self):
         if self.telSock:
-            self.updateText.emit("### OFFSETTING TO GUIDER FIELD ###")
+            self.updateText.emit("### OFFSETTING TO GUIDER FIELD")
 
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
@@ -267,7 +267,7 @@ class WIFISGuider(QObject):
 
     def offsetToWIFIS(self):
         if self.telSock:
-            self.updateText.emit("### OFFSETTING TO WIFIS FIELD ###")
+            self.updateText.emit("### OFFSETTING TO WIFIS FIELD")
 
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
@@ -478,7 +478,7 @@ class WIFISGuider(QObject):
             dx = offsetx * x_rot
             dy = offsety * y_rot
             radec = dx + dy
-            self.updateText.emit("#### FINISHED CHECK CENTROIDS")
+            self.updateText.emit("### FINISHED CHECK CENTROIDS")
 
         return img, d*radec[1], d*radec[0]
 
@@ -603,7 +603,7 @@ class FocusCamera(QThread):
             focus_check1 = focus_check2
             current_focus = self.foc.get_stepper_position() 
         
-        self.updateText.emit("### FINISHED FOCUSING ####")
+        self.updateText.emit("### FINISHED FOCUSING")
 
 
 class RunGuiding(QThread):
@@ -656,7 +656,7 @@ class RunGuiding(QThread):
         else:
             self.guideTargetText = self.guideTargetVar.text()
 
-        self.updateText.emit("###### STARTING GUIDING ON %s" % (self.guideTargetText))
+        self.updateText.emit("### STARTING GUIDING ON %s" % (self.guideTargetText))
         gfls = self.checkGuideVariable()
 
         guidingstuff = self.wifis_simple_guiding_setup(gfls)
@@ -741,7 +741,7 @@ class RunGuiding(QThread):
         while True:
             if self.stopThread:
                 self.cam.end_exposure()
-                self.updateText.emit("###### FINISHED GUIDING")
+                self.updateText.emit("### FINISHED GUIDING")
                 break
             else:
                 try:

@@ -81,40 +81,40 @@ class h2rg(QObject):
     def connect(self):
         if self.scideton:
             if self.connected == True:
-                self.printTxt("#### DETECTOR ALREADY CONNECTED")
+                self.printTxt("### DETECTOR ALREADY CONNECTED")
                 return True
-            self.printTxt("#### CONNECTING TO DETECTOR")
+            self.printTxt("### CONNECTING TO DETECTOR")
             try:
                 self.s.settimeout(None)
                 self.s.connect((self.servername,self.port))
                 self.connected = True
                 self.h2rgstatus.setStyleSheet('color: blue')
                 self.h2rgstatus.setText("H2RG Connected")
-                self.printTxt("#### CONNECTED TO DETECTOR")
+                self.printTxt("### CONNECTED TO DETECTOR")
             except Exception as e:
-                self.printTxt("#### THERE WAS AN ISSUE CONNECTING THE DETECTOR....\nCHECK TERMINAL")
+                self.printTxt("### THERE WAS AN ISSUE CONNECTING THE DETECTOR....\nCHECK TERMINAL")
                 print e
                 print traceback.print_exc()
                 return False
             return True
         else:
-            self.printTxt("#### NOT CONNECTED TO DETECTOR...IT APPEARS OFF\nCHECK THE CONNECTION")
+            self.printTxt("### NOT CONNECTED TO DETECTOR...IT APPEARS OFF\nCHECK THE CONNECTION")
             return False
 
     
     def disconnect(self):
         if (self.connected):
             try:
-                self.printTxt("#### DISCONNECTING FROM THE DETECTOR")
+                self.printTxt("### DISCONNECTING FROM THE DETECTOR")
                 self.s.close() 
                 self.connected = False
                 self.initialized = False 
-                self.printTxt("#### DISCONNECTED")
+                self.printTxt("### DISCONNECTED")
                 self.h2rgstatus.setStyleSheet('color: red')
                 self.h2rgstatus.setText("H2RG Disconnected")
                 return(True)
             except Exception as e:
-                self.printTxt("#### SOMETHING WENT WRONG WHILE DISCONNECTING FROM THE DETECTOR")
+                self.printTxt("### SOMETHING WENT WRONG WHILE DISCONNECTING FROM THE DETECTOR")
                 return False
         
         return(False)
@@ -122,40 +122,40 @@ class h2rg(QObject):
     def initialize(self):
         if(self.connected) and (self.initialized == False):
             if self.initialized == True:
-                self.printTxt("#### DETECTOR ALREADY INITIALIZED") 
+                self.printTxt("### DETECTOR ALREADY INITIALIZED") 
 
             try:
-                self.printTxt("#### INITIALIZING")
+                self.printTxt("### INITIALIZING")
                 self.s.send("INITIALIZE1")
                 response = self.s.recv(self.buffersize)
                 self.printTxt(response)
 
                 self.s.send("SETGAIN(12)")
-                self.printTxt("#### Setting Gain")
+                self.printTxt("### Setting Gain")
                 response = self.s.recv(buffersize)
                 self.printTxt(response)
 
                 self.s.send("SETDETECTOR(2,32)")
-                self.printTxt("#### Setting Detector Channels")
+                self.printTxt("### Setting Detector Channels")
                 response = self.s.recv(buffersize)
                 self.printTxt(response)
 
                 self.s.send("SETENHANCEDCLK(1)")
-                self.printTxt("#### Setting Clocking")
+                self.printTxt("### Setting Clocking")
                 response = self.s.recv(buffersize)
                 self.printTxt(response)
 
-                self.printTxt("#### INITIALIZED")
+                self.printTxt("### INITIALIZED")
                 self.initialized = True            
                 self.h2rgstatus.setStyleSheet('color: green')
                 return(True)
             except Exception as e:
-                self.printTxt("#### SOMETHING WENT WRONG DURING INITIALIZATION...CHECK TERMINAL") 
+                self.printTxt("### SOMETHING WENT WRONG DURING INITIALIZATION...CHECK TERMINAL") 
                 print e
                 print traceback.print_exc()
                 return(False)
         else:
-            self.printTxt("#### DETECTOR NOT CONNECTED..CANNOT INITIALIZE") 
+            self.printTxt("### DETECTOR NOT CONNECTED..CANNOT INITIALIZE") 
         
         return(False)
         
@@ -226,7 +226,7 @@ class h2rg(QObject):
         after = dict ([(f, None) for f in os.listdir (watchpath)])
         added = [f for f in after if not f in before]
 
-        self.printTxt("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
+        self.printTxt("Added Dir: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
 
         finalPath = watchpath+"/"+added[0]
 
@@ -250,7 +250,8 @@ class h2rg(QObject):
 
         self.s.send("ACQUIRERAMP")
         response = self.s.recv(buffersize)
-        self.printTxt(response)
+        print response[-1] == '\n'
+        #self.printTxt(response)
 
         after = dict ([(f, None) for f in os.listdir (watchpath)])
         added = [f for f in after if not f in before]
@@ -264,7 +265,7 @@ class h2rg(QObject):
             f1.write(str(added[0]))
             f1.close()
 
-        self.printTxt("Added Directory: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
+        self.printTxt("Added Dir: "+added[0][:8]+" "+added[0][8:]+', '+sourceName +'\n')
 
         if nreads < 2:
             self.plotImage("Ramp",nreads,finalPath+"/H2RG_R01_M01_N01.fits", None, sourcename=sourceName)
@@ -367,11 +368,11 @@ class h2rgExposeThread(QThread):
 
         try:
             if self.detector.connected == False:
-                self.printTxt("####### Please connect the detector "+'\n'+\
+                self.printTxt("### Please connect the detector "+'\n'+\
                         "and initialize if not done already")
                 return
 
-            self.printTxt("####### STARTING EXPOSURE")
+            self.printTxt("### STARTING EXPOSURE")
 
             self.nreadsText = self.nreads
             self.nrampsText = self.nramps
@@ -393,7 +394,7 @@ class h2rgExposeThread(QThread):
             elif(self.exposureTypeText == "Calibrations"):
                 output = self.detector.takecalibrations(self.sourceNameText)
 
-            self.printTxt("####### FINISHED EXPOSURE")
+            self.printTxt("### FINISHED EXPOSURE")
 
         except Exception as e:
             print e

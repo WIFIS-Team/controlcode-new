@@ -111,7 +111,7 @@ def query_telescope(telSock, reqString, verbose=True, telem=False):
                 inStuff = telSock.recv(100)
             except socket.timeout:
                 if resp and verbose:
-                    print("###\tDONE RECEIVING TELEMETRY\t###")
+                    print("### DONE RECEIVING TELEMETRY")
                 test = False
                 break
 

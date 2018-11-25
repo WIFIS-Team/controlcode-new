@@ -1,4 +1,4 @@
-from wifis import Ui_MainWindow
+from wifis_new import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDesktopWidget
 from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox, QHBoxLayout,QLabel
@@ -263,10 +263,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
         self.actionQuit.triggered.connect(self.close)
         
-        self.FocusTestButton.setStyleSheet('background-color: red')
-        self.FocusTestStop.setStyleSheet('background-color: red')
-        self.FocusTestButton.setEnabled(False)
-        self.FocusTestStop.setEnabled(False)
+        #self.FocusTestButton.setStyleSheet('background-color: red')
+        #self.FocusTestStop.setStyleSheet('background-color: red')
+        #self.FocusTestButton.setEnabled(False)
+        #self.FocusTestStop.setEnabled(False)
         #self.FocusTestButton.clicked.connect(self.runFocusTest)
         #self.FocusTestStop.clicked.connect(self.stopFocusTest)
 
@@ -280,7 +280,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         
         self.SetNextButton.clicked.connect(self.setNextRADEC)
         self.MoveNextButton.clicked.connect(self.moveNext)
-        self.PullCoordsButton.clicked.connect(self.pullCoords)
+        #self.PullCoordsButton.clicked.connect(self.pullCoords)
 
     def pullCoords(self):
         RA = self.RALabel.text()
@@ -372,11 +372,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.guider.astrometryCalc.connect(self._handleAstrometryCalc)
             self.guideron = True
         except:
-            print "##### Can't Connect to Guider ##### -- Something Failed"
+            print "### Can't Connect to Guider -- Something Failed"
             self.guideron = False
 
         if not self.guider.guiderready:
-            print "##### Can't connect to one or all of the guider components"
+            print "### Can't connect to one or all of the guider components"
             print "FOC: ",self.guider.foc
             print "CAM: ",self.guider.cam
             print "FLT: ",self.guider.flt
@@ -385,7 +385,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         else:
             self.guiderToggle(True)
             self.guiderSwitch()
-            print "Connected to Guider #####"
+            print "### Connected to Guider"
 
     def guiderToggle(self, on):
 
@@ -433,17 +433,17 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.calibrationcontrol.checkStatus2()
 
                 self.calibSwitch()
-                print "Connected to Calibration Unit #####"
+                print "### Connected to Calibration Unit"
 
             except Exception as e:
-                print "##### Can't connect to Calibraiton Unit -- Something Failed"
+                print "### Can't connect to Calibraiton Unit -- Something Failed"
                 print e
                 self.calibon = False
                 self.calibrationcontrol = None
                 self.calibToggle(False)
                 
         else:
-            print "##### Can't connect to Calibraiton Unit -- No Power Connection"
+            print "### Can't connect to Calibraiton Unit -- No Power Connection"
             self.calibon = False
             self.calibrationcontrol = None
 
@@ -517,16 +517,16 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             
             self.powerSwitch()
             if (val1 == False) and (val2 == False):
-                print "##### Can't connect to Power Controllers -- Something Failed"
+                print "### Can't connect to Power Controllers -- Something Failed"
             elif (val1 == False) and (val2 == True):
-                print "##### Can't connect to Power Controller 1 -- Something Failed"
+                print "### Can't connect to Power Controller 1 -- Something Failed"
             elif (val1 == True) and (val2 == False):
-                print "##### Can't connect to Power Controller 2 -- Something Failed"
+                print "### Can't connect to Power Controller 2 -- Something Failed"
             else:
-                print "Connected to Power Controllers #####"
+                print "###Connected to Power Controllers"
 
         except Exception as e:
-            print "##### Can't connect to Power Controllers -- Something Failed"
+            print "### Can't connect to Power Controllers -- Something Failed"
             print e
             print traceback.print_exc()
             self.poweron = False
@@ -617,7 +617,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                         float(self.ForceIISEntry.text())
                         self.IISLabel.setText(self.ForceIISEntry.text())
                     except:
-                        self._handleOutputTextUpdate('#### FORCED IIS NOT A FLOAT')
+                        self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
                         self.IISLabel.setText(telemDict['IIS']) 
             else:
                 #Set IIS early because certain functions rely on this value
@@ -627,10 +627,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
             self.telescopeToggle(True)
 
-            print "Connected to Telescope #####"
+            print "### Connected to Telescope"
 
         except Exception as e:
-            print "##### Can't connect to telescope -- Something Failed"
+            print "### Can't connect to telescope -- Something Failed"
             print e
             print traceback.print_exc()
             self.telescope = False
@@ -653,7 +653,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CalOffsetButton.setStyleSheet(s)
         self.SetNextButton.setStyleSheet(s)
         self.MoveNextButton.setStyleSheet(s)
-        self.PullCoordsButton.setStyleSheet(s)
+        #self.PullCoordsButton.setStyleSheet(s)
 
         self.GuiderMoveButton.setEnabled(val)
         self.WIFISMoveButton.setEnabled(val)
@@ -662,7 +662,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CalOffsetButton.setEnabled(val)
         self.SetNextButton.setEnabled(val)
         self.MoveNextButton.setEnabled(val)
-        self.PullCoordsButton.setEnabled(val)
+        #self.PullCoordsButton.setEnabled(val)
 
     def connectH2RGAction(self):
         #Connecting to Detector
@@ -678,21 +678,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                     self.scideton = True
                     self.H2RGToggle(True)
                     self.scidetSwitch()
-                    print "Connected to Science Array #####"
+                    print "### Connected to Science Array"
                 else:
                     self.scideton = False
-                    print "##### Can't Connect to Science Array -- Something Failed"
+                    print "### Can't Connect to Science Array -- Something Failed"
                     print e
                     print traceback.print_exc()
                     self.H2RGToggle(False)
             except Exception as e:
                 self.scideton = False
-                print "##### Can't Connect to Science Array -- Something Failed"
+                print "### Can't Connect to Science Array -- Something Failed"
                 print e
                 print traceback.print_exc()
                 self.H2RGToggle(False)
         else:
-            print "##### Can't Connect to Science Array -- No Power Connection"
+            print "### Can't Connect to Science Array -- No Power Connection"
             self.scideton = False
             self.H2RGToggle(False)
 
@@ -868,7 +868,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def startNodding(self):
         self.noddingexposure = NoddingExposure(self.scidet, self.guider, self.NodSelection, \
                 self.NNods, self.NodsPerCal, self.NRampsText, self.NReadsText, \
-                self.ObjText, self.NodRAText, self.NodDecText, self.SkipCalib)
+                self.ObjText, self.NodRAText, self.NodDecText, self.SkipCalib,\
+                self.OffsetNod, self.RADECNod, self.RAObj, self.DECObj)
         self.noddingexposure.updateText.connect(self._handleOutputTextUpdate)
         self.noddingexposure.startGuiding.connect(self._handleNoddingGuide)
         self.noddingexposure.stopGuiding.connect(self._handleNoddingGuideStop)
@@ -939,7 +940,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                     float(self.ForceIISEntry.text())
                     self.IISLabel.setText(self.ForceIISEntry.text())
                 except:
-                    self._handleOutputTextUpdate('#### FORCED IIS NOT A FLOAT')
+                    self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
                     self.IISLabel.setText(telemDict['IIS']) 
         else:
             #Set IIS early because certain functions rely on this value
@@ -1319,7 +1320,7 @@ class NoddingExposure(QThread):
     progBar = pyqtSignal(int, int)
 
     def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, nramps, nreads,\
-            objname, nodra, noddec, skipcalib):
+            objname, nodra, noddec, skipcalib, offsetArcsec, offsetRADEC, targetRA, targetDEC):
 
         QThread.__init__(self)
 
@@ -1334,6 +1335,10 @@ class NoddingExposure(QThread):
         self.nodra = nodra
         self.noddec = noddec
         self.skipcalib = skipcalib
+        self.offsetNod = offsetArcsec
+        self.RADECNod = offsetRADEC
+        self.RAObj = targetRA
+        self.DECObj = targetDEC
 
         self.stopthread = False
 
@@ -1342,8 +1347,9 @@ class NoddingExposure(QThread):
 
     def stop(self):
         if self.stopthread == True:
-            self.updateText.emit("Waiting for exposure to finish then stopping!")
-        self.updateText.emit("####### STOPPING NODDING WHEN CURRENT EXPOSURE FINISHES #######")
+            self.updateText.emit("### Still waiting for exposure to finish then stopping!")
+            return
+        self.updateText.emit("### STOPPING NODDING WHEN CURRENT EXPOSURE FINISHES")
         self.stopthread = True
 
     def run(self):
@@ -1352,37 +1358,61 @@ class NoddingExposure(QThread):
             return
 
         self.NodSelectionVal = self.NodSelection.currentText()
+        self.objnameval = self.objname.text()
+
+        if self.RADECNod.isChecked():
+            raoff, decoff = self.calcOffset()
+            if raoff == False:
+                self.updateText.emit("SOMETHING WRONG WITH RA/DEC INPUTS\nSEE BELOW")
+                self.updateText.emit(decoff)
+                return
+            else:
+                self.updateText.emit("CALCULATED OFFSETS\nRA:\t%f\nDEC:\t%f\n" % (raoff, decoff))
+                self.nodraval = raoff
+                self.noddecval = decoff
+                if self.nodraval > 1000:
+                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                    return
+                if self.noddecval > 1000:
+                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                    return
+        else:
+            try:
+                self.nodraval = float(self.nodra.text())
+                self.noddecval = float(self.noddec.text())
+                if self.nodraval > 1000:
+                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                    return
+                if self.noddecval > 1000:
+                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                    return
+            except:
+                self.updateText.emit("NOD OFFSETS NOT FLOATS -- QUITTING")
+                return
+
         try:
             self.nrampsval = int(self.nramps.text())
             self.nreadsval = int(self.nreads.text())
             self.NodsPerCalVal = int(self.NodsPerCal.text())
             self.NNodsVal = int(self.NNods.text())
         except:
-            self.updateText.emit("N_RAMPS/N_READS/N_NODS/N_CALS NOT INTS -- QUITTING")
-            return
-
-        self.objnameval = self.objname.text()
-        try:
-            self.nodraval = float(self.nodra.text())
-            self.noddecval = float(self.noddec.text())
-        except:
-            self.updateText.emit("NOD VALUES NOT FLOATS -- QUITTING")
+            self.updateText.emit("NOTE! N_RAMPS/N_READS/N_NODS/N_CALS NOT INTS -- QUITTING")
             return
 
         if self.stopthread:
             self.stopthread = False
 
-        self.updateText.emit("####### STARTING NODDING SEQUENCE #######")
+        self.updateText.emit("### STARTING NODDING SEQUENCE")
 
         if not self.skipcalib.isChecked():
-            self.updateText.emit("# Doing initial calibrations")
+            self.updateText.emit("### DOING INITIAL CALIBS")
             self.progBar.emit(42, self.nrampsval)
             self.scidet.takecalibrations(self.objnameval)
         else:
-            self.updateText.emit("####### SKIPPING INITIAL CALIBS #######")
+            self.updateText.emit("### SKIPPING INITIAL CALIBS")
 
         if self.stopthread:
-            self.updateText.emit("####### STOPPED NODDING SEQUENCE #######")
+            self.updateText.emit("### STOPPED NODDING SEQUENCE")
             return
 
         for i in range(self.NNodsVal):
@@ -1421,12 +1451,30 @@ class NoddingExposure(QThread):
                     break
 
             if self.stopthread:
-                self.updateText.emit("####### STOPPED NODDING SEQUENCE #######")
+                self.updateText.emit("### STOPPED NODDING SEQUENCE")
                 break
             if (i + 1) % self.NodsPerCalVal == 0:
                 self.scidet.takecalibrations(self.objnameval)
 
-        self.updateText.emit("####### FINISHED NODDING SEQUENCE #######")
+        if not self.stopthread:
+            self.updateText.emit("### FINISHED NODDING SEQUENCE")
+    
+    def calcOffset(self):
+        RAObjP, DECObjP = parseRADECText(self.RAObj.text(), self.DECObj.text())
+        RAOffP, DECOffP = parseRADECText(self.nodra.text(), self.noddec.text())
+
+        if RAObjP == False:
+            return False, DECObjP
+        if RAOffP == False:
+            return False, DECOffP
+
+        startcoord = SkyCoord(RAObjP, DECObjP, unit = (u.hourangle, u.deg))
+        targetcoord = SkyCoord(RAOffP, DECOffP, unit = (u.hourangle, u.deg))
+
+        offset = startcoord.spherical_offsets_to(targetcoord)
+
+        return float(offset[0].to(u.arcsec).to_string()[:-6]), \
+                float(offset[1].to(u.arcsec).to_string()[:-6])
         
 class UpdateLabels(QThread):
 
@@ -1466,7 +1514,7 @@ class UpdateLabels(QThread):
                             float(self.ForceIISEntry.text())
                             telemDict['IIS'] = self.ForceIISEntry.text()
                         except:
-                            self._handleOutputTextUpdate('#### FORCED IIS NOT A FLOAT')
+                            self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
 
                 telemDict['RAObj'] = self.RAObj.text()
                 telemDict['DECObj'] = self.DECObj.text()
@@ -1577,6 +1625,46 @@ class FocusTest(QThread):
 
         self.calibcontrol.sourcesetup()
         self.updateText.emit("FOCUS THREAD FINISHED")
+
+def parseRADECText(RAText, DECText):
+
+        try:
+            float(RAText)
+            float(DECText)
+        except:
+            return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
+
+        if (len(RAText) == 0) or (len(DECText) == 0):
+            return False, 'RA or DEC Text Empty!'
+
+        try:
+            if (RAText[0] == '+') or (RAText[0] == '-'):
+                RAspl = RAText[1:].split('.')
+                if len(RAspl[0]) != 6: 
+                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
+            else:
+                RAspl = RAText.split('.')
+                if len(RAspl[0]) != 6: 
+                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
+            if (DECText[0] == '+') or (DECText[0] == '-'):
+                DECspl = DECText[1:].split('.')
+                if len(DECspl[0]) != 6: 
+                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
+            else:
+                DECspl = DECText.split('.')
+                if len(DECspl) != 6: 
+                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
+        except Exception as e:
+            print e
+            return False, 'RA or DEC Obj IMPROPER INPUT LIKELY'
+
+        if (RAText[0] == '+') or (RAText[0] == '-'):
+            RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
+        else:
+            RA = RAText[0:2] + ' ' + RAText[2:4] + ' ' + RAText[4:]
+        DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
+
+        return RA, DEC
 
 def main():
 
