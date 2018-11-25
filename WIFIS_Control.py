@@ -164,6 +164,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
                         self.Power28]
         self.caliblabels = [self.CalibModeButton,self.ObsModeButton,self.ArclampModeButton,self.ISphereModeButton]
+        self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDecText]
+        self.readLabels()
 
         self.WIFISTabWidget.setCurrentIndex(0)
 
@@ -193,7 +195,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             updatevals = [self.RAObj, self.DECObj]
             if not self.updateon:
                 self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
                 self.labelsThread.start()
                 self.updateon = True
@@ -201,12 +203,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 if self.labelsThread.isrunning:
                     self.labelsThread.stop()
                     self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
                 else:
                     self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction)
+                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
         
@@ -1121,6 +1123,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def stopFocusTest(self):
         self.focustest.stop()
 
+    def readLabels(self):
+        #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
+        f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','r')
+        values = []
+        for l in f:
+            values.append(l.split(' ')[-1][:-1])
+        for i,label in enumerate(self.textlabels):
+            label.setText(values[i])
+
     def _handleMoveMotor(self, s1, s2, mot):
         self.motorcontrol.stepping_operation(s1, unit=0x01)
         #self.motormove = wm.MotorThread(self.motorcontrol, mot, s1)
@@ -1370,21 +1381,21 @@ class NoddingExposure(QThread):
                 self.updateText.emit("CALCULATED OFFSETS\nRA:\t%f\nDEC:\t%f\n" % (raoff, decoff))
                 self.nodraval = raoff
                 self.noddecval = decoff
-                if self.nodraval > 1000:
-                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                if self.nodraval > 1500:
+                    self.updateText.emit("NOD OFFSETS > 1500 arcsec -- QUITTING")
                     return
-                if self.noddecval > 1000:
-                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                if self.noddecval > 1500:
+                    self.updateText.emit("NOD OFFSETS > 1500 arcsec -- QUITTING")
                     return
         else:
             try:
                 self.nodraval = float(self.nodra.text())
                 self.noddecval = float(self.noddec.text())
-                if self.nodraval > 1000:
-                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                if self.nodraval > 1500:
+                    self.updateText.emit("NOD OFFSETS > 1500 arcsec -- QUITTING")
                     return
-                if self.noddecval > 1000:
-                    self.updateText.emit("NOD OFFSETS > 1000 arcsec -- QUITTING")
+                if self.noddecval > 1500:
+                    self.updateText.emit("NOD OFFSETS > 1500 arcsec -- QUITTING")
                     return
             except:
                 self.updateText.emit("NOD OFFSETS NOT FLOATS -- QUITTING")
@@ -1481,7 +1492,7 @@ class UpdateLabels(QThread):
     updateText = pyqtSignal(list)
 
     def __init__(self, guider, motorcontrol, guideron, updatevals, EnableForceIIS,\
-            ForceIISEntry, motoraction):
+            ForceIISEntry, motoraction, textlabels):
         QThread.__init__(self)
 
         self.guider = guider
@@ -1494,6 +1505,7 @@ class UpdateLabels(QThread):
         self.ForceIISEntry = ForceIISEntry
         self.updatemotors = False
         self.motoraction = motoraction
+        self.textlabels = textlabels
 
     def __del__(self):
         self.wait()
@@ -1537,6 +1549,8 @@ class UpdateLabels(QThread):
 
                 self.updateText.emit([telemDict,steppos,ccdTemp])
 
+                self.printLabels()
+
                 self.sleep(5)
 
             except Exception as e:
@@ -1546,6 +1560,13 @@ class UpdateLabels(QThread):
                 print e
                 print "############################"
         self.isrunning = False
+
+    def printLabels(self):
+        f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','w')
+        #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
+        textlabelnames = ['Target','RAObj','DECObj','RANod','DECNod']
+        for i in range(len(textlabelnames)):
+            f.write('%s:\t%s\n' % (textlabelnames[i], self.textlabels[i].text()))
 
 class FocusTest(QThread):
 

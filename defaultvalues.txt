@@ -1,2 +1,2 @@
-GuideRA		-2.13
+GuideRA		-3.2
 GuideDEC		363.2
