@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1103</width>
+    <width>1034</width>
     <height>911</height>
    </rect>
   </property>
@@ -66,7 +66,7 @@
              <string>TextLabel</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -150,7 +150,7 @@
              <string>TextLabel</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -207,7 +207,7 @@
              <string>TextLabel</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -263,7 +263,7 @@
              <string>TextLabel</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -291,7 +291,7 @@
              <string>TextLabel</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -347,7 +347,7 @@
              <string>TextLabel</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -947,25 +947,6 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="4">
-               <widget class="QPushButton" name="TBButton">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>TB Filter</string>
-                </property>
-               </widget>
-              </item>
               <item row="4" column="1">
                <widget class="QPushButton" name="FocusGoTo">
                 <property name="sizePolicy">
@@ -1034,7 +1015,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Focus Motor (1)</string>
+                 <string>Focus (1)</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -1062,7 +1043,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Filter Motor (2)</string>
+                 <string>Filter (2)</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -1097,44 +1078,6 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="4">
-               <widget class="QPushButton" name="HButton">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>H Filter</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="4">
-               <widget class="QPushButton" name="BlankButton">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>25</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Blank Filter</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="3">
                <widget class="QLabel" name="label_41">
                 <property name="sizePolicy">
@@ -1156,7 +1099,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Grating Motor (3)</string>
+                 <string>Grating (3)</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -1330,7 +1273,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>-125</string>
+                 <string>-135</string>
                 </property>
                </widget>
               </item>
@@ -1504,13 +1447,70 @@
                 </property>
                </widget>
               </item>
+              <item row="4" column="0">
+               <widget class="QPushButton" name="TBButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>TB Filter</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QPushButton" name="HButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>H Filter</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QPushButton" name="BlankButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Blank Filter</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
            </layout>
           </widget>
           <widget class="QWidget" name="tab_4">
            <attribute name="title">
-            <string>Other Control</string>
+            <string>Other</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_14">
             <property name="leftMargin">
@@ -1684,10 +1684,10 @@
         <item row="3" column="6">
          <widget class="QLabel" name="label_32">
           <property name="text">
-           <string>Nods per Cal</string>
+           <string>Nods/Calib:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -1707,7 +1707,7 @@
            <string>Nod RA:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -1728,7 +1728,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Set Coords as Next</string>
+           <string>Set Next</string>
           </property>
           <property name="default">
            <bool>false</bool>
@@ -1754,7 +1754,7 @@
            <string>Nod Type:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -1768,7 +1768,7 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>100</width>
+            <width>70</width>
             <height>16777215</height>
            </size>
           </property>
@@ -1787,10 +1787,10 @@
         <item row="2" column="6">
          <widget class="QLabel" name="label_31">
           <property name="text">
-           <string>N Nods</string>
+           <string>N Nods:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -1804,6 +1804,9 @@
             <property name="checked">
              <bool>true</bool>
             </property>
+            <attribute name="buttonGroup">
+             <string notr="true">buttonGroup</string>
+            </attribute>
            </widget>
           </item>
           <item>
@@ -1822,6 +1825,9 @@
             <property name="checked">
              <bool>false</bool>
             </property>
+            <attribute name="buttonGroup">
+             <string notr="true">buttonGroup</string>
+            </attribute>
            </widget>
           </item>
          </layout>
@@ -1832,7 +1838,7 @@
            <string>Nod DEC:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -1842,7 +1848,7 @@
            <string>Nod Pattern</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -1856,7 +1862,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>100</width>
+            <width>120</width>
             <height>0</height>
            </size>
           </property>
@@ -1878,7 +1884,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>100</width>
+            <width>120</width>
             <height>0</height>
            </size>
           </property>
@@ -1900,7 +1906,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>100</width>
+            <width>120</width>
             <height>0</height>
            </size>
           </property>
@@ -1915,10 +1921,16 @@
         <item row="1" column="5">
          <widget class="QLineEdit" name="NodRAText">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>0</height>
+           </size>
           </property>
           <property name="maximumSize">
            <size>
@@ -1934,10 +1946,16 @@
         <item row="2" column="5">
          <widget class="QLineEdit" name="NodDecText">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>0</height>
+           </size>
           </property>
           <property name="maximumSize">
            <size>
@@ -1960,7 +1978,7 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>100</width>
+            <width>70</width>
             <height>16777215</height>
            </size>
           </property>
@@ -1979,7 +1997,7 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>100</width>
+            <width>70</width>
             <height>16777215</height>
            </size>
           </property>
@@ -2066,6 +2084,12 @@
         </item>
         <item row="3" column="0">
          <widget class="QLabel" name="label_30">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>Exp Progress</string>
           </property>
@@ -2076,6 +2100,12 @@
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label_21">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>N Reads:</string>
           </property>
@@ -2086,6 +2116,12 @@
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label_20">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>N Ramps:</string>
           </property>
@@ -2101,41 +2137,20 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="5">
-         <widget class="QCheckBox" name="SkipCalib">
-          <property name="text">
-           <string>Skip Initial Cals</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="5">
-         <widget class="QPushButton" name="NodBeginButton">
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>BEGIN NOD SEQ</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="5">
-         <widget class="QPushButton" name="StopExpButton">
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>STOP NODS</string>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="2">
          <widget class="QPushButton" name="TakeCalibButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <weight>75</weight>
@@ -2201,47 +2216,7 @@
            <string>Exposure Type:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="5">
-         <widget class="QLabel" name="DetectorStatusLabel">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>150</height>
-           </size>
-          </property>
-          <property name="baseSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>H2RG Not Connected</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -2293,10 +2268,83 @@
           </property>
          </widget>
         </item>
+        <item row="0" column="5" colspan="2">
+         <widget class="QLabel" name="DetectorStatusLabel">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>150</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>H2RG Not Connected</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5" colspan="2">
+         <widget class="QPushButton" name="NodBeginButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>BEGIN NOD SEQ</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="5" colspan="2">
+         <widget class="QPushButton" name="StopExpButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>STOP NODS</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="5" colspan="2">
+         <widget class="QCheckBox" name="SkipCalib">
+          <property name="text">
+           <string>Skip Initial Cals</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item row="6" column="0">
-       <layout class="QGridLayout" name="gridLayout_6" rowstretch="1,1,1" columnstretch="1,1">
+       <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0" columnstretch="0,0">
         <item row="0" column="0" colspan="2">
          <widget class="QLabel" name="label_29">
           <property name="sizePolicy">
@@ -2341,7 +2389,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_7">
            <attribute name="title">
@@ -3137,7 +3185,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1103</width>
+     <width>1034</width>
      <height>22</height>
     </rect>
    </property>
@@ -3279,9 +3327,7 @@
   <tabstop>Power27</tabstop>
   <tabstop>Power28</tabstop>
   <tabstop>FilterHome</tabstop>
-  <tabstop>BlankButton</tabstop>
   <tabstop>GratingStop</tabstop>
-  <tabstop>HButton</tabstop>
   <tabstop>OffsetNod</tabstop>
   <tabstop>RADECNod</tabstop>
   <tabstop>WIFISTabWidget</tabstop>
@@ -3289,7 +3335,6 @@
   <tabstop>FilterStep</tabstop>
   <tabstop>FilterGoTo</tabstop>
   <tabstop>GratingGoTo</tabstop>
-  <tabstop>TBButton</tabstop>
   <tabstop>FocusStop</tabstop>
   <tabstop>FilterStop</tabstop>
   <tabstop>GratingHome</tabstop>
@@ -3299,4 +3344,7 @@
  </tabstops>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>
