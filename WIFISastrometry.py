@@ -54,7 +54,7 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'uns
     ra_deg = coord.ra.deg
     dec_deg = coord.dec.deg
 
-    offsets = get_rotation_solution_astrom(rotangle, guider_offsets, dec_deg)
+    offsets = get_rotation_solution_offset(rotangle, guider_offsets, dec_deg)
 
     name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord= grabUNSOfield(RA, DEC, offsets=offsets, catalog = catalog)
 
@@ -815,6 +815,38 @@ def projected_coords(ra, dec, ra0, dec0):
     y = (flength * Y / 0.013) + 512
 
     return x, y, X, Y
+
+def get_rotation_solution(rotangle, guideroffsets, DEC):
+
+    rotangle = rotangle - 90 - 0.26
+    rotangle_rad = rotangle * np.pi / 180.0
+
+    rotation_matrix = np.array([[np.cos(rotangle_rad),np.sin(rotangle_rad)],\
+                              [-1.*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+
+    rotation_matrix_offsets = np.array([[np.cos(rotangle_rad),-1*np.sin(rotangle_rad)],\
+                                [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+
+    offsets = np.dot(rotation_matrix_offsets, guideroffsets)
+    #offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
+
+    return offsets
+
+def get_rotation_solution_offset(rotangle, guideroffsets, DEC):
+
+    rotangle = rotangle - 90
+    rotangle_rad = rotangle * np.pi / 180.0
+
+    rotation_matrix = np.array([[np.cos(rotangle_rad),np.sin(rotangle_rad)],\
+                              [-1.*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+
+    rotation_matrix_offsets = np.array([[np.cos(rotangle_rad),-1*np.sin(rotangle_rad)],\
+                                [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
+
+    offsets = np.dot(rotation_matrix_offsets, guideroffsets)
+    #offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
+
+    return offsets
 
 def get_rotation_solution_astrom(rotangle, guideroffsets, DEC):
 

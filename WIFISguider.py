@@ -256,7 +256,7 @@ class WIFISGuider(QObject):
             guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
             print guideroffsets
 
-            offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
+            offsets = WA.get_rotation_solution_offset(float(self.rotangle.text()), guideroffsets[:2], decdeg)
             print offsets
 
             result = WG.move_telescope(self.telSock, offsets[0], offsets[1]) 
@@ -275,7 +275,7 @@ class WIFISGuider(QObject):
             guidevals = read_defaults()
             guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
 
-            offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
+            offsets = WA.get_rotation_solution_offset(float(self.rotangle.text()), guideroffsets[:2], decdeg)
             result = WG.move_telescope(self.telSock, -1.0*offsets[0], -1.0*offsets[1])
             self.updateText.emit(result)
             #self.offsetButton.configure(text='Move to Guider',\
@@ -671,10 +671,10 @@ class RunGuiding(QThread):
                 guidingstuff = self.wifis_simple_guiding_setup(gfls)
                 self.exptime += 1000
 
-            if guidingstuff[3] == 'NoStar':
-                self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
-                self.endNodding.emit(True)
-                return 
+            #if guidingstuff[3] == 'NoStar':
+            #    self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
+            #    self.endNodding.emit(True)
+            #    return 
 
         if (guidingstuff[3] == None) or (guidingstuff[4] == None):
             self.updateText.emit("NO STARS TO GUIDE ON...INCREASING GUIDE TIME...")
@@ -685,10 +685,10 @@ class RunGuiding(QThread):
                 guidingstuff = self.wifis_simple_guiding_setup(gfls)
                 self.exptime += 1000
 
-            if guidingstuff[3] == None:
-                self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
-                self.endNodding.emit(True)
-                return 
+            #if guidingstuff[3] == None:
+            #    self.updateText.emit("NO STARS TO GUIDE ON AT 9s, QUITTING")
+            #    self.endNodding.emit(True)
+            #    return 
 
         elif guidingstuff[3] == False:
             self.updateText.emit("ALL STARS IN FIELD SATURATED..DECREASING GUIDE TIME...")

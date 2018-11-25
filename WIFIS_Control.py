@@ -183,23 +183,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Connecting to Motor Control /// Currently disabled due to unknown crashes caused by Motor
         #Serial connection
         if motors:
-            try:
-                self.motorclient = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
-                bytesize=8, parity='E', baudrate=9600, timeout=0.1)
-                print "Connecting to motors..."
-                self.motorclient.connect()
-
-                #motorlabels = [self.FocusPosition, self.FilterPosition, self.GratingPosition,\
-                #    self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusStep,\
-                #    self.FilterStep, self.GratingStep]
-
-                self.motorcontrol = wm.MotorControl(self.motorclient) 
-                self.motorcontrol.updateText.connect(self._handleMotorText)
-                self.motorson = True
-            except Exception as e:
-                print "Something went wrong connecting to the motors...."
-                print e
-                self.motorson = False
+            self.connectMotorAction()
         else:
             self.motorcontrol = None
             self.motorson = False
@@ -292,6 +276,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ConnectH2RG.triggered.connect(self.connectH2RGAction)
         self.ConnectTelescope.triggered.connect(self.connectTelescopeAction)
         self.ConnectAll.triggered.connect(self.connectAllAction)
+        self.ConnectMotors.triggered.connect(self.connectMotorAction)
         
         self.SetNextButton.clicked.connect(self.setNextRADEC)
         self.MoveNextButton.clicked.connect(self.moveNext)
