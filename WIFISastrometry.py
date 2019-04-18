@@ -33,7 +33,7 @@ def read_defaults():
 
     return valuesdict
 
-def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'unso'):
+def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'sdss'):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
 
@@ -70,11 +70,16 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'uns
     xproj = np.array(xproj)
     yproj = np.array(yproj)
 
+
     if len(rmag[np.isnan(rmag)]) > len(rmag)/2.: 
         k = rmag != 0
         print 'lots of nan'
-    else:
-        k = rmag < 17
+    elif catalog == 'unso':
+        magval = 17.5
+        k = rmag < magval
+    elif catalog == 'sdss':
+        magval = 20
+        k = rmag < magval
 
     #compareresults = compareFieldsNew(x, y, xproj, yproj, rad, ded, k)
     compareresults = compareFields3(x, y, xproj, yproj, rad, ded, k, Iarr)
@@ -109,6 +114,8 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'uns
         return [False]
     elif platesolve == 'Offsets':
         print "TOO FEW STARS"
+        print xorig
+        print yorig
         return [xdist, ydist]
     else:
         print "Solved"
@@ -148,8 +155,9 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'uns
 
         xproj = np.array(xproj)
         yproj = np.array(yproj)
+
         #mpl.plot(x,y, 'r*')
-        k = rmag < 17
+        k = rmag < magval
         #mpl.plot(xproj[k], yproj[k],'b.')
         #mpl.show()
         
@@ -510,14 +518,15 @@ def unso(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min
 
 def sdss(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min. import urllib as url
     
-    str1 = 'http://vizier.hia.nrc.ca/viz-bin/asu-tsv/?-source=SDSS-DR12'
+    #str1 = 'http://vizier.hia.nrc.ca/viz-bin/asu-tsv/?-source=SDSS-DR12'
+    str1 = 'http://vizier.hia.nrc.ca/viz-bin/asu-tsv/?-source=V/147'
     str2 = '&-c.ra={:4.6f}&-c.dec={:4.6f}&-c.bm={:4.7f}/{:4.7f}&-out.max=unlimited'.format(\
             radeg,decdeg,fovam,fovam)
 
     # Make sure str2 does not have any spaces or carriage returns/line feeds when you # cut 
     #and paste into your code
     URLstr = str1+str2
-    #print URLstr
+    print URLstr
 
     f = url.urlopen(URLstr)
     # Read from the object, storing the page's contents in 's'.
@@ -543,9 +552,14 @@ def sdss(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min
     return name,rad,ded,zmag
 
 def load_img(fl,telSock):
+    biasff = fits.open('/home/utopea/elliot/20190418T073052_Bias.fits')
+    bias = biasff[0].data
+    bias = bias.astype('float')
+
     if type(fl) == str:
         f = fits.open(fl)
         data = f[0].data
+        data = data.astype('float') - bias
         head = f[0].header
         RA = head['RA']
         DEC = head['DEC']
@@ -554,7 +568,7 @@ def load_img(fl,telSock):
 
         cresult = centroid_finder(data)
     else:
-        data = fl
+        data = fl.astype('float') - bias
         telem = WG.get_telemetry(telSock)
         RA = telem['RA']
         DEC = telem['DEC']
@@ -573,9 +587,9 @@ def centroid_finder(img, plot=False):
     #find bright pixels
     imgmedian = np.median(img)
     #print "MEDIAN: %f, MEAN: %f" % (imgmedian, np.mean(img))
-    imgstd = np.std(img[img < 3000])
+    imgstd = np.std(img[img < (imgmedian + 50)])
     nstd = 3.0
-    #print "IMG MEAN: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
+    print "IMG MED: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
 
     brightpix = np.where(img >= imgmedian + nstd*imgstd)
     new_img = np.zeros(imgsize)
@@ -644,6 +658,8 @@ def centroid_finder(img, plot=False):
             width.append(np.mean([gausx[0][1],gausy[0][1]]) * 2.355)
         except:
             width.append(0)
+
+    print "Number of stars: "+str(len(centroidx))
 
     return [centroidx,centroidy,Iarr, Isat, width]
 

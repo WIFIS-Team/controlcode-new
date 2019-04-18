@@ -755,6 +755,10 @@ class RunGuiding(QThread):
                     print traceback.print_exc()
                     self.updateText.emit("SOMETHING WRONG WITH GUIDING...CONTINUING...")
                     something_wrong_count += 1
+                    #if something_wrong_count > 3:
+                    #    self.updateText.emit("INCREASING GUIDE EXP TIME BY 1s...")
+                    #    self.exptime += 1000
+                        #self.cam.set_exposure(self.exptime, frametype="normal")
                     if something_wrong_count > 15:
                         self.updateText.emit("GUIDING NOT WORKING...QUITTING")
                         break

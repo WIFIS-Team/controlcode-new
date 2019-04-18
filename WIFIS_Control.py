@@ -27,7 +27,7 @@ import time
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
-motors = True
+motors = False
 
 def read_defaults():
 
@@ -47,6 +47,14 @@ class Formatter(object):
     def __call__(self, x, y):
         z = self.im.get_array()[int(y), int(x)]
 	return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
+
+class CustomWIFISToolbar(NavigationToolbar):
+        #NavigationToolbar.__init__(self, plotCanvas, plotself)
+    toolitems = [t for t in NavigationToolbar.toolitems if t[0] in ('Home','Back','Forward','Pan','Zoom')]
+
+        #remove = [6,8]
+        #for b in remove:
+        #    self.DeleteToolByPos(b)
 
 class PlotWindow(QDialog):
 
@@ -83,10 +91,12 @@ class DoublePlotWindow(QDialog):
         self.setWindowTitle(title)
         self.objfigure = mpl.figure()
         self.objcanvas = FigureCanvas(self.objfigure)
-        self.objtoolbar = NavigationToolbar(self.objcanvas, self)
+        #self.objtoolbar = NavigationToolbar(self.objcanvas, self)
+        self.objtoolbar = CustomWIFISToolbar(self.objcanvas, self)
         self.guidefigure = mpl.figure()
         self.guidecanvas = FigureCanvas(self.guidefigure)
-        self.guidetoolbar = NavigationToolbar(self.guidecanvas, self)
+        #self.guidetoolbar = NavigationToolbar(self.guidecanvas, self)
+        self.guidetoolbar = CustomWIFISToolbar(self.guidecanvas, self)
         self.ObjPlotLabel = QLabel()
         self.ObjPlotLabel.setText("Detector Plot")
         self.GuidePlotLabel = QLabel()
@@ -283,6 +293,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SetNextButton.clicked.connect(self.setNextRADEC)
         self.MoveNextButton.clicked.connect(self.moveNext)
         #self.PullCoordsButton.clicked.connect(self.pullCoords)
+
+        guidebiasff = fits.open('/home/utopea/elliot/20190418T073052_Bias.fits')
+        self.guidebias = guidebiasff[0].data
+        self.guidebias = self.guidebias.astype('float')
 
     def pullCoords(self):
         RA = self.RALabel.text()
@@ -742,14 +756,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
                 self.GuiderExpTime.text(), self.OverGuideStar, self.coords)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
-        self.guideThread.plotSignal.connect(self._handleGuidePlotting)
+        self.guideThread.plotSignal.connect(self._handleGuidingPlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
         self.StopGuidingButton.clicked.connect(self.guideThread.stop)
         self.guideThread.start()
 
     def focusCamera(self):
         self.fcthread = gf.FocusCamera(self.guider.cam, self.guider.foc, self.ExpTime)
-        self.fcthread.plotSignal.connect(self._handleGuidePlotting)
+        self.fcthread.plotSignal.connect(self._handleGuidingPlotting)
         self.fcthread.updateText.connect(self._handleGuidingTextUpdate)
         self.fcthread.start()
 
@@ -895,7 +909,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
                     self.GuiderExpTime.text(), self.OverGuideStar, self.coords, sky=False)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
-        self.guideThread.plotSignal.connect(self._handleGuidePlotting)
+        self.guideThread.plotSignal.connect(self._handleGuidingPlotting)
         self.guideThread.setSkySignal.connect(self._handleGuidingSky)
         self.guideThread.endNodding.connect(self._endNodding)
         self.StopGuidingButton.clicked.connect(self.guideThread.stop)
@@ -983,6 +997,28 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
 
     def _handleGuidePlotting(self, image, flname):
+        try:
+            image = image.astype('float') - self.guidebias
+            norm = ImageNormalize(image, interval=PercentileInterval(98.5),stretch=LinearStretch())
+
+            self.plotwindow.guidefigure.clear()
+
+            ax = self.plotwindow.guidefigure.add_subplot(1,1,1)
+            #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
+            im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
+            ax.format_coord = Formatter(im)
+            ax.set_title(flname)
+            self.plotwindow.guidefigure.colorbar(im)
+            self.plotwindow.guidefigure.tight_layout()
+
+            self.plotwindow.guidecanvas.draw()
+
+        except Exception as e:
+            print e
+            print traceback.print_exc()
+            self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
+
+    def _handleGuidingPlotting(self, image, flname):
         try:
             norm = ImageNormalize(image, interval=PercentileInterval(98.5),stretch=LinearStretch())
 
@@ -1128,7 +1164,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','r')
         values = []
         for l in f:
-            values.append(l.split(' ')[-1][:-1])
+            values.append(l.split('\t')[-1][:-1])
         for i,label in enumerate(self.textlabels):
             label.setText(values[i])
 
