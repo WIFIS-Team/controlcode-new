@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1034</width>
+    <width>1015</width>
     <height>911</height>
    </rect>
   </property>
@@ -45,14 +45,14 @@
           <item row="6" column="1">
            <widget class="QLabel" name="HALabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>75</width>
               <height>30</height>
              </size>
             </property>
@@ -129,14 +129,14 @@
           <item row="5" column="1">
            <widget class="QLabel" name="IISLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>75</width>
               <height>30</height>
              </size>
             </property>
@@ -164,7 +164,7 @@
             </property>
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>75</width>
               <height>0</height>
              </size>
             </property>
@@ -186,14 +186,14 @@
           <item row="2" column="1">
            <widget class="QLabel" name="DECLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>75</width>
               <height>30</height>
              </size>
             </property>
@@ -242,14 +242,14 @@
           <item row="1" column="1">
            <widget class="QLabel" name="RALabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>75</width>
               <height>30</height>
              </size>
             </property>
@@ -270,14 +270,14 @@
           <item row="3" column="1">
            <widget class="QLabel" name="ELLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>75</width>
               <height>30</height>
              </size>
             </property>
@@ -326,14 +326,14 @@
           <item row="4" column="1">
            <widget class="QLabel" name="AZLabel">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>75</width>
               <height>30</height>
              </size>
             </property>
@@ -455,13 +455,6 @@
               <property name="horizontalSpacing">
                <number>6</number>
               </property>
-              <item row="0" column="2">
-               <widget class="QPushButton" name="GuiderMoveButton">
-                <property name="text">
-                 <string>Move To Guider</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="4">
                <widget class="QLabel" name="label_36">
                 <property name="text">
@@ -531,24 +524,10 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
-               <widget class="QPushButton" name="WIFISMoveButton">
-                <property name="text">
-                 <string>Move to WIFIS</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="3" rowspan="4">
                <widget class="Line" name="line_8">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="MoveBackButton">
-                <property name="text">
-                 <string>Move Back</string>
                 </property>
                </widget>
               </item>
@@ -576,7 +555,21 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
+              <item row="1" column="2">
+               <widget class="QPushButton" name="MoveBackButton">
+                <property name="text">
+                 <string>Move Back</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QPushButton" name="WIFISMoveButton">
+                <property name="text">
+                 <string>Move to WIFIS</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
                <widget class="QPushButton" name="moveTelescopeButton">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -596,13 +589,20 @@
                </widget>
               </item>
               <item row="2" column="2">
+               <widget class="QPushButton" name="GuiderMoveButton">
+                <property name="text">
+                 <string>Move To Guider</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="2">
                <widget class="QPushButton" name="MoveNextButton">
                 <property name="text">
                  <string>Move Next</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="2">
+              <item row="3" column="5">
                <widget class="QPushButton" name="CenteringCheck">
                 <property name="text">
                  <string>Centering Check</string>
@@ -2389,7 +2389,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab_7">
            <attribute name="title">
@@ -2493,19 +2493,6 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QLabel" name="label_11">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Guider ExpTime</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="3">
                <widget class="QLabel" name="label_26">
                 <property name="font">
@@ -2560,19 +2547,6 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="StopGuidingButton">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Stop Guiding</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="5">
                <widget class="QPushButton" name="TakeImageButton">
                 <property name="font">
@@ -2586,17 +2560,43 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="doAstrometryButton">
-                <property name="text">
-                 <string>Astrometry</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="2" rowspan="3">
                <widget class="Line" name="line_5">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="StopGuidingButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Stop Guiding</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_11">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Guider ExpTime</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QPushButton" name="doAstrometryButton">
+                <property name="text">
+                 <string>Astrometry</string>
                 </property>
                </widget>
               </item>
@@ -2648,7 +2648,7 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="2">
+              <item row="0" column="3">
                <widget class="QLabel" name="label_24">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -2681,14 +2681,14 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="4">
+              <item row="1" column="5">
                <widget class="QPushButton" name="StopFocus">
                 <property name="text">
                  <string>Stop Focus</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
+              <item row="1" column="3">
                <widget class="QLabel" name="label_23">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -2721,7 +2721,7 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="3">
+              <item row="0" column="4">
                <widget class="QLineEdit" name="FocStep">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2771,7 +2771,7 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="4">
+              <item row="0" column="5">
                <widget class="QPushButton" name="FocusCameraButton">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -2948,7 +2948,7 @@
                 </item>
                </widget>
               </item>
-              <item row="1" column="3">
+              <item row="1" column="4">
                <widget class="QLabel" name="FocPosition">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
@@ -2978,7 +2978,7 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="3">
+              <item row="2" column="4">
                <layout class="QHBoxLayout" name="horizontalLayout">
                 <item>
                  <widget class="QPushButton" name="BKWButton">
@@ -3031,6 +3031,13 @@
                  </widget>
                 </item>
                </layout>
+              </item>
+              <item row="0" column="2" rowspan="4">
+               <widget class="Line" name="line_7">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -3202,7 +3209,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1034</width>
+     <width>1015</width>
      <height>22</height>
     </rect>
    </property>
@@ -3232,9 +3239,16 @@
     <addaction name="ConnectMotors"/>
     <addaction name="ConnectAll"/>
    </widget>
+   <widget class="QMenu" name="menuTarget_List">
+    <property name="title">
+     <string>Target List</string>
+    </property>
+    <addaction name="LoadTargetsAction"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuInitialie"/>
    <addaction name="menuConnect"/>
+   <addaction name="menuTarget_List"/>
   </widget>
   <action name="actionConnect">
    <property name="text">
@@ -3305,13 +3319,15 @@
     <string>Motors</string>
    </property>
   </action>
+  <action name="LoadTargetsAction">
+   <property name="text">
+    <string>Load List</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>RAMoveBox</tabstop>
   <tabstop>DECMoveBox</tabstop>
-  <tabstop>moveTelescopeButton</tabstop>
-  <tabstop>GuiderMoveButton</tabstop>
-  <tabstop>WIFISMoveButton</tabstop>
   <tabstop>XPos</tabstop>
   <tabstop>YPos</tabstop>
   <tabstop>CalOffsetButton</tabstop>
