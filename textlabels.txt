@@ -1,0 +1,5 @@
+Target:	HIP78017
+RAObj:	155549.6
+DECObj:	+585442.4
+RANod:	360
+DECNod:	0

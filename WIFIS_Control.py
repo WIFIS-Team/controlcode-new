@@ -298,6 +298,37 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guidebias = guidebiasff[0].data
         self.guidebias = self.guidebias.astype('float')
 
+        self.targetsloaded = False
+        self.LoadTargetsAction.triggered.connect(self.loadTargetList)
+
+    def loadTargetList(self):
+        '''Loads the targets defined in the target list file. The targets are loaded
+        as buttons in the Target List Menu'''
+
+        tarlistfile = '/home/utopea/WIFIS-Team/wifiscontrol/targetlist.txt'
+        self.tars = np.loadtxt(tarlistfile, dtype=str)
+    
+        if self.targetsloaded:
+            for act in self.taractions:
+                self.menuTarget_List.removeAction(act)
+
+        self.taractions = []
+        for i in range(len(self.tars)):
+            act = self.menuTarget_List.addAction(self.tars[i][0])
+            act.triggered.connect(lambda checked, val=i: self.enterTargetInfo(val))
+            self.taractions.append(act)
+
+
+        self.targetsloaded = True
+
+    def enterTargetInfo(self, i):
+        '''Takes the loaded Name, RA, and DEC from the loaded target info
+        and places it in their respective text boxes'''
+
+        self.ObjText.setText(self.tars[i][0])
+        self.RAObj.setText(self.tars[i][1])
+        self.DECObj.setText(self.tars[i][2])
+
     def pullCoords(self):
         RA = self.RALabel.text()
         DEC = self.DECLabel.text()

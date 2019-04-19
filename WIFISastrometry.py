@@ -40,6 +40,8 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'sds
     data, head, RA, DEC, centroids = load_img(fl, telSock)
     if type(fl) != str:
         head['IIS'] = rotangleget
+    print "Number of stars in image: "+str(len(centroids[0]))
+
     xorig = np.array(centroids[0])
     yorig = np.array(centroids[1])
     Iarr = np.array(centroids[2])
@@ -589,7 +591,7 @@ def centroid_finder(img, plot=False):
     #print "MEDIAN: %f, MEAN: %f" % (imgmedian, np.mean(img))
     imgstd = np.std(img[img < (imgmedian + 50)])
     nstd = 3.0
-    print "IMG MED: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
+    #print "IMG MED: %f\nIMGSTD: %f\nCUTOFF: %f" % (imgmedian, imgstd,imgmedian+nstd*imgstd)
 
     brightpix = np.where(img >= imgmedian + nstd*imgstd)
     new_img = np.zeros(imgsize)
@@ -658,8 +660,6 @@ def centroid_finder(img, plot=False):
             width.append(np.mean([gausx[0][1],gausy[0][1]]) * 2.355)
         except:
             width.append(0)
-
-    print "Number of stars: "+str(len(centroidx))
 
     return [centroidx,centroidy,Iarr, Isat, width]
 
