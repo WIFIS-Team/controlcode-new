@@ -425,7 +425,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -562,13 +562,6 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="2">
-               <widget class="QPushButton" name="WIFISMoveButton">
-                <property name="text">
-                 <string>Move to WIFIS</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="2">
                <widget class="QPushButton" name="moveTelescopeButton">
                 <property name="sizePolicy">
@@ -595,17 +588,24 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="2">
+              <item row="3" column="2">
+               <widget class="QPushButton" name="WIFISMoveButton">
+                <property name="text">
+                 <string>Move to WIFIS</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
                <widget class="QPushButton" name="MoveNextButton">
                 <property name="text">
                  <string>Move Next</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="5">
+              <item row="3" column="1">
                <widget class="QPushButton" name="CenteringCheck">
                 <property name="text">
-                 <string>Centering Check</string>
+                 <string>Quick Field</string>
                 </property>
                </widget>
               </item>
@@ -1599,6 +1599,13 @@
                <widget class="QLabel" name="label_47">
                 <property name="text">
                  <string>Force IIS Val</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="2">
+               <widget class="QPushButton" name="CheckResolution">
+                <property name="text">
+                 <string>Check Resolution</string>
                 </property>
                </widget>
               </item>
@@ -3244,6 +3251,7 @@
      <string>Target List</string>
     </property>
     <addaction name="LoadTargetsAction"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuInitialie"/>
