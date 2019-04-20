@@ -904,8 +904,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def checkStartNodding(self):
         choice = QMessageBox.question(self,\
-                'Nodding Sequence?',\
-                "Start Nodding Sequence?",\
+                'Nodding Sequence',\
+                "Start Nodding Sequence?\nReads and Sky Coords Set?",\
                 QMessageBox.Yes | QMessageBox.No)
         if choice == QMessageBox.Yes:
             self.startNodding()
