@@ -22,7 +22,7 @@ from WIFIScalibration import CalibrationControl
 
 import traceback
 import numpy as np
-from get_src_pos import get_src_pos
+import get_src_pos
 import time
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
@@ -238,6 +238,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.TakeCalibButton.clicked.connect(self.initCalibExposure)
         self.NodBeginButton.clicked.connect(self.checkStartNodding)
         self.CenteringCheck.clicked.connect(self.checkcentering)
+        self.CheckResolution.clicked.connect(self.arcWidthMap)
 
         #Defining actions for Guider Control
         #self.guiderSwitch()
@@ -997,7 +998,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CCDTemp.setText(ccdtemp)
 
     def checkcentering(self):
-        fieldrecObj = get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
+        fieldrecObj = get_src_pos.get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
                 '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
         fieldrecObj.plotField.connect(self._handleFRPlotting)
         fieldrecObj.doFieldRec()
@@ -1006,6 +1007,36 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Old implementation without classes
         #do_get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
         #        '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
+
+    def arcWidthMap(self):
+        arcwidthObj = get_src_pos.arc_width_map('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst')
+        arcwidthObj.plotField.connect(self._handleArcPlotting)
+        arcwidthObj.get_arc_map()
+
+    def _handleArcPlotting(self, returns):
+        fwhmMap, fwhmMed, waveMin, waveMax = returns
+
+        try:
+            print('Plotting Arc Data')
+            self.plotwindow.objfigure.clear()
+            ax = self.plotwindow.objfigure.add_subplot(111)
+
+            interval=ZScaleInterval()
+            lims=interval.get_limits(fwhmMap)
+
+            im = ax.imshow(fwhmMap, aspect='auto', cmap='jet', clim=lims, origin='lower')
+            self.plotwindow.objfigure.colorbar(im)
+            self.plotwindow.objfigure.tight_layout()
+
+            ax.set_title('Median FWHM is '+'{:3.1f}'.format(fwhmMed) +', min wave is '+'{:6.1f}'.format(waveMin)+', max wave is '+'{:6.1f}'.format(waveMax))
+
+            self.plotwindow.objcanvas.draw()
+
+        except Exception as e:
+            print e
+            print traceback.print_exc()
+            self.OutputText.append("SOMETHING WENT WRONG WITH THE ARC PLOTTING")
+
 
     def _handlePlotting(self, image, flname):
 

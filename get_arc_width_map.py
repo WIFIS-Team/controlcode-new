@@ -29,5 +29,5 @@ for i in range(len(waveLst)):
     if len(waveLst)>1:
         quickReduction.procArcData(waveLst[i], flatLst[i], colorbarLims=None, hband=hband, varFile=varFile, noPlot=True)
     else:
-        quickReduction.procArcData(waveLst[i], flatLst[i], colorbarLims=None, hband=hband, varFile=varFile, noPlot=False)
+        quickReduction.procArcData(waveLst[i], flatLst[i], colorbarLims=None, hband=hband, varFile=varFile, noPlot=True)
 

@@ -185,7 +185,7 @@ def clean_telem(telemDict):
 
 def write_telemetry(telemDict):
 
-    f = open('/home/utopea/WIFIS-Team/controlcode/BokTelemetry.txt', 'w')
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/BokTelemetry.txt', 'w')
     f.write('Timestamp: %s\n' % (time.ctime(time.time())))
     for (key,value) in telemDict.iteritems():
         f.write("%s:\t\t%s\n" % (key, value))

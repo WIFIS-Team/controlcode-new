@@ -11,6 +11,8 @@ from astropy.visualization import (PercentileInterval, LinearStretch,
                                    ImageNormalize)
 from time import time, sleep
 import traceback
+import requests
+import json
 
 # Define global variables here
 servername = "192.168.0.20"
@@ -182,7 +184,7 @@ class h2rg(QObject):
         f.write("Obs Type: "+obsType+"\n")
         f.write("Source: "+sourceName+"\n")
 
-        telemf = open("/home/utopea/WIFIS-Team/controlcode/BokTelemetry.txt","r")
+        telemf = open("/home/utopea/WIFIS-Team/wifiscontrol/BokTelemetry.txt","r")
         defaults = read_gc_defaults()
 
         for line in telemf:
@@ -191,6 +193,19 @@ class h2rg(QObject):
         f.write('GCDECOff\t'+defaults['GuideDEC']+'\n')
 
         telemf.close()
+
+        weatherjson = requests.get('http://140.252.86.113:42080/bokdev/bokdev/latest_new.json')
+        weatherinfo = json.loads(weatherjson.text)
+        f.write('INHUMID\t'+str(weatherinfo['inside_outside']['inhumid'])+'\n')
+        f.write('OUTHUMID\t'+str(weatherinfo['inside_outside']['outhumid'])+'\n')
+        f.write('MIRHUMID\t'+str(weatherinfo['mirror_cell']['mcell_humid'])+'\n')
+        f.write('INTEMP\t'+str(weatherinfo['inside_outside']['intemp'])+'\n')
+        f.write('OUTTEMP\t'+str(weatherinfo['inside_outside']['outtemp'])+'\n')
+        f.write('MIRTEMP\t'+str(weatherinfo['mirror_cell']['mcell_temp'])+'\n')
+        f.write('GEOELEV\t'+str(2071)+'\n')
+        f.write('LATITUDE\t'+str('+31d57m46.5s')+'\n')
+        f.write('LONGITUD\t'+str('111d36m01.6s')+'\n')
+
         f.close()
                 
     def exposeSF(self, sourceName):
