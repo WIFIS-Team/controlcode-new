@@ -58,7 +58,8 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'sds
 
     offsets = get_rotation_solution_offset(rotangle, guider_offsets, dec_deg)
 
-    name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord= grabUNSOfield(RA, DEC, offsets=offsets, catalog = catalog)
+    name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord, newcatalog = grabUNSOfield(RA, DEC, offsets=offsets, catalog = catalog)
+    catalog = newcatalog
 
     cxrot, cyrot, cxrotneg, cyrotneg = rotate_points(rotangle,xorig,yorig)
 
@@ -151,8 +152,8 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'sds
         fieldoffset = solvecenter.spherical_offsets_to(newcoord)
         realcenter = [ra_cen, dec_cen]
 
-        name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,ncoord, nnewcoord = grabUNSOfield(ra_cen, dec_cen, offsets=False\
-              ,deg=True)
+        name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,ncoord, nnewcoord, newcatalog = grabUNSOfield(ra_cen, dec_cen, offsets=False\
+              ,deg=True, catalog= catalog)
         xproj, yproj,X,Y = projected_coords(rad, ded, ra_cen, dec_cen)
 
         xproj = np.array(xproj)
@@ -382,6 +383,7 @@ def compareFields3(x, y, xp, yp,rad, ded, k, Iarr):
                 if (Xdistnew[mini] < 15) and (Ydistnew[mini] < 15):
                     nsmall += 1
             nsmalls.append(nsmall)
+
         nsmalls_max.append(np.max(nsmalls))
         nsmalls_imax.append(np.argmax(nsmalls))
 
@@ -475,13 +477,17 @@ def grabUNSOfield(RA, DEC, offsets=False, deg = False, catalog = 'unso'):
     newcoord = SkyCoord(ra_deg, dec_deg, unit='deg')
 
     fov_am = 5
-
     if catalog == 'unso':
         name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
     else:
         name, rad, ded, rmag = sdss(ra_deg,dec_deg, fov_am)
-    
-    return [name, rad, ded, rmag, ra_deg, dec_deg, fov_am, coord, newcoord]
+        if len(rad) == 0:
+            print "NO STARS IN SDSS, TRYING UNSO"
+            name, rad, ded, rmag = unso(ra_deg,dec_deg, fov_am)
+            catalog = 'unso'
+
+
+    return [name, rad, ded, rmag, ra_deg, dec_deg, fov_am, coord, newcoord, catalog]
 
 def unso(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min. import urllib as url
     

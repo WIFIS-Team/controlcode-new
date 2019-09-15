@@ -153,14 +153,14 @@ waveTempResultsFile = '/home/utopea/WIFIS-Team/pipeline/external_data/waveTempla
 #spatGridPropsFile = '/home/utopea/quickreduce/calibfls/20170831211259_ronchi_spatGridProps.dat'
 
 #Jan/Feb
-#distMapFile = '/home/utopea/elliot/20180201211831_ronchi_distMap.fits'
-#distMapLimitsFile = '/home/utopea/elliot/20180201212213_flat_limits.fits'
-#spatGridPropsFile = '/home/utopea/elliot/20180201211831_ronchi_spatGridProps.dat'
+distMapFile = '/home/utopea/elliot/20180201211831_ronchi_distMap.fits'
+distMapLimitsFile = '/home/utopea/elliot/20180201212213_flat_limits.fits'
+spatGridPropsFile = '/home/utopea/elliot/20180201211831_ronchi_spatGridProps.dat'
 
 #Jun18Cal
-distMapFile =       '/home/utopea/cals/jun18cal/processed/20180201211831_ronchi_distMap.fits'
-distMapLimitsFile = '/home/utopea/cals/jun18cal/processed/20180201212213_flat_limits.fits'
-spatGridPropsFile = '/home/utopea/cals/jun18cal/processed/20180201211831_ronchi_spatGridProps.dat'
+#distMapFile =       '/home/utopea/cals/jun18cal/processed/20180602022110_ronchi_distMap.fits'
+#distMapLimitsFile = '/home/utopea/cals/jun18cal/processed/20180602022627_flat_limits.fits'
+#spatGridPropsFile = '/home/utopea/cals/jun18cal/processed/20180602022110_ronchi_spatGridProps.dat'
 
 
 # calibration files

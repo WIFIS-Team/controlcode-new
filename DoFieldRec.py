@@ -111,7 +111,7 @@ def procScienceDataGUI(rampFolder='', flatFolder='', noProc=False, skyFolder=Non
         distMap = wifisIO.readImgsFromFile(distMapFile)[0]
         spatGridProps = wifisIO.readTable(spatGridPropsFile)
 
-    dataGrid = createCube.distCorAll(dataSlices, distMap, spatGridProps=spatGridProps)
+    dataGrid = createCube.distCorAll_CL(dataSlices, distMap, spatGridProps=spatGridProps)
 
     #create cube
     print('Creating image')
