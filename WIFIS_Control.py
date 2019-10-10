@@ -18,6 +18,7 @@ import WIFISmotor as wm
 import WIFIStelescope as wg
 import WIFISdetector as wd
 import WIFISguider as gf
+import WIFISastrometry as wa
 from WIFIScalibration import CalibrationControl
 
 import traceback
@@ -27,7 +28,7 @@ import time
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
-motors = False
+motors = True
 
 def read_defaults():
 
@@ -158,22 +159,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.GuideDEC.setText(self.guidevals['GuideDEC'])
         self.SetGuideOffset.clicked.connect(self.setGuideOffset)
 
-        #self.guideroffsets = [self.GuideRA, self.GuideDEC]
-
         self.labelsThread = False
         self.motoraction = False
         self.coords = [self.RALabel, self.DECLabel]
 
         #Defining GUI Variables to feed into different control classes
         #Important that the classes only read the variables and never try to adjust them.
-        self.guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType, self.ExpTime,\
-                self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, self.YPos,self.IISLabel,\
-                self.coords]
+        self.guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType,\
+                self.ExpTime, self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, \
+                self.YPos,self.IISLabel, self.coords]
         self.power_widgets = [self.Power11, self.Power12, self.Power13, self.Power14, self.Power15,\
                         self.Power16, self.Power17, self.Power18, self.Power21, self.Power22,\
                         self.Power23, self.Power24, self.Power25, self.Power26, self.Power27,\
                         self.Power28]
-        self.caliblabels = [self.CalibModeButton,self.ObsModeButton,self.ArclampModeButton,self.ISphereModeButton]
+        self.caliblabels = [self.CalibModeButton,self.ObsModeButton,\
+                self.ArclampModeButton,self.ISphereModeButton]
         self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDecText]
         self.readLabels()
 
@@ -204,7 +204,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if self.telescope:
             updatevals = [self.RAObj, self.DECObj]
             if not self.updateon:
-                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, \
+                        self.guideron,updatevals,\
                         self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
                 self.labelsThread.updateText.connect(self._handleUpdateLabels)
                 self.labelsThread.start()
@@ -212,12 +213,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             else:
                 if self.labelsThread.isrunning:
                     self.labelsThread.stop()
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
+                            self.guideron,updatevals,\
                         self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
                 else:
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, self.guideron,updatevals,\
+                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
+                            self.guideron,updatevals,\
                         self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
                     self.labelsThread.updateText.connect(self._handleUpdateLabels)
                     self.labelsThread.start()
@@ -227,10 +230,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExpProgressBar.setMaximum(100)
         self.ExpProgressBar.setValue(0)
         
-        #Starting function to update labels and telescope controls
-
+        ### Starting functions to update labels and telescope controls
         #Defining actions for Exposure Control
-        #self.scidetSwitch()
         if self.scideton and not self.scidet.connected:
             self.DetectorStatusLabel.setStyleSheet('color: red')
         #Detector control functions that don't reference the detector
@@ -241,18 +242,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CheckResolution.clicked.connect(self.arcWidthMap)
 
         #Defining actions for Guider Control
-        #self.guiderSwitch()
         #Guider Control functions that don't reference the guider
         self.SaveImageButton.clicked.connect(self.initGuideExposureSave)
         self.TakeImageButton.clicked.connect(self.initGuideExposure)
         self.FocusCameraButton.clicked.connect(self.focusCamera) 
         self.StartGuidingButton.clicked.connect(self.startGuiding)
-
-        #Defining Actions for Power Control
-        #self.powerSwitch()
-
-        #CalibrationControl Buttons in Other Tab
-        #self.calibSwitch()
 
         #Defining actions for Motor Control CURRENTLY DISABLED
         if motors:
@@ -276,13 +270,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
         self.actionQuit.triggered.connect(self.close)
         
-        #self.FocusTestButton.setStyleSheet('background-color: red')
-        #self.FocusTestStop.setStyleSheet('background-color: red')
-        #self.FocusTestButton.setEnabled(False)
-        #self.FocusTestStop.setEnabled(False)
-        #self.FocusTestButton.clicked.connect(self.runFocusTest)
-        #self.FocusTestStop.clicked.connect(self.stopFocusTest)
-
         self.ConnectGuider.triggered.connect(self.connectGuiderAction)
         self.ConnectCalib.triggered.connect(self.connectCalibAction)
         self.ConnectPower.triggered.connect(self.connectPowerAction)
@@ -293,7 +280,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         
         self.SetNextButton.clicked.connect(self.setNextRADEC)
         self.MoveNextButton.clicked.connect(self.moveNext)
-        #self.PullCoordsButton.clicked.connect(self.pullCoords)
 
         guidebiasff = fits.open('/home/utopea/elliot/20190418T073052_Bias.fits')
         self.guidebias = guidebiasff[0].data
@@ -392,7 +378,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.FWDButton.clicked.connect(self.guider.stepForward)
             self.CentroidButton.clicked.connect(self.guider.checkCentroids)
             self.SetTempButton.clicked.connect(self.guider.setTemperature)
-            self.doAstrometryButton.clicked.connect(self.guider.doAstrometry)
+            #self.doAstrometryButton.clicked.connect(self.guider.doAstrometry)
+            self.doAstrometryButton.clicked.connect(self.doAstrometry)
             self.FilterVal.currentIndexChanged.connect(self.guider.goToFilter)
 
         if self.telescope:
@@ -701,7 +688,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CalOffsetButton.setStyleSheet(s)
         self.SetNextButton.setStyleSheet(s)
         self.MoveNextButton.setStyleSheet(s)
-        #self.PullCoordsButton.setStyleSheet(s)
 
         self.GuiderMoveButton.setEnabled(val)
         self.WIFISMoveButton.setEnabled(val)
@@ -710,7 +696,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CalOffsetButton.setEnabled(val)
         self.SetNextButton.setEnabled(val)
         self.MoveNextButton.setEnabled(val)
-        #self.PullCoordsButton.setEnabled(val)
 
     def connectH2RGAction(self):
         #Connecting to Detector
@@ -814,8 +799,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         if reply == QMessageBox.Yes:
             wg.move_next(self.telsock)
-        else:
-            return
+            self._handleGuidingTextUpdate("### MOVING TELESCOPE TO NEXT")
+
+    def _handleOutputTextUpdate(self, txt):
+        self.OutputText.append(txt)
+        #else:
+        #    return
 
     def setNextRADEC(self):
 
@@ -1162,7 +1151,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
 
     def _handleMotorText(self, s, labeltype, motnum):
-        #print "HANDLING MOTOR UPDATE"
         
         if labeltype in ['Position', 'Status']:
             if labeltype == 'Position':
@@ -1183,15 +1171,23 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         else:
             #while self.labelsThread.updatemotors:
             #    pass
-            #self.motoraction = True
+
+            if self.motoraction == True:
+                self.OutputText.append("MOTORS BUSY, TRY AGAIN")
+                return
+
+            self.motoraction = True
 
             if labeltype == 'Step':
                 if motnum == 0:
-                    self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
+                    self.motorcontrol.stepping_operation(self.FocusStep.text(),\
+                            unit=0x01)
                 elif motnum == 1:
-                    self.motorcontrol.stepping_operation(self.FilterStep.text(), unit=0x02)
+                    self.motorcontrol.stepping_operation(self.FilterStep.text(),\
+                            unit=0x02)
                 elif motnum == 2:
-                    self.motorcontrol.stepping_operation(self.GratingStep.text(), unit=0x03)
+                    self.motorcontrol.stepping_operation(self.GratingStep.text(),\
+                            unit=0x03)
 
             if (labeltype == 'Step') and (len(s) != 0):
                 if motnum == 0:
@@ -1209,32 +1205,52 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 elif motnum == 2:
                     self.motorcontrol.homing_operation(0x03)
 
-            #self.motoraction = False
-
-    def runFocusTest(self):
-        self.focustest = FocusTest(self.motorcontrol, self.scidet, self.FocusStatus, self.calibrationcontrol,\
-                self.FocusPosition)
-        self.focustest.updateText.connect(self._handleOutputTextUpdate)
-        self.focustest.moveMotor.connect(self._handleMoveMotor)
-        self.focustest.start()
-
-    def stopFocusTest(self):
-        self.focustest.stop()
-
-    def readLabels(self):
-        #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
-        f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','r')
-        values = []
-        for l in f:
-            values.append(l.split('\t')[-1][:-1])
-        for i,label in enumerate(self.textlabels):
-            label.setText(values[i])
+            self.motoraction = False
 
     def _handleMoveMotor(self, s1, s2, mot):
+        if self.motoraction == True:
+            self.OutputText.append("MOTORS BUSY, TRY AGAIN")
+            return
+        self.motoraction = True
         self.motorcontrol.stepping_operation(s1, unit=0x01)
+        self.motoraction = False
+
         #self.motormove = wm.MotorThread(self.motorcontrol, mot, s1)
         #self.motormove.updateText.connect(self._handleMotorText)
         #self.motormove.start()
+
+    def readLabels(self):
+        #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
+        try:
+            f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','r')
+            values = []
+            for l in f:
+                values.append(l.split('\t')[-1][:-1])
+            for i,label in enumerate(self.textlabels):
+                label.setText(values[i])
+        except:
+            self.OutputText.append("### Old labels were not found")
+
+    def doAstrometry(self):
+        self.astrometrythread = wa.AstrometryThread(self.guider, self.RAObj,
+                self.DECObj, self.ObjText, self.GuiderExpTime.text())
+        self.astrometrythread.updateText.connect(self._handleGuidingTextUpdate)
+        self.astrometrythread.plotSignal.connect(self._handleGuidingPlotting)
+        self.astrometrythread.astrometricPlotSignal.connect(self._handleAstrometricPlotting)
+        self.astrometrythread.astrometryMove.connect(self._handleAstrometryMove)
+        self.astrometrythread.start()
+        
+    def _handleAstrometryMove(self,FOffsethms, FOffsetdms):
+
+        reply = QMessageBox.question(self, "Message", \
+                "WIFIS Astrometry has determined a pointing adjustment of:\n RA: %.2f\nDEC: %.2f?\nWould you like to move the telescope by this amount?" % (FOffsethms, FOffsetdms), \
+                QMessageBox.Yes | QMessageBox.Cancel)
+
+        if reply == QMessageBox.Yes:
+            result = wg.move_telescope(self.telsock, FOffsethms, FOffsetdms)
+            self.GuidingText.append(result)
+        else:
+            return
 
     def _handleAstrometryCalc(self, solve):
         solvecenter, guideroffsets, plotting = solve
@@ -1406,7 +1422,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             print e
             print traceback.print_exc()
             self.OutputText.append("SOMETHING WENT WRONG WITH THE PLOTTING")
-
+            
     def closeEvent(self, event):
         
         reply = QMessageBox.question(self, "Message", "Are you sure you want to quit?", QMessageBox.Close | QMessageBox.Cancel)
@@ -1601,7 +1617,7 @@ class UpdateLabels(QThread):
         self.isrunning = False
         self.EnableForceIIS = EnableForceIIS
         self.ForceIISEntry = ForceIISEntry
-        self.updatemotors = False
+        self.updatemotors = True
         self.motoraction = motoraction
         self.textlabels = textlabels
 
@@ -1665,85 +1681,6 @@ class UpdateLabels(QThread):
         textlabelnames = ['Target','RAObj','DECObj','RANod','DECNod']
         for i in range(len(textlabelnames)):
             f.write('%s:\t%s\n' % (textlabelnames[i], self.textlabels[i].text()))
-
-class FocusTest(QThread):
-
-    updateText = pyqtSignal(str)
-    moveMotor = pyqtSignal(str,str,int)
-
-
-    def __init__(self, motorcontrol, scidet, focusstatus, calibcontrol, focvalue):
-        QThread.__init__(self)
-
-        self.motorcontrol = motorcontrol
-        self.scidet = scidet
-        self.stopthread = False
-        self.focarray = np.arange(-200,200,10)
-        #self.focarray = np.arange(-20,20,10)
-        self.focstatus = focusstatus
-        self.calibcontrol = calibcontrol
-        self.focvalue = focvalue
-        self.motorson = False
-
-    def __del__(self):
-        self.wait()
-
-    def stop(self):
-        self.updateText.emit("STOPPING FOCUS THREAD ASAP")
-        self.stopthread = True
-
-
-    def run(self):
-
-        self.updateText.emit("### STARTING FOCUS TEST")
-        nexp = len(self.focarray)
-        i = 0
-        while (not self.stopthread) and (i < nexp):
-            try:                
-                self.updateText.emit("### MOVING TO %i" % (self.focarray[i]))
-                self.moveMotor.emit(str(self.focarray[i]),'Step',0)
-                self.sleep(3)
-                currentfocvalue = self.focvalue.text()
-                t1 = time.time()
-                while currentfocvalue != str(self.focarray[i]):
-                    currentfocvalue = self.focvalue.text()
-                    
-                    if self.stopthread:
-                        break
-                    continue
-
-                    t2 = time.time()
-                    if ((t2 - t1) / 60) > 0.5:
-                        self.stopthread = True
-                        self.updateText.emit("Taking too long to move...")
-                        break
-
-                    self.sleep(1)
-
-                self.sleep(2)
-
-                currentfocvalue = self.focvalue.text()
-                if currentfocvalue != str(self.focarray[i]):
-                    self.updateText.emit("THE MOTOR ISNT MOVING PROPERLY, EXITING...")
-                    break
-
-                self.scidet.flatramp('FocusTest', notoggle=True)
-
-                if self.stopthread:
-                    self.updateText.emit("EXITING FOCUS THREAD")
-                    break
-
-                i += 1
-
-            except Exception as e:
-                print "############################"
-                print "ERROR IN FOCUS TEST THREAD"
-                print traceback.print_exc()
-                print e
-                print "############################"
-
-        self.calibcontrol.sourcesetup()
-        self.updateText.emit("FOCUS THREAD FINISHED")
 
 def parseRADECText(RAText, DECText):
 

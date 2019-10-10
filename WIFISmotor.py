@@ -86,6 +86,7 @@ class MotorControl(QObject):
 
 
     def stepping_operation(self, value, unit):
+
         step = int(value)
         if step < 0:
             step += 2**32

@@ -9,6 +9,10 @@ import WIFIStelescope as WG
 from sys import exit
 from scipy.stats import mode
 from numpy.linalg import inv
+import traceback
+import time
+
+from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal
 
 plate_scale = 0.29125
 #flength = 9206.678
@@ -886,3 +890,202 @@ def get_rotation_solution_astrom(rotangle, guideroffsets, DEC):
 
     return offsets
 
+class AstrometryThread(QThread):
+
+    updateText = pyqtSignal(str)
+    plotSignal = pyqtSignal(np.ndarray,str)
+    astrometricPlotSignal = pyqtSignal(list,str)
+    astrometryMove = pyqtSignal(float,float)
+
+    def __init__(self, guider, RAObj, DECObj, ObjText, GuiderExpTime):
+
+        QThread.__init__(self)
+
+        self.guider = guider
+        self.telSock = self.guider.telSock
+        self.RAObj = RAObj
+        self.DECObj = DECObj
+        self.ObjText = ObjText
+        self.GuiderExpTime = GuiderExpTime
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+
+        if self.guider.cam:
+            exptime = int(self.guider.expTime.text())
+            self.updateText.emit("TAKING ASTROMETRIC IMAGE")
+            img = self.guider.takeImage(dark=False)
+
+            self.plotSignal.emit(img, 'Astrometry')
+            self.updateText.emit("STARTING ASTROMETRIC DERIVATION")
+            try:
+                results = getAstrometricSoln(img, self.telSock, \
+                        self.guider.rotangle.text())
+                if len(results) < 3:
+                    self.updateText.emit("NO ASTROMETRIC SOLUTION...NOT ENOUGH STARS? >=3")
+                    self.updateText.emit("Try increasing exp time, or moving to a different field?")
+                else:
+                    platesolve, fieldoffset, realcenter, solvecenter, guideroffsets,plotting = results
+                    self.updateText.emit("Real Guider Center is: \nRA:\t%s\n DEC:\t%s" % \
+                            (self.returnhmsdmsstr(solvecenter.ra.hms), self.returnhmsdmsstr(solvecenter.dec.dms)))
+                    #self.updateText.emit('Guider Offset (") is: \nRA: %s\n DEC: %s' % (fieldoffset[0].to(u.arcsec).to_string(),\
+                    #        fieldoffset[1].to(u.arcsec).to_string()))
+                    self.astrometry_calc(solvecenter, guideroffsets, plotting)
+
+            except Exception as e:
+                print e
+                print traceback.print_exc()
+                self.updateText.emit("SOMETHING WENT WRONG WITH ASTROMETRY....\nCHECK TERMINAL")
+
+    def returnhmsdmsstr(self,angle):
+
+        return str(int(angle[0])) + ' '+ str(int(angle[1])) + ' ' + str(float(angle[2]))
+
+    def astrometry_calc(self, solvecenter, guideroffsets, plotting):
+        self.astrometricPlotSignal.emit(plotting, "Astrometry Solution")
+
+        #Grabbing the Object RA and DEC
+        RAText = self.RAObj.text()
+        DECText = self.DECObj.text()
+
+        #RA and DEC of Guider center in deg
+        ra_guide = solvecenter.ra.deg
+        dec_guide = solvecenter.dec.deg
+        GUIDERCoordhms = self.returnhmsdmsstr(solvecenter.ra.hms)
+        GUIDERCoorddms = self.returnhmsdmsstr(solvecenter.dec.dms)
+
+        #Performing the calculation to get the RA and DEC of the WIFIS field using the guider offsets
+        #Note this assumes the offsets are true
+        ra_wifis = ra_guide + (guideroffsets[0]/3600. / np.cos(dec_guide * np.pi / 180.))
+        dec_wifis = dec_guide + guideroffsets[1]/3600.
+        
+        #Coord object for WIFIS Center
+        WIFISCoord = SkyCoord(ra_wifis, dec_wifis, unit='deg')
+
+        #Getting nice formatted strings for printout
+        WIFISCoordhms = self.returnhmsdmsstr(WIFISCoord.ra.hms)
+        WIFISCoorddms = self.returnhmsdmsstr(WIFISCoord.dec.dms)
+
+        coordvalues = [GUIDERCoordhms, GUIDERCoorddms, WIFISCoordhms, WIFISCoorddms]
+
+        self.updateText.emit("Real WIFIS Field Center is: \nRA %s\nDEC: %s" % (WIFISCoordhms, WIFISCoorddms))
+
+        #Checking if the RA and DEC values are okay
+        worked = True
+        try:
+            float(RAText)
+            float(DECText)
+        except:
+            self.updateText.emit('RA or DEC Obj IMPROPER INPUT')
+            self.updateText.emit('PLEASE USE RA = HHMMSS.S  and')
+            self.updateText.emit('DEC = +/-DDMMSS.S, no spaces')
+            worked = False
+
+        if (len(RAText) == 0) or (len(DECText) == 0):
+            self.updateText.emit('RA or DEC Obj Text Empty!')
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
+            return
+
+        try:
+            if (RAText[0] == '+') or (RAText[0] == '-'):
+                RAspl = RAText[1:].split('.')
+                if len(RAspl[0]) != 6: 
+                    self.updateText.emit('RA or DEC Obj IMPROPER INPUT')
+                    self.updateText.emit('PLEASE USE RA = HHMMSS.S  and')
+                    self.updateText.emit('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
+            else:
+                RAspl = RAText.split('.')
+                if len(RAspl[0]) != 6: 
+                    self.updateText.emit('RA or DEC Obj IMPROPER INPUT')
+                    self.updateText.emit('PLEASE USE RA = HHMMSS.S  and')
+                    self.updateText.emit('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
+
+            if (DECText[0] == '+') or (DECText[0] == '-'):
+                DECspl = DECText[1:].split('.')
+                if len(DECspl[0]) != 6: 
+                    self.updateText.emit('RA or DEC Obj IMPROPER INPUT')
+                    self.updateText.emit('PLEASE USE RA = HHMMSS.S  and')
+                    self.updateText.emit('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
+            else:
+                DECspl = DECText.split('.')
+                if len(DECspl) != 6: 
+                    self.updateText.emit('RA or DEC Obj IMPROPER INPUT')
+                    self.updateText.emit('PLEASE USE RA = HHMMSS.S  and')
+                    self.updateText.emit('DEC = +/-DDMMSS.S, no spaces')
+                    worked = False
+        except Exception as e:
+            print e
+            self.updateText.emit('RA or DEC Obj IMPROPER INPUT LIKELY')
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
+            return
+
+        if worked == False:
+            self.updateText.emit('NO Object RA and DEC...Cant compute offset')
+            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
+            return
+        else:
+            if (RAText[0] == '+') or (RAText[0] == '-'):
+                RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
+            else:
+                RA = RAText[0:2] + ' ' + RAText[2:4] + ' ' + RAText[4:]
+            DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
+
+        TargetCoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
+        fieldoffset = WIFISCoord.spherical_offsets_to(TargetCoord)
+        FOffsethms = fieldoffset[0].to(u.arcsec).to_string()
+        FOffsetdms = fieldoffset[1].to(u.arcsec).to_string()
+
+        GOffsetCoord = solvecenter.spherical_offsets_to(TargetCoord)
+        GOffsethms = GOffsetCoord[0].to(u.arcsec).to_string()
+        GOffsetdms = GOffsetCoord[1].to(u.arcsec).to_string()
+            
+        self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC, coordvalues, worked, guideroffsets)
+
+        self.updateText.emit("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s\n" % \
+                (GOffsethms,GOffsetdms))
+        self.updateText.emit('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s\n' % \
+                        (FOffsethms, FOffsetdms))
+
+        self.astrometryMove.emit(fieldoffset[0].arcsec, fieldoffset[1].arcsec)
+
+    def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC, coordvalues, worked, guideroffsets):
+        x,y,k,xproj,yproj,image,head,coord = plotting
+
+        fieldoffset = coord.spherical_offsets_to(WIFISCoord)
+        FOffsethms = fieldoffset[0].to(u.arcsec).to_string()
+        FOffsetdms = fieldoffset[1].to(u.arcsec).to_string()
+
+        objtext = self.ObjText.text()
+        todaydate = time.strftime("%Y%m%d")
+
+        hdr = fits.Header()
+        hdr['DATE'] = todaydate 
+        hdr['SCOPE'] = 'Bok Telescope, Steward Observatory'
+        hdr['ObsTime'] = time.strftime('%H:%M"%S')
+        hdr['ExpTime'] = (self.GuiderExpTime, '//Guider Exposure Time')
+        hdr['RA'] = (head['RA'], '//Telescope RA')
+        hdr['DEC'] = (head['DEC'], '//Telescope DEC')
+        hdr['IIS'] = (head['IIS'], '//Rotator Angle')
+        hdr['EL'] = head['EL']
+        hdr['AZ'] = head['AZ']
+        hdr['AM'] = (head['SECZ'], '//Airmass')
+        hdr['Filter'] = self.guider.getFilterType()
+        hdr['FocPos'] = self.guider.foc.get_stepper_position()
+        hdr['OBJ'] = objtext
+        hdr['OBJRA'] = (RA, '//Entered Object RA')
+        hdr['OBJDEC'] = (DEC, '//Entered Object DEC')
+        hdr['WRA'] = (coordvalues[2], '//Calculated WIFIS Field RA')
+        hdr['WDEC'] = (coordvalues[3], '//Calculated WIFIS Field DEC')
+        hdr['GRA'] = (coordvalues[0], '//Calculated Guider Field RA')
+        hdr['GDEC'] = (coordvalues[1], '//Calculated Guider Field DEC')
+        hdr['FOffRA'] = (FOffsethms, '//Arcsec from Telescope to WIFIS')
+        hdr['FOffDEC'] = (FOffsetdms, '//Arcsec from Telescope to WIFIS')
+        hdr['GRAOff'] = (str(guideroffsets[0]), '//Guider RA Offset')
+        hdr['GDECOff'] = (str(guideroffsets[1]), '//Guider DEC Offset')
+        fits.writeto('/Data/WIFISGuider/astrometry/'+todaydate+'T'+\
+                        time.strftime('%H%M%S')+'.fits', image, hdr, clobber=True)
