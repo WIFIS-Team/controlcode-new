@@ -28,7 +28,7 @@ import time
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
-motors = True
+motors = False
 
 def read_defaults():
 

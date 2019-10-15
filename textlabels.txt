@@ -1,5 +1,5 @@
-Target:	Ronchi
-RAObj:	
-DECObj:	
+Target:	Telluric
+RAObj:	053338.84
+DECObj:	+202827.1
 RANod:	0
 DECNod:	300
