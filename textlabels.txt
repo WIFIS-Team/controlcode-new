@@ -1,5 +1,5 @@
-Target:	Telluric
-RAObj:	053338.84
-DECObj:	+202827.1
+Target:	HIP38722
+RAObj:	075539.9
+DECObj:	+195302.2
 RANod:	0
-DECNod:	300
+DECNod:	360

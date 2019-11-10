@@ -1057,6 +1057,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             ax = self.plotwindow.guidefigure.add_subplot(1,1,1)
             #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
             im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
+
+            rotAng = float(self.IISLabel.text())
+            rotMat = np.asarray([[np.cos(rotAng*np.pi/180.),np.sin(rotAng*np.pi/180.)],\
+                    [-np.sin(rotAng*np.pi/180.),np.cos(rotAng*np.pi/180.)]])
+
+            raAx = np.dot([5,0], rotMat)
+            decAx = np.dot([0,-5], rotMat)
+
+            cent = np.asarray([10,25])
+            ax.arrow(cent[0],cent[1], raAx[0],raAx[1], head_width=1, head_length=1, fc='w', ec='w')
+            ax.arrow(cent[0],cent[1], decAx[0],decAx[1], head_width=1, head_length=1, fc='w', ec='w')
+
+            ax.text((cent+decAx)[0]+1, (cent+decAx)[1]+1,"N",ha="left", va="top", rotation=rotAng, color='w')
+            ax.text((cent+raAx)[0]+1, (cent+raAx)[1]+1,"E",ha="left", va="bottom", rotation=rotAng, color='w')
+
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
             self.plotwindow.guidefigure.colorbar(im)
@@ -1097,6 +1112,22 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             
             #Things that are needed for plotting the data
             #WCS, dataImg, hdr
+
+            tarx = gfit.x_mean
+            tary = gfit.y_mean
+
+            wcent = WCS.wcs_pix2world(17.5,45,0)
+            wtar = WCS.wcs_pix2world(tarx,tary,0)
+
+            skycent = SkyCoord(wcent[0], wcent[1], unit = 'deg')
+            skytar = SkyCoord(wtar[0], wtar[1], unit = 'deg')
+
+            centeroffset = skytar.spherical_offsets_to(skycent)
+            offsetra = centeroffset[0].arcsec
+            offsetdec = centeroffset[1].arcsec
+
+            self._handleGuidingTextUpdate('Target Offset (") to WIFIS Center is:\nRA:\t%.2f\nDEC:\t%.2f\n' % \
+                        (offsetra, offsetdec))
 
             print('Plotting FIELD REC data')
             self.plotwindow.objfigure.clear()
@@ -1254,6 +1285,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def _handleAstrometryCalc(self, solve):
         solvecenter, guideroffsets, plotting = solve
+        x,y,k,xproj,yproj,image,head,coord = plotting
+
         self._handleAstrometricPlotting(plotting)
 
         #Grabbing the Object RA and DEC
@@ -1282,83 +1315,41 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self._handleGuidingTextUpdate("Real WIFIS Field Center is: \nRA %s\nDEC: %s" % (WIFISCoordhms, WIFISCoorddms))
 
-        #Checking if the RA and DEC values are okay
-        worked = True
-        try:
-            float(RAText)
-            float(DECText)
-        except:
-            self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-            self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
-            self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-            worked = False
-
         if (len(RAText) == 0) or (len(DECText) == 0):
             self._handleGuidingTextUpdate('RA or DEC Obj Text Empty!')
             self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
             return
 
-        try:
-            if (RAText[0] == '+') or (RAText[0] == '-'):
-                RAspl = RAText[1:].split('.')
-                if len(RAspl[0]) != 6: 
-                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
-                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                    worked = False
-            else:
-                RAspl = RAText.split('.')
-                if len(RAspl[0]) != 6: 
-                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
-                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                    worked = False
-
-            if (DECText[0] == '+') or (DECText[0] == '-'):
-                DECspl = DECText[1:].split('.')
-                if len(DECspl[0]) != 6: 
-                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
-                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                    worked = False
-            else:
-                DECspl = DECText.split('.')
-                if len(DECspl) != 6: 
-                    self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                    self._handleGuidingTextUpdate('PLEASE USE RA = HHMMSS.S  and')
-                    self._handleGuidingTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                    worked = False
-        except Exception as e:
-            print e
+        #Checking if the entered target RA and DEC values are okay.
+        RA, DEC = parseRADECText(RAText, DECText)
+        if RA == False:
+            self._handleGuidingTextUpdate(DEC)
             self._handleGuidingTextUpdate('RA or DEC Obj IMPROPER INPUT LIKELY')
             self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
             return
 
-        if worked == False:
-            self._handleGuidingTextUpdate('NO Object RA and DEC...Cant compute offset')
-            self.writeOffsetInfo(plotting,WIFISCoord,'NotSet','NotSet', coordvalues, worked, guideroffsets)
-            return
-        else:
-            if (RAText[0] == '+') or (RAText[0] == '-'):
-                RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
-            else:
-                RA = RAText[0:2] + ' ' + RAText[2:4] + ' ' + RAText[4:]
-            DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
-
         TargetCoord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
         fieldoffset = WIFISCoord.spherical_offsets_to(TargetCoord)
-        FOffsethms = fieldoffset[0].to(u.arcsec).to_string()
-        FOffsetdms = fieldoffset[1].to(u.arcsec).to_string()
+        #FOffsethms = fieldoffset[0].to(u.arcsec).to_string()
+        #FOffsetdms = fieldoffset[1].to(u.arcsec).to_string()
+        FOffsethms = fieldoffset[0].arcsec
+        FOffsetdms = fieldoffset[1].arcsec
 
         GOffsetCoord = solvecenter.spherical_offsets_to(TargetCoord)
-        GOffsethms = GOffsetCoord[0].to(u.arcsec).to_string()
-        GOffsetdms = GOffsetCoord[1].to(u.arcsec).to_string()
+        #GOffsethms = GOffsetCoord[0].to(u.arcsec).to_string()
+        #GOffsetdms = GOffsetCoord[1].to(u.arcsec).to_string()
+        GOffsethms = GOffsetCoord[0].arcsec
+        GOffsetdms = GOffsetCoord[1].arcsec
             
         self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC, coordvalues, worked, guideroffsets)
 
-        self._handleGuidingTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%s\nDEC:\t%s\n" % \
+        # De-rotating offsets for an IIS = 90.
+        rotoffsetra, rotoffsetdec = wa.get_rotation_solution_offset(float(head['IIS'],\
+                [GOffsethms,Goffsetdms], None, reverse=True)
+
+        self._handleGuidingTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%.2f\nDEC:\t%.2f\n" % \
                 (GOffsethms,GOffsetdms))
-        self._handleGuidingTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%s\nDEC:\t%s\n' % \
+        self._handleGuidingTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%.2f\nDEC:\t%.2f\n' % \
                         (FOffsethms, FOffsetdms))
 
     def writeOffsetInfo(self, plotting, WIFISCoord, RA, DEC, coordvalues, worked, guideroffsets):

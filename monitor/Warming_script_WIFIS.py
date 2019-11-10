@@ -129,18 +129,18 @@ def warming_setpoints(): #dynamically generate setpoints for cooling
             wait_time(interval-(time.time()-time_now))
             continue #skip the rest of the loop
             
-        if Twork < activation_temperature:
+        #if Twork < activation_temperature:
 
-            print 'Worksurface is still at LN2 temperature, doing nothing'
+        #    print 'Worksurface is still at LN2 temperature, doing nothing'
 #            print 'Trigger 2' #====Testing
 #            print 'execution time: ',  time.time()-time_now
-            wait_time(interval-(time.time()-time_now))
-            continue #skip the rest of the loop
+        #    wait_time(interval-(time.time()-time_now))
+        #    continue #skip the rest of the loop
         
         if average_dT_dt > max_warming_gradient: #If temperature is increasing faster than rate set in 'max_gradient', turn off the heaters
             dTdtcount += 1
             print "GRADIENT HIGHER THAN MAXIMUM, INCREMENTING"
-            if dTdtcount >= 5:
+            if dTdtcount >= 3:
                 dTdtcount = 0
                 turn_off_heaters()
                 heater_off = True

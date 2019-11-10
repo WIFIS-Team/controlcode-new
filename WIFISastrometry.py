@@ -858,25 +858,13 @@ def get_rotation_solution(rotangle, guideroffsets, DEC):
 
     return offsets
 
-def get_rotation_solution_offset(rotangle, guideroffsets, DEC):
+def get_rotation_solution_offset(rotangle, guideroffsets, DEC, reverse=False):
 
-    rotangle = rotangle - 90
-    rotangle_rad = rotangle * np.pi / 180.0
+    if reverse:
+        rotangle = -1*(rotangle - 90)
+    else:
+        rotangle = rotangle - 90
 
-    rotation_matrix = np.array([[np.cos(rotangle_rad),np.sin(rotangle_rad)],\
-                              [-1.*np.sin(rotangle_rad), np.cos(rotangle_rad)]])
-
-    rotation_matrix_offsets = np.array([[np.cos(rotangle_rad),-1*np.sin(rotangle_rad)],\
-                                [np.sin(rotangle_rad), np.cos(rotangle_rad)]])
-
-    offsets = np.dot(rotation_matrix_offsets, guideroffsets)
-    #offsets[0] = offsets[0] * np.cos(float(DEC)*np.pi / 180.)
-
-    return offsets
-
-def get_rotation_solution_astrom(rotangle, guideroffsets, DEC):
-
-    rotangle = rotangle - 90 - 0.26
     rotangle_rad = rotangle * np.pi / 180.0
 
     rotation_matrix = np.array([[np.cos(rotangle_rad),np.sin(rotangle_rad)],\
