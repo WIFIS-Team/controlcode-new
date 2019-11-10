@@ -256,6 +256,7 @@ class h2rg(QObject):
             self.printTxt("ACQUIRING RAMP FOR "+sourceName)
         else:
             self.printTxt("ACQUIRING RAMP")
+
         commandstring = "SETRAMPPARAM(1,%d,1,1.5,%d)" % (nreads,nramps)
         self.s.send(commandstring)
         response = self.s.recv(buffersize)
@@ -363,6 +364,7 @@ class h2rg(QObject):
 	
 class h2rgExposeThread(QThread):
 
+    started = pyqtSignal()
     finished = pyqtSignal()
     updateText = pyqtSignal(str)
     startProgBar = pyqtSignal()
@@ -388,6 +390,7 @@ class h2rgExposeThread(QThread):
                 return
 
             self.printTxt("### STARTING EXPOSURE")
+            self.started.emit()
 
             self.nreadsText = self.nreads
             self.nrampsText = self.nramps
@@ -415,6 +418,7 @@ class h2rgExposeThread(QThread):
             print e
             print traceback.print_exc()
             self.printTxt("Something Went Wrong with the Exposure, check terminal")
+            self.finished.emit()
             return
 
         self.finished.emit()

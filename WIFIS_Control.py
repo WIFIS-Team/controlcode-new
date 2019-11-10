@@ -159,6 +159,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.GuideDEC.setText(self.guidevals['GuideDEC'])
         self.SetGuideOffset.clicked.connect(self.setGuideOffset)
 
+        self.detector_in_use = False
         self.labelsThread = False
         self.motoraction = False
         self.coords = [self.RALabel, self.DECLabel]
@@ -196,9 +197,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Serial connection
         if motors:
             self.connectMotorAction()
+            self.MotorsEnabledLabel.setText("Enabled")
         else:
             self.motorcontrol = None
             self.motorson = False
+            self.MotorsEnabledLabel.setText("Disabled")
 
         #Turn on label thread
         if self.telescope:
@@ -287,6 +290,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self.targetsloaded = False
         self.LoadTargetsAction.triggered.connect(self.loadTargetList)
+        self.ResetExposureFlagButton.triggered.connect(self.resetExposureFlag)
 
     def loadTargetList(self):
         '''Loads the targets defined in the target list file. The targets are loaded
@@ -862,13 +866,28 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         return1 = wg.set_next_radec(self.telsock,RAText,DECText)
         self._handleOutputTextUpdate(return1)
 
+    def resetExposureFlag(self):
+        self.detector_in_use = False
+
     def initExposure(self):
+
+        if self.detector_in_use == True:
+            self._handleOutputTextUpdate('CANT EXPOSE, DETECTOR CURRENTLY IN USE!')
+            self._handleOutputTextUpdate('If this is false, reset the detector flag in the Other tab')
+            return
+
+        nreads = int(round(int(self.NReadsText.text()) / 1.5))
+        if nreads < 2:
+            self._handleOutputTextUpdate('Exposure time must be at least 3 seconds')
+            return
+
         self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect.currentText(),\
-                nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()),\
+                nreads=nreads,nramps=int(self.NRampsText.text()),\
                 sourceName=self.ObjText.text())
         self.scidetexpose.updateText.connect(self._handleOutputTextUpdate)
         self.scidetexpose.finished.connect(self._handleExpFinished)
         self.scidetexpose.startProgBar.connect(self._startProgBar)
+        self.scidetexpose.started.connect(self._handleExpStarted)
         self.scidetexpose.start()
 
     def _startProgBar(self):
@@ -885,11 +904,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.progbar.start()
 
     def initCalibExposure(self):
+
+        if self.detector_in_use == True:
+            self._handleOutputTextUpdate('CANT EXPOSE, DETECTOR CURRENTLY IN USE!')
+            self._handleOutputTextUpdate('If this is false, reset the detector flag in the Other tab')
+            return
+
+        nreads = int(round(int(self.NReadsText.text()) / 1.5))
+
         self.calibexpose = wd.h2rgExposeThread(self.scidet, "Calibrations",\
-                nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()),\
+                nreads=nreads,nramps=int(self.NRampsText.text()),\
                 sourceName=self.ObjText.text())
         self.calibexpose.updateText.connect(self._handleOutputTextUpdate)
         self.calibexpose.startProgBar.connect(self._startNoddingProgBar)
+        self.calibexpose.started.connect(self._handleExpStarted)
+        self.calibexpose.finished.connect(self._handleExpFinished)
         self.calibexpose.start()
 
     def checkStartNodding(self):
@@ -903,6 +932,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             pass
 
     def startNodding(self):
+
+        if self.detector_in_use == True:
+            self._handleOutputTextUpdate('CANT EXPOSE, DETECTOR CURRENTLY IN USE!')
+            self._handleOutputTextUpdate('If this is false, reset the detector flag in the Other tab')
+            return
+
         self.noddingexposure = NoddingExposure(self.scidet, self.guider, self.NodSelection, \
                 self.NNods, self.NodsPerCal, self.NRampsText, self.NReadsText, \
                 self.ObjText, self.NodRAText, self.NodDecText, self.SkipCalib,\
@@ -910,10 +945,18 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.noddingexposure.updateText.connect(self._handleOutputTextUpdate)
         self.noddingexposure.startGuiding.connect(self._handleNoddingGuide)
         self.noddingexposure.stopGuiding.connect(self._handleNoddingGuideStop)
+        self.noddingexposure.starting.connect(self._handleNoddingStarting)
+        self.noddingexposure.finished.connect(self._handleNoddingFinished)
         self.StopExpButton.clicked.connect(self.noddingexposure.stop)
         self.noddingexposure.progBar.connect(self._handleNoddingProgBar)
 
         self.noddingexposure.start()
+
+    def _handleNoddingStarting(self):
+        self.detector_in_use = True
+
+    def _handleNoddingFinished(self):
+        self.detector_in_use = False
 
     def _handleNoddingProgBar(self, nreads, nramps):
 
@@ -957,7 +1000,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def _handleProgressBar(self, i):
         self.ExpProgressBar.setValue(i)
 
+    def _handleExpStarted(self):
+        self.detector_in_use = True
+
     def _handleExpFinished(self):
+        self.detector_in_use = False
         self.ExpProgressBar.setValue(0)
 
     def _handleUpdateLabels(self, labelupdates):
@@ -1062,12 +1109,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             rotMat = np.asarray([[np.cos(rotAng*np.pi/180.),np.sin(rotAng*np.pi/180.)],\
                     [-np.sin(rotAng*np.pi/180.),np.cos(rotAng*np.pi/180.)]])
 
-            raAx = np.dot([5,0], rotMat)
-            decAx = np.dot([0,-5], rotMat)
+            raAx = np.dot([70,0], rotMat)
+            decAx = np.dot([0,-70], rotMat)
 
-            cent = np.asarray([10,25])
-            ax.arrow(cent[0],cent[1], raAx[0],raAx[1], head_width=1, head_length=1, fc='w', ec='w')
-            ax.arrow(cent[0],cent[1], decAx[0],decAx[1], head_width=1, head_length=1, fc='w', ec='w')
+            cent = np.asarray([100,850])
+            ax.arrow(cent[0],cent[1], raAx[0],raAx[1], head_width=15, head_length=15, fc='w', ec='w')
+            ax.arrow(cent[0],cent[1], decAx[0],decAx[1], head_width=15, head_length=15, fc='w', ec='w')
 
             ax.text((cent+decAx)[0]+1, (cent+decAx)[1]+1,"N",ha="left", va="top", rotation=rotAng, color='w')
             ax.text((cent+raAx)[0]+1, (cent+raAx)[1]+1,"E",ha="left", va="bottom", rotation=rotAng, color='w')
@@ -1113,11 +1160,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #Things that are needed for plotting the data
             #WCS, dataImg, hdr
 
-            tarx = gfit.x_mean
-            tary = gfit.y_mean
+            tarx = gFit.x_mean
+            tary = gFit.y_mean
 
+            print(tarx,tary)
             wcent = WCS.wcs_pix2world(17.5,45,0)
-            wtar = WCS.wcs_pix2world(tarx,tary,0)
+            wtar = WCS.wcs_pix2world(tary,tarx,0)
 
             skycent = SkyCoord(wcent[0], wcent[1], unit = 'deg')
             skytar = SkyCoord(wtar[0], wtar[1], unit = 'deg')
@@ -1344,11 +1392,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.writeOffsetInfo(plotting,WIFISCoord,RA,DEC, coordvalues, worked, guideroffsets)
 
         # De-rotating offsets for an IIS = 90.
-        rotoffsetra, rotoffsetdec = wa.get_rotation_solution_offset(float(head['IIS'],\
+        rotoffsetra, rotoffsetdec = wa.get_rotation_solution_offset(float(head['IIS']),\
                 [GOffsethms,Goffsetdms], None, reverse=True)
 
         self._handleGuidingTextUpdate("IF RA/DEC IS CENTERED\nGuider Offsets Are:\nRA:\t%.2f\nDEC:\t%.2f\n" % \
-                (GOffsethms,GOffsetdms))
+                (rotoffsetra,rotoffsetdec))
         self._handleGuidingTextUpdate('WIFIS Offset (") to Target is:\nRA:\t%.2f\nDEC:\t%.2f\n' % \
                         (FOffsethms, FOffsetdms))
 
@@ -1430,10 +1478,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
 class NoddingExposure(QThread):
 
+    started = pyqtSignal()
     updateText = pyqtSignal(str)
     startGuiding = pyqtSignal(str)
     stopGuiding = pyqtSignal()
     progBar = pyqtSignal(int, int)
+    finished = pyqtSignal()
 
     def __init__(self, scidet, guider, NodSelection, NNods, NodsPerCal, nramps, nreads,\
             objname, nodra, noddec, skipcalib, offsetArcsec, offsetRADEC, targetRA, targetDEC):
@@ -1445,7 +1495,7 @@ class NoddingExposure(QThread):
         self.NodSelection = NodSelection
         self.NNods = NNods
         self.NodsPerCal = NodsPerCal
-        self.nramps = nramps
+        self.nramps = 1
         self.nreads = nreads
         self.objname = objname
         self.nodra = nodra
@@ -1507,8 +1557,13 @@ class NoddingExposure(QThread):
                 return
 
         try:
-            self.nrampsval = int(self.nramps.text())
-            self.nreadsval = int(self.nreads.text())
+            self.nrampsval = 1
+            self.nreadsval = int(round(int(self.nreads.text())/1.5))
+
+            if nreads < 2:
+                self.updateText.emit('Exposure time must be at least 3 seconds -- QUITTING')
+                return
+
             self.NodsPerCalVal = int(self.NodsPerCal.text())
             self.NNodsVal = int(self.NNods.text())
         except:
@@ -1519,6 +1574,7 @@ class NoddingExposure(QThread):
             self.stopthread = False
 
         self.updateText.emit("### STARTING NODDING SEQUENCE")
+        self.started.emit()
 
         if not self.skipcalib.isChecked():
             self.updateText.emit("### DOING INITIAL CALIBS")
@@ -1574,6 +1630,8 @@ class NoddingExposure(QThread):
 
         if not self.stopthread:
             self.updateText.emit("### FINISHED NODDING SEQUENCE")
+
+        self.finished.emit()
     
     def calcOffset(self):
         RAObjP, DECObjP = parseRADECText(self.RAObj.text(), self.DECObj.text())
