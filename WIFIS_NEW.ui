@@ -425,7 +425,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -1449,6 +1449,9 @@
               </item>
               <item row="4" column="0">
                <widget class="QPushButton" name="TBButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
                   <horstretch>0</horstretch>
@@ -1468,6 +1471,9 @@
               </item>
               <item row="5" column="0">
                <widget class="QPushButton" name="HButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
                   <horstretch>0</horstretch>
@@ -1487,6 +1493,9 @@
               </item>
               <item row="6" column="0">
                <widget class="QPushButton" name="BlankButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
                   <horstretch>0</horstretch>
@@ -1501,6 +1510,13 @@
                 </property>
                 <property name="text">
                  <string>Blank Filter</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="MotorsEnabledLabel">
+                <property name="text">
+                 <string/>
                 </property>
                </widget>
               </item>
@@ -1606,6 +1622,13 @@
                <widget class="QPushButton" name="CheckResolution">
                 <property name="text">
                  <string>Check Resolution</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="pushButton">
+                <property name="text">
+                 <string>Reset Exposure Flag</string>
                 </property>
                </widget>
               </item>
@@ -2114,7 +2137,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>N Reads:</string>
+           <string>Exp Time (s):</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -2130,7 +2153,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>N Ramps:</string>
+           <string>Exposures:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
