@@ -37,11 +37,12 @@ def read_defaults():
 
     return valuesdict
 
-def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'sdss'):
+def getAstrometricSoln(fl, telSock, head, rotangleget, verbose = False, catalog = 'sdss'):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
 
-    data, head, RA, DEC, centroids = load_img(fl, telSock)
+    data, head, RA, DEC, centroids = load_img(fl, head, telSock)
+
     if type(fl) != str:
         head['IIS'] = rotangleget
     print "Number of stars in image: "+str(len(centroids[0]))
@@ -76,7 +77,6 @@ def getAstrometricSoln(fl, telSock, rotangleget, verbose = False, catalog = 'sds
 
     xproj = np.array(xproj)
     yproj = np.array(yproj)
-
 
     if len(rmag[np.isnan(rmag)]) > len(rmag)/2.: 
         k = rmag != 0
@@ -563,7 +563,7 @@ def sdss(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min
         
     return name,rad,ded,zmag
 
-def load_img(fl,telSock):
+def load_img(fl, head, telSock):
     biasff = fits.open('/home/utopea/elliot/20190418T073052_Bias.fits')
     bias = biasff[0].data
     bias = bias.astype('float')
@@ -572,25 +572,25 @@ def load_img(fl,telSock):
         f = fits.open(fl)
         data = f[0].data
         data = data.astype('float') - bias
-        head = f[0].header
-        RA = head['RA']
-        DEC = head['DEC']
+        flhead = f[0].header
+        RA = flhead['RA']
+        DEC = flhead['DEC']
         RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
         DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
 
         cresult = centroid_finder(data)
     else:
         data = fl.astype('float') - bias
-        telem = WG.get_telemetry(telSock)
-        RA = telem['RA']
-        DEC = telem['DEC']
+        #telem = WG.get_telemetry(telSock)
+        RA = head['RA']
+        DEC = head['DEC']
         RA = RA[0:2] + ' ' + RA[2:4] + ' ' + RA[4:]
         DEC = DEC[0:3] + ' ' + DEC[3:5] + ' ' + DEC[5:]
-        head = telem
+        flhead = head
 
         cresult = centroid_finder(data)
 
-    return data, head, RA, DEC, cresult
+    return data, flhead, RA, DEC, cresult
 
 def centroid_finder(img, plot=False):
 
@@ -885,7 +885,7 @@ class AstrometryThread(QThread):
     astrometricPlotSignal = pyqtSignal(list,str)
     astrometryMove = pyqtSignal(float,float)
 
-    def __init__(self, guider, RAObj, DECObj, ObjText, GuiderExpTime):
+    def __init__(self, guider, RAObj, DECObj, ObjText, GuiderExpTime, head):
 
         QThread.__init__(self)
 
@@ -895,6 +895,7 @@ class AstrometryThread(QThread):
         self.DECObj = DECObj
         self.ObjText = ObjText
         self.GuiderExpTime = GuiderExpTime
+        self.head = head
 
     def __del__(self):
         self.wait()
@@ -910,7 +911,7 @@ class AstrometryThread(QThread):
             self.updateText.emit("STARTING ASTROMETRIC DERIVATION")
             try:
                 results = getAstrometricSoln(img, self.telSock, \
-                        self.guider.rotangle.text())
+                        self.head, self.guider.rotangle.text(), catalog='unso')
                 if len(results) < 3:
                     self.updateText.emit("NO ASTROMETRIC SOLUTION...NOT ENOUGH STARS? >=3")
                     self.updateText.emit("Try increasing exp time, or moving to a different field?")

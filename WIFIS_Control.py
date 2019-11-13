@@ -1,6 +1,12 @@
+####################################################
+# WIFIS Control Software GUI
+#
+# Developed by: R Elliot Meyer, PhD 2019
+####################################################
+
 from wifis_new import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDesktopWidget
-from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal, Qt
 from PyQt5.QtWidgets import QDialog, QApplication, QPushButton, QVBoxLayout, QMessageBox, QHBoxLayout,QLabel
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -28,21 +34,14 @@ import time
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
+# Global setting for the motors.
+# Default is False due to the currently buggy behaviour of the motor code
+# with the GuI code. 
 motors = False
 
-def read_defaults():
-
-    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
-    #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
-    valuesdict = {}
-    for line in f:
-        spl = line.split()
-        valuesdict[spl[0]] = spl[1]
-    f.close()
-
-    return valuesdict
-
 class Formatter(object):
+    '''Class that formats the mouseover readout for matplotlib plots'''
+
     def __init__(self, im):
         self.im = im
     def __call__(self, x, y):
@@ -50,14 +49,14 @@ class Formatter(object):
 	return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
 class CustomWIFISToolbar(NavigationToolbar):
-        #NavigationToolbar.__init__(self, plotCanvas, plotself)
+    '''Custom matplotlib toolbar that removes some unncessary functions. 
+    Ultimately used to save space on the monitor in order to see mouseover'''
+
     toolitems = [t for t in NavigationToolbar.toolitems if t[0] in ('Home','Back','Forward','Pan','Zoom')]
 
-        #remove = [6,8]
-        #for b in remove:
-        #    self.DeleteToolByPos(b)
 
 class PlotWindow(QDialog):
+    '''Creates a single plot window. Now depreciated for the double plot window'''
 
     def __init__(self, title, parent=None):
         super(PlotWindow, self).__init__(parent)
@@ -85,10 +84,13 @@ class PlotWindow(QDialog):
             event.accept()
 
 class DoublePlotWindow(QDialog):
+    '''Creates a window with plots for the H2RG and the Guider.
+    Simplifies the number of GUI windows'''
 
     def __init__(self, title, parent=None):
         super(DoublePlotWindow, self).__init__(parent)
        
+        # Define the windows and figures
         self.setWindowTitle(title)
         self.objfigure = mpl.figure()
         self.objcanvas = FigureCanvas(self.objfigure)
@@ -111,6 +113,7 @@ class DoublePlotWindow(QDialog):
         self.objtoolbarlayout = QHBoxLayout()
         self.guidetoolbarlayout = QHBoxLayout()
 
+        # Add the various components
         self.layout.addLayout(self.objtoolbarlayout)
         self.objtoolbarlayout.addWidget(self.objtoolbar)
         self.objtoolbarlayout.addWidget(self.ObjPlotLabel)
@@ -121,6 +124,7 @@ class DoublePlotWindow(QDialog):
         #self.layout.addWidget(self.guidetoolbar)
         self.layout.addWidget(self.guidecanvas)
 
+        # Create the window
         screen = QDesktopWidget().screenGeometry()
         self.setGeometry(0,0,screen.width()/2.5, screen.height()-60)
 
@@ -139,10 +143,13 @@ class DoublePlotWindow(QDialog):
             event.accept()
 
 class WIFISUI(QMainWindow, Ui_MainWindow):
+    '''WIFIS Control Software Primary GUI Program.
+    '''
 
     def __init__(self):
         super(WIFISUI, self).__init__()
 
+        # Load all of the GUI elements
         self.setupUi(self)
 
         #Create the plotting windows
@@ -151,21 +158,28 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #self.guideplotwindow = PlotWindow('Guider Plot Window')
         #self.guideplotwindow.show()
 
+        # Create the double plot window.
         self.plotwindow = DoublePlotWindow("WIFIS Plot Window")
         self.plotwindow.show()
 
-        self.guidevals = read_defaults()
+        # Read in the previous guide offset values and update the gui forms
+        self.guidevals = self.read_defaults()
         self.GuideRA.setText(self.guidevals['GuideRA'])
         self.GuideDEC.setText(self.guidevals['GuideDEC'])
-        self.SetGuideOffset.clicked.connect(self.setGuideOffset)
 
+        # Set some default flags and values
         self.detector_in_use = False
         self.labelsThread = False
         self.motoraction = False
+        self.targetsloaded = False
+        self.expbaron = False
+        # Flag for update thread
+        self.updateon = False
+
         self.coords = [self.RALabel, self.DECLabel]
 
-        #Defining GUI Variables to feed into different control classes
-        #Important that the classes only read the variables and never try to adjust them.
+        # Defining GUI Variables to feed into the different control classes
+        # Important that the classes only read the variables and never try to adjust them.
         self.guide_widgets = [self.RAMoveBox, self.DECMoveBox, self.FocStep, self.ExpType,\
                 self.ExpTime, self.ObjText, self.SetTempValue, self.FilterVal, self.XPos, \
                 self.YPos,self.IISLabel, self.coords]
@@ -176,65 +190,72 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.caliblabels = [self.CalibModeButton,self.ObsModeButton,\
                 self.ArclampModeButton,self.ISphereModeButton]
         self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDecText]
+        # Update other forms with saved values from the last execution
         self.readLabels()
 
+        # Set the main tab widget to the first page (Telescope Control)
         self.WIFISTabWidget.setCurrentIndex(0)
 
-        self.updateon = False
-
+        # Connect the give separate WIFIS components in order. 
         self.connectTelescopeAction()
         self.connectPowerAction()
         self.connectCalibAction()
         self.connectGuiderAction()
         self.connectH2RGAction()
 
-        #Defining various control/serial variables
-
-        #self.calibon = False
-        #self.calibrationcontrol = False
-
-        #Connecting to Motor Control /// Currently disabled due to unknown crashes caused by Motor
-        #Serial connection
+        #Connecting to Motor Controller
+        #/// Currently disabled due to unknown crashes caused by the Motor Serial connection
         if motors:
             self.connectMotorAction()
             self.MotorsEnabledLabel.setText("Enabled")
+            self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
+            self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: green;}")
         else:
             self.motorcontrol = None
             self.motorson = False
             self.MotorsEnabledLabel.setText("Disabled")
+            self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
+            self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: red;}")
 
-        #Turn on label thread
+        # Iniializae telemetry label update thread
         if self.telescope:
             updatevals = [self.RAObj, self.DECObj]
-            if not self.updateon:
-                self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, \
-                        self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
-                self.labelsThread.updateText.connect(self._handleUpdateLabels)
-                self.labelsThread.start()
-                self.updateon = True
-            else:
-                if self.labelsThread.isrunning:
-                    self.labelsThread.stop()
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
-                            self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
-                    self.labelsThread.updateText.connect(self._handleUpdateLabels)
-                    self.labelsThread.start()
-                else:
-                    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
-                            self.guideron,updatevals,\
-                        self.EnableForceIIS, self.ForceIISEntry, self.motoraction, self.textlabels)
-                    self.labelsThread.updateText.connect(self._handleUpdateLabels)
-                    self.labelsThread.start()
+            self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, \
+                    self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry,\
+                    self.motoraction, self.textlabels)
+            self.labelsThread.updateText.connect(self._handleUpdateLabels)
+            self.labelsThread.start()
+            self.updateon = True
+            #if not self.updateon:
+            #    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, \
+            #            self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry,\
+            #            self.motoraction, self.textlabels)
+            #    self.labelsThread.updateText.connect(self._handleUpdateLabels)
+            #    self.labelsThread.start()
+            #    self.updateon = True
+            #else:
+            #    if self.labelsThread.isrunning:
+            #        self.labelsThread.stop()
+            #        self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
+            #                self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry, \
+            #                self.motoraction, self.textlabels)
+            #        self.labelsThread.updateText.connect(self._handleUpdateLabels)
+            #        self.labelsThread.start()
+            #    else:
+            #        self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
+            #                self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry,\
+            #                self.motoraction, self.textlabels)
+            #        self.labelsThread.updateText.connect(self._handleUpdateLabels)
+            #        self.labelsThread.start()
         
-        #Defining settings from progress bar
+        # Defining settings for exposure progress bar
         self.ExpProgressBar.setMinimum(0)
         self.ExpProgressBar.setMaximum(100)
         self.ExpProgressBar.setValue(0)
         
-        ### Starting functions to update labels and telescope controls
-        #Defining actions for Exposure Control
+        ### Connecting GUI elements to the various functions
+
+        # Connecting functions for Exposure Control
         if self.scideton and not self.scidet.connected:
             self.DetectorStatusLabel.setStyleSheet('color: red')
         #Detector control functions that don't reference the detector
@@ -244,18 +265,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CenteringCheck.clicked.connect(self.checkcentering)
         self.CheckResolution.clicked.connect(self.arcWidthMap)
 
-        #Defining actions for Guider Control
-        #Guider Control functions that don't reference the guider
+        # Connecting Guider Control functions that don't require the guider class
         self.SaveImageButton.clicked.connect(self.initGuideExposureSave)
         self.TakeImageButton.clicked.connect(self.initGuideExposure)
         self.FocusCameraButton.clicked.connect(self.focusCamera) 
         self.StartGuidingButton.clicked.connect(self.startGuiding)
 
-        #Defining actions for Motor Control CURRENTLY DISABLED
+        #Defining actions for Motor Control IF ENABLED
         if motors:
-            #self.motorcontrol.update_status()
-            #self.motorcontrol.get_position() 
-
             self.FocusGoTo.clicked.connect(self.motorcontrol.m1_step)
             self.FilterGoTo.clicked.connect(self.motorcontrol.m2_step)
             self.GratingGoTo.clicked.connect(self.motorcontrol.m3_step)
@@ -269,7 +286,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.HButton.clicked.connect(self.motorcontrol.gotoH)
             self.BlankButton.clicked.connect(self.motorcontrol.gotoBlank)
 
-        #Others
+        # Connecting other functions to GUI elements
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
         self.actionQuit.triggered.connect(self.close)
         
@@ -284,13 +301,28 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SetNextButton.clicked.connect(self.setNextRADEC)
         self.MoveNextButton.clicked.connect(self.moveNext)
 
+        self.LoadTargetsAction.triggered.connect(self.loadTargetList)
+        self.ResetExposureFlagButton.clicked.connect(self.resetExposureFlag)
+        self.SetGuideOffset.clicked.connect(self.setGuideOffset)
+
+        # Load guider bias frame to remove from images
         guidebiasff = fits.open('/home/utopea/elliot/20190418T073052_Bias.fits')
         self.guidebias = guidebiasff[0].data
         self.guidebias = self.guidebias.astype('float')
 
-        self.targetsloaded = False
-        self.LoadTargetsAction.triggered.connect(self.loadTargetList)
-        self.ResetExposureFlagButton.triggered.connect(self.resetExposureFlag)
+    def read_defaults(self):
+        '''Loads the default or saved values for some of the GUI entry forms'''
+
+        # Opens the file and reads the variable and value into a dictionary
+        f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+        valuesdict = {}
+        for line in f:
+            spl = line.split()
+            valuesdict[spl[0]] = spl[1]
+        f.close()
+
+        # Returns the dict
+        return valuesdict
 
     def loadTargetList(self):
         '''Loads the targets defined in the target list file. The targets are loaded
@@ -320,17 +352,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.RAObj.setText(self.tars[i][1])
         self.DECObj.setText(self.tars[i][2])
 
-    def pullCoords(self):
-        RA = self.RALabel.text()
-        DEC = self.DECLabel.text()
-
-        NEWRA = RA[:2] + RA[3:5] + RA[6:]
-        NEWDEC = DEC[:3] + DEC[4:6] + DEC[7:]
-
-        self.RAObj.setText(NEWRA)
-        self.DECObj.setText(NEWDEC)
-
     def setGuideOffset(self):
+        '''Function that handles setting new guider offsets'''
+
         self._handleOutputTextUpdate('SETTING NEW GUIDE OFFSETS...')
         coord = SkyCoord(self.RALabel.text(), self.DECLabel.text(), unit=(u.hourangle, u.deg))
         dec_deg = coord.dec.deg
@@ -339,44 +363,45 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guidevals['GuideRA'] = self.GuideRA.text() #str(float(self.GuideRA.text()) / np.cos(dec_deg * np.pi / 180.))
         self.guidevals['GuideDEC'] = self.GuideDEC.text()
 
-
+        # Save the new offsets to file. 
         fl = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','w')
         for key, val in self.guidevals.iteritems():
             fl.write('%s\t\t%s\n' % (key, val))
         fl.close()
         self._handleOutputTextUpdate('NEW GUIDE OFFSETS SET')
         
+    def connectGuiderAction(self):
+        '''Function that connects to the WIFIS Guider Camera'''
 
-    def calibSwitch(self):
-        '''Connects all the calibration buttons to the proper functions'''
-        if self.calibon:
-            self.CalibModeButton.clicked.connect(self.calibrationcontrol.flip2pos2)
-            self.ObsModeButton.clicked.connect(self.calibrationcontrol.flip2pos1)
-            self.ArclampModeButton.clicked.connect(self.calibrationcontrol.flip1pos2)
-            self.ISphereModeButton.clicked.connect(self.calibrationcontrol.flip1pos1)
+        #Connecting to Guider
+        try:
+            #Guider Control and Threads
+            self.guider = gf.WIFISGuider(self.guide_widgets)
+            self.guider.updateText.connect(self._handleGuidingTextUpdate)
+            self.guider.plotSignal.connect(self._handleGuidePlotting)
+            self.guider.astrometryCalc.connect(self._handleAstrometryCalc)
+            self.guideron = True
+        except:
+            print "### can't connect to guider -- something failed"
+            self._handleOutputTextUpdate("### can't connect to guider -- something failed")
 
-    def powerSwitch(self):
-        '''Connects all the Power buttons to the proper functions'''
-        if self.poweron:
-            self.Power11.clicked.connect(self.powercontrol.toggle_plug9)
-            self.Power12.clicked.connect(self.powercontrol.toggle_plug10)
-            self.Power13.clicked.connect(self.powercontrol.toggle_plug11)
-            self.Power14.clicked.connect(self.powercontrol.toggle_plug12)
-            self.Power15.clicked.connect(self.powercontrol.toggle_plug13)
-            self.Power16.clicked.connect(self.powercontrol.toggle_plug14)
-            self.Power17.clicked.connect(self.powercontrol.toggle_plug15)
-            self.Power18.clicked.connect(self.powercontrol.toggle_plug16)
-            self.Power21.clicked.connect(self.powercontrol.toggle_plug1)
-            self.Power22.clicked.connect(self.powercontrol.toggle_plug2)
-            self.Power23.clicked.connect(self.powercontrol.toggle_plug3)
-            self.Power24.clicked.connect(self.powercontrol.toggle_plug4)
-            self.Power25.clicked.connect(self.powercontrol.toggle_plug5)
-            self.Power26.clicked.connect(self.powercontrol.toggle_plug6)
-            self.Power27.clicked.connect(self.powercontrol.toggle_plug7)
-            self.Power28.clicked.connect(self.powercontrol.toggle_plug8)
+            self.guideron = False
+
+        if not self.guider.guiderready:
+            print "### Can't connect to one or all of the guider components"
+            print "FOC: ",self.guider.foc
+            print "CAM: ",self.guider.cam
+            print "FLT: ",self.guider.flt
+            self.guideron = False
+            self.guiderToggle(False)
+        else:
+            self.guiderToggle(True)
+            self.guiderSwitch()
+            print "### Connected to Guider"
 
     def guiderSwitch(self):
-        '''Connects all the guider buttons to the proper functions'''
+        '''Connects all the guider elements to the proper functions'''
+
         if self.guideron:
             self.BKWButton.clicked.connect(self.guider.stepBackward)
             self.FWDButton.clicked.connect(self.guider.stepForward)
@@ -392,39 +417,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.moveTelescopeButton.clicked.connect(self.guider.moveTelescope)
             self.MoveBackButton.clicked.connect(self.guider.moveTelescopeBack)
             self.CalOffsetButton.clicked.connect(self.guider.calcOffset)
-
-    def scidetSwitch(self):
-        '''Connects all the scidet buttons to the proper functions'''
-        if self.scideton:
-            self.actionConnect.triggered.connect(self.scidet.connect)
-            self.actionInitialize.triggered.connect(self.scidet.initialize)
-            self.actionDisconnect.triggered.connect(self.scidet.disconnect)
-            self.scidet.connect()
-
-    def connectGuiderAction(self):
-        #Connecting to Guider
-        try:
-            #Guider Control and Threads
-            self.guider = gf.WIFISGuider(self.guide_widgets)
-            self.guider.updateText.connect(self._handleGuidingTextUpdate)
-            self.guider.plotSignal.connect(self._handleGuidePlotting)
-            self.guider.astrometryCalc.connect(self._handleAstrometryCalc)
-            self.guideron = True
-        except:
-            print "### Can't Connect to Guider -- Something Failed"
-            self.guideron = False
-
-        if not self.guider.guiderready:
-            print "### Can't connect to one or all of the guider components"
-            print "FOC: ",self.guider.foc
-            print "CAM: ",self.guider.cam
-            print "FLT: ",self.guider.flt
-            self.guideron = False
-            self.guiderToggle(False)
-        else:
-            self.guiderToggle(True)
-            self.guiderSwitch()
-            print "### Connected to Guider"
 
     def guiderToggle(self, on):
 
@@ -487,6 +479,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.calibrationcontrol = None
 
             self.calibToggle(False)
+
+    def calibSwitch(self):
+        '''Connects all the calibration elements to the proper functions'''
+
+        if self.calibon:
+            self.CalibModeButton.clicked.connect(self.calibrationcontrol.flip2pos2)
+            self.ObsModeButton.clicked.connect(self.calibrationcontrol.flip2pos1)
+            self.ArclampModeButton.clicked.connect(self.calibrationcontrol.flip1pos2)
+            self.ISphereModeButton.clicked.connect(self.calibrationcontrol.flip1pos1)
             
     def calibToggle(self, status):
         if status:
@@ -571,6 +572,28 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.poweron = False
             self.ConnectPower.setText('Power - X')
             self.powerToggle(False, False, False)
+
+    def powerSwitch(self):
+        '''Connects all the Power elements to the proper functions'''
+
+        if self.poweron:
+            self.Power11.clicked.connect(self.powercontrol.toggle_plug9)
+            self.Power12.clicked.connect(self.powercontrol.toggle_plug10)
+            self.Power13.clicked.connect(self.powercontrol.toggle_plug11)
+            self.Power14.clicked.connect(self.powercontrol.toggle_plug12)
+            self.Power15.clicked.connect(self.powercontrol.toggle_plug13)
+            self.Power16.clicked.connect(self.powercontrol.toggle_plug14)
+            self.Power17.clicked.connect(self.powercontrol.toggle_plug15)
+            self.Power18.clicked.connect(self.powercontrol.toggle_plug16)
+            self.Power21.clicked.connect(self.powercontrol.toggle_plug1)
+            self.Power22.clicked.connect(self.powercontrol.toggle_plug2)
+            self.Power23.clicked.connect(self.powercontrol.toggle_plug3)
+            self.Power24.clicked.connect(self.powercontrol.toggle_plug4)
+            self.Power25.clicked.connect(self.powercontrol.toggle_plug5)
+            self.Power26.clicked.connect(self.powercontrol.toggle_plug6)
+            self.Power27.clicked.connect(self.powercontrol.toggle_plug7)
+            self.Power28.clicked.connect(self.powercontrol.toggle_plug8)
+
 
     def powerToggle(self, status, switch1, switch2):
         if status: 
@@ -733,6 +756,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.scideton = False
             self.H2RGToggle(False)
 
+    def scidetSwitch(self):
+        '''Connects all the detector functions to the proper functions'''
+
+        if self.scideton:
+            self.actionConnect.triggered.connect(self.scidet.connect)
+            self.actionInitialize.triggered.connect(self.scidet.initialize)
+            self.actionDisconnect.triggered.connect(self.scidet.disconnect)
+            self.scidet.connect()
+
     def H2RGToggle(self, status):
         if status:
             s = ''
@@ -815,48 +847,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         RAText = self.RAObj.text()
         DECText = self.DECObj.text()
 
-        try:
-            float(RAText)
-            float(DECText)
-        except:
-            self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-            self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-            self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
+        RA, DEC = parseRADECText(RAText, DECText)
+        if RA == False:
+            self._handleOutputTextUpdate(DEC)
             return
-
-        if (len(RAText) == 0) or (len(DECText) == 0):
-            self._handleOutputTextUpdate('RA or DEC Obj Text Empty!')
-            return
-
-        if (RAText[0] == '+') or (RAText[0] == '-'):
-            RAspl = RAText[1:].split('.')
-            if len(RAspl[0]) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                return
-        else:
-            RAspl = RAText.split('.')
-            if len(RAspl[0]) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                return
-
-        if (DECText[0] == '+') or (DECText[0] == '-'):
-            DECspl = DECText[1:].split('.')
-            if len(DECspl[0]) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                return
-        else:
-            DECspl = DECText.split('.')
-            if len(DECspl) != 6: 
-                self._handleOutputTextUpdate('RA or DEC Obj IMPROPER INPUT')
-                self._handleOutputTextUpdate('PLEASE USE RA = +/-HHMMSS.S  and')
-                self._handleOutputTextUpdate('DEC = +/-DDMMSS.S, no spaces')
-                return
 
         RAText = float(RAText)
         DECText = float(DECText)
@@ -887,6 +881,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.scidetexpose.updateText.connect(self._handleOutputTextUpdate)
         self.scidetexpose.finished.connect(self._handleExpFinished)
         self.scidetexpose.startProgBar.connect(self._startProgBar)
+        self.scidetexpose.endProgBar.connect(self._endProgBar)
         self.scidetexpose.started.connect(self._handleExpStarted)
         self.scidetexpose.start()
 
@@ -894,13 +889,21 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.progbar = wd.h2rgProgressThread(self.ExpTypeSelect.currentText(),\
                 nreads=int(self.NReadsText.text()),nramps=int(self.NRampsText.text()))
         self.progbar.updateBar.connect(self._handleProgressBar)
-        self.progbar.finished.connect(self._handleExpFinished)
+        self.progbar.finished.connect(self._endProgBar)
         self.progbar.start()
 
-    def _startNoddingProgBar(self):
-        self.progbar = wd.h2rgProgressThread('Ramp',nreads=42,nramps=1)
+    def _endProgBar(self):
+        try:
+            self.progbar.finish = True
+        except Exception as e:
+            print e
+            self._handleOutputTextUpdate('Something went wrong with finishing prog bar')
+        self.ExpProgressBar.setValue(0)
+
+    def _startCalibProgBar(self):
+        self.progbar = wd.h2rgProgressThread('Ramp',nreads=55,nramps=1)
         self.progbar.updateBar.connect(self._handleProgressBar)
-        self.progbar.finished.connect(self._handleExpFinished)
+        self.progbar.finished.connect(self._endProgBar)
         self.progbar.start()
 
     def initCalibExposure(self):
@@ -916,7 +919,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 nreads=nreads,nramps=int(self.NRampsText.text()),\
                 sourceName=self.ObjText.text())
         self.calibexpose.updateText.connect(self._handleOutputTextUpdate)
-        self.calibexpose.startProgBar.connect(self._startNoddingProgBar)
+        self.calibexpose.startProgBar.connect(self._startCalibProgBar)
         self.calibexpose.started.connect(self._handleExpStarted)
         self.calibexpose.finished.connect(self._handleExpFinished)
         self.calibexpose.start()
@@ -945,14 +948,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.noddingexposure.updateText.connect(self._handleOutputTextUpdate)
         self.noddingexposure.startGuiding.connect(self._handleNoddingGuide)
         self.noddingexposure.stopGuiding.connect(self._handleNoddingGuideStop)
-        self.noddingexposure.starting.connect(self._handleNoddingStarting)
+        self.noddingexposure.started.connect(self._handleNoddingStarted)
         self.noddingexposure.finished.connect(self._handleNoddingFinished)
         self.StopExpButton.clicked.connect(self.noddingexposure.stop)
         self.noddingexposure.progBar.connect(self._handleNoddingProgBar)
 
         self.noddingexposure.start()
 
-    def _handleNoddingStarting(self):
+    def _handleNoddingStarted(self):
         self.detector_in_use = True
 
     def _handleNoddingFinished(self):
@@ -962,7 +965,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         self.progbar = wd.h2rgProgressThread('Ramp',nreads=nreads,nramps=nramps)
         self.progbar.updateBar.connect(self._handleProgressBar)
-        self.progbar.finished.connect(self._handleExpFinished)
+        self.progbar.finished.connect(self._endProgBar)
         self.progbar.start()
 
     def _handleNoddingGuide(self, s):
@@ -1005,11 +1008,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def _handleExpFinished(self):
         self.detector_in_use = False
-        self.ExpProgressBar.setValue(0)
 
     def _handleUpdateLabels(self, labelupdates):
         telemDict,steppos,ccdtemp = labelupdates
 
+        self.head = telemDict
         DECText = telemDict['DEC']
         RAText = telemDict['RA']
 
@@ -1105,19 +1108,28 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #im = ax.imshow(image, origin='lower', norm=norm, interpolation='none', cmap='gray')
             im = ax.imshow(image, origin='lower', norm=norm, interpolation='none')
 
-            rotAng = float(self.IISLabel.text())
+            rotAng = float(self.IISLabel.text()) - 90.
             rotMat = np.asarray([[np.cos(rotAng*np.pi/180.),np.sin(rotAng*np.pi/180.)],\
                     [-np.sin(rotAng*np.pi/180.),np.cos(rotAng*np.pi/180.)]])
 
-            raAx = np.dot([70,0], rotMat)
-            decAx = np.dot([0,-70], rotMat)
+            decAx = np.dot([-70,0], rotMat)
+            raAx = np.dot([0,-70], rotMat)
 
-            cent = np.asarray([100,850])
-            ax.arrow(cent[0],cent[1], raAx[0],raAx[1], head_width=15, head_length=15, fc='w', ec='w')
-            ax.arrow(cent[0],cent[1], decAx[0],decAx[1], head_width=15, head_length=15, fc='w', ec='w')
+            cent = np.asarray([150,780])
+            ax.arrow(cent[0],cent[1], raAx[0],raAx[1], width = 5,\
+                    head_width=15, head_length=15, fc='w', ec='k')
+            ax.arrow(cent[0],cent[1], decAx[0],decAx[1], width = 5,\
+                    head_width=15, head_length=15, fc='w', ec='k')
 
-            ax.text((cent+decAx)[0]+1, (cent+decAx)[1]+1,"N",ha="left", va="top", rotation=rotAng, color='w')
-            ax.text((cent+raAx)[0]+1, (cent+raAx)[1]+1,"E",ha="left", va="bottom", rotation=rotAng, color='w')
+            #ax.text((cent+decAx+10)[0]+1, (cent+decAx+10)[1]+1,\
+            #        "N",ha="left", va="top", rotation=rotAng, color='w', fontsize=20)
+            #ax.text((cent+raAx+10)[0]+1, (cent+raAx+10)[1]+1,\
+            #        "E",ha="left", va="bottom", rotation=rotAng, color='w', fontsize=20)
+            ax.text((cent+decAx-50)[0], (cent+decAx-10)[1],\
+                    "N",ha="left", va="top", rotation=rotAng, color='k', fontsize=17)
+            ax.text((cent+raAx+10)[0], (cent+raAx-50)[1],\
+                    "E",ha="left", va="bottom", rotation=rotAng, color='k', fontsize=17)
+            print cent, decAx, raAx
 
             ax.format_coord = Formatter(im)
             ax.set_title(flname)
@@ -1164,13 +1176,14 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             tary = gFit.y_mean
 
             print(tarx,tary)
-            wcent = WCS.wcs_pix2world(17.5,45,0)
-            wtar = WCS.wcs_pix2world(tary,tarx,0)
+            #wcent = WCS.wcs_pix2world(17.5,45,0)
+            wcent = WCS.wcs_pix2world(45,17.5,0)
+            wtar = WCS.wcs_pix2world(tarx,tary,0)
 
             skycent = SkyCoord(wcent[0], wcent[1], unit = 'deg')
             skytar = SkyCoord(wtar[0], wtar[1], unit = 'deg')
 
-            centeroffset = skytar.spherical_offsets_to(skycent)
+            centeroffset = skycent.spherical_offsets_to(skytar)
             offsetra = centeroffset[0].arcsec
             offsetdec = centeroffset[1].arcsec
 
@@ -1312,7 +1325,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def doAstrometry(self):
         self.astrometrythread = wa.AstrometryThread(self.guider, self.RAObj,
-                self.DECObj, self.ObjText, self.GuiderExpTime.text())
+                self.DECObj, self.ObjText, self.GuiderExpTime.text(), self.head)
         self.astrometrythread.updateText.connect(self._handleGuidingTextUpdate)
         self.astrometrythread.plotSignal.connect(self._handleGuidingPlotting)
         self.astrometrythread.astrometricPlotSignal.connect(self._handleAstrometricPlotting)
@@ -1505,6 +1518,7 @@ class NoddingExposure(QThread):
         self.RADECNod = offsetRADEC
         self.RAObj = targetRA
         self.DECObj = targetDEC
+        self.nreadssec = int(self.nreads.text())
 
         self.stopthread = False
 
@@ -1558,16 +1572,16 @@ class NoddingExposure(QThread):
 
         try:
             self.nrampsval = 1
-            self.nreadsval = int(round(int(self.nreads.text())/1.5))
+            self.nreadsval = int(round(self.nreadssec/1.5))
 
-            if nreads < 2:
+            if self.nreadsval < 2:
                 self.updateText.emit('Exposure time must be at least 3 seconds -- QUITTING')
                 return
 
             self.NodsPerCalVal = int(self.NodsPerCal.text())
             self.NNodsVal = int(self.NNods.text())
-        except:
-            self.updateText.emit("NOTE! N_RAMPS/N_READS/N_NODS/N_CALS NOT INTS -- QUITTING")
+        except Exception as e:
+            self.updateText.emit("NOTE!\nN_RAMPS/N_READS/N_NODS/N_CALS NOT INTS -- QUITTING")
             return
 
         if self.stopthread:
@@ -1576,7 +1590,7 @@ class NoddingExposure(QThread):
         self.updateText.emit("### STARTING NODDING SEQUENCE")
         self.started.emit()
 
-        if not self.skipcalib.isChecked():
+        if (not self.skipcalib.isChecked()) and (self.NodsPerCalVal != 0):
             self.updateText.emit("### DOING INITIAL CALIBS")
             self.progBar.emit(42, self.nrampsval)
             self.scidet.takecalibrations(self.objnameval)
@@ -1598,7 +1612,7 @@ class NoddingExposure(QThread):
                     if self.stopthread:
                         break
 
-                    self.progBar.emit(self.nreadsval, self.nrampsval)
+                    self.progBar.emit(self.nreadssec, self.nrampsval)
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval)
 
                     self.stopGuiding.emit()
@@ -1611,7 +1625,7 @@ class NoddingExposure(QThread):
                     if self.stopthread:
                         break
 
-                    self.progBar.emit(self.nreadsval, self.nrampsval)
+                    self.progBar.emit(self.nreadssec, self.nrampsval)
                     self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky')
                     
                     self.stopGuiding.emit()
@@ -1625,7 +1639,9 @@ class NoddingExposure(QThread):
             if self.stopthread:
                 self.updateText.emit("### STOPPED NODDING SEQUENCE")
                 break
-            if (i + 1) % self.NodsPerCalVal == 0:
+            if self.NodsPerCalVal == 0:
+                continue
+            elif (i + 1) % self.NodsPerCalVal == 0:
                 self.scidet.takecalibrations(self.objnameval)
 
         if not self.stopthread:
@@ -1733,43 +1749,47 @@ class UpdateLabels(QThread):
 
 def parseRADECText(RAText, DECText):
 
-        try:
-            float(RAText)
-            float(DECText)
-        except:
-            return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
+    badformatstr = 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE '+\
+            'RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
 
-        if (len(RAText) == 0) or (len(DECText) == 0):
-            return False, 'RA or DEC Text Empty!'
+    try:
+        float(RAText)
+        float(DECText)
+    except:
+        return False, \
+            
 
-        try:
-            if (RAText[0] == '+') or (RAText[0] == '-'):
-                RAspl = RAText[1:].split('.')
-                if len(RAspl[0]) != 6: 
-                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
-            else:
-                RAspl = RAText.split('.')
-                if len(RAspl[0]) != 6: 
-                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
-            if (DECText[0] == '+') or (DECText[0] == '-'):
-                DECspl = DECText[1:].split('.')
-                if len(DECspl[0]) != 6: 
-                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
-            else:
-                DECspl = DECText.split('.')
-                if len(DECspl) != 6: 
-                    return False, 'RA or DEC Obj IMPROPER INPUT\nPLEASE USE RA = HHMMSS.S and\nDEC = +/-DDMMSS.S, no spaces\n'
-        except Exception as e:
-            print e
-            return False, 'RA or DEC Obj IMPROPER INPUT LIKELY'
+    if (len(RAText) == 0) or (len(DECText) == 0):
+        return False, 'RA or DEC Text Empty!'
 
+    try:
         if (RAText[0] == '+') or (RAText[0] == '-'):
-            RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
+            RAspl = RAText[1:].split('.')
+            if len(RAspl[0]) != 6: 
+                return False, badformatstr
         else:
-            RA = RAText[0:2] + ' ' + RAText[2:4] + ' ' + RAText[4:]
-        DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
+            RAspl = RAText.split('.')
+            if len(RAspl[0]) != 6: 
+                return False, badformatstr
+        if (DECText[0] == '+') or (DECText[0] == '-'):
+            DECspl = DECText[1:].split('.')
+            if len(DECspl[0]) != 6: 
+                return False, badformatstr 
+        else:
+            DECspl = DECText.split('.')
+            if len(DECspl) != 6: 
+                return False, badformatstr 
+    except Exception as e:
+        print e
+        return False, 'RA or DEC Obj IMPROPER INPUT LIKELY'
 
-        return RA, DEC
+    if (RAText[0] == '+') or (RAText[0] == '-'):
+        RA = RAText[1:3] + ' ' + RAText[3:5] + ' ' + RAText[5:]
+    else:
+        RA = RAText[0:2] + ' ' + RAText[2:4] + ' ' + RAText[4:]
+    DEC = DECText[0:3] + ' ' + DECText[3:5] + ' ' + DECText[5:]
+
+    return RA, DEC
 
 def main():
 

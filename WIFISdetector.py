@@ -368,6 +368,7 @@ class h2rgExposeThread(QThread):
     finished = pyqtSignal()
     updateText = pyqtSignal(str)
     startProgBar = pyqtSignal()
+    endProgBar = pyqtSignal()
 
     def __init__(self,detector,exposureType,nreads=2,nramps=1,sourceName=""):
         QThread.__init__(self)
@@ -384,6 +385,7 @@ class h2rgExposeThread(QThread):
     def run(self):
 
         try:
+            t1 = time.time()
             if self.detector.connected == False:
                 self.printTxt("### Please connect the detector "+'\n'+\
                         "and initialize if not done already")
@@ -398,6 +400,8 @@ class h2rgExposeThread(QThread):
             self.exposureTypeText = self.exposureType
 
             self.startProgBar.emit()
+            t2 = time.time()
+            print "TIME 2 - 1: ", t2-t1
             if(self.exposureTypeText == "Single Frame"):
                 output = self.detector.exposeSF(self.sourceNameText)
             elif(self.exposureTypeText == "CDS"):
@@ -412,6 +416,9 @@ class h2rgExposeThread(QThread):
             elif(self.exposureTypeText == "Calibrations"):
                 output = self.detector.takecalibrations(self.sourceNameText)
 
+            t3 = time.time()
+            print "TIME 3 - 2: ", t3-t2
+
             self.printTxt("### FINISHED EXPOSURE")
 
         except Exception as e:
@@ -422,6 +429,7 @@ class h2rgExposeThread(QThread):
             return
 
         self.finished.emit()
+        self.endProgBar.emit()
 
     def printTxt(self, s):
         self.updateText.emit(s)
@@ -437,6 +445,7 @@ class h2rgProgressThread(QThread):
         self.nreads = nreads
         self.nramps = nramps
         self.exposureType = exposureType
+        self.finish = False
 
     def __del__(self):
         self.wait()
@@ -444,12 +453,17 @@ class h2rgProgressThread(QThread):
     def run(self):
         if self.exposureType in ["Calibrations", "Single Frame","CDS"]:
             return
+        if self.exposureType in ['Flat Ramp', 'Arc Ramp']:
+            self.nreads = 5
+            self.nramps = 1
        
         self.sleep(4)
         t1 = time()
-        n_seconds = self.nreads * self.nramps * 1.5
+        n_seconds = self.nreads * self.nramps #* 1.5
         while (time() - t1) < n_seconds:
             self.updateBar.emit(int((time() - t1)/n_seconds * 100))
+            if self.finish == True:
+                break
             #self.progressbar.setValue(int((time() - t1)/n_seconds * 100))
 
         self.finished.emit()
