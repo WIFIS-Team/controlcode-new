@@ -385,7 +385,7 @@ class h2rgExposeThread(QThread):
     def run(self):
 
         try:
-            t1 = time.time()
+            t1 = time()
             if self.detector.connected == False:
                 self.printTxt("### Please connect the detector "+'\n'+\
                         "and initialize if not done already")
@@ -400,7 +400,7 @@ class h2rgExposeThread(QThread):
             self.exposureTypeText = self.exposureType
 
             self.startProgBar.emit()
-            t2 = time.time()
+            t2 = time()
             print "TIME 2 - 1: ", t2-t1
             if(self.exposureTypeText == "Single Frame"):
                 output = self.detector.exposeSF(self.sourceNameText)
@@ -416,7 +416,7 @@ class h2rgExposeThread(QThread):
             elif(self.exposureTypeText == "Calibrations"):
                 output = self.detector.takecalibrations(self.sourceNameText)
 
-            t3 = time.time()
+            t3 = time()
             print "TIME 3 - 2: ", t3-t2
 
             self.printTxt("### FINISHED EXPOSURE")

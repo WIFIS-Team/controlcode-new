@@ -4,5 +4,5 @@ do
     scp  "/home/utopea/WIFIS-Team/wifiscontrol/monitor/t_stream.html" suresh@thor.dunlap.utoronto.ca:Sites/wifis/
     scp  /home/utopea/WIFIS-Team/wifiscontrol/monitor/*.jpg suresh@thor.dunlap.utoronto.ca:Sites/wifis/
 
-    sleep 60
+    sleep 30
 done
