@@ -1325,7 +1325,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def doAstrometry(self):
         self.astrometrythread = wa.AstrometryThread(self.guider, self.RAObj,
-                self.DECObj, self.ObjText, self.GuiderExpTime.text(), self.head)
+                self.DECObj, self.ObjText, self.GuiderExpTime.text(), self.head,
+                self.IISLabel.text())
         self.astrometrythread.updateText.connect(self._handleGuidingTextUpdate)
         self.astrometrythread.plotSignal.connect(self._handleGuidingPlotting)
         self.astrometrythread.astrometricPlotSignal.connect(self._handleAstrometricPlotting)

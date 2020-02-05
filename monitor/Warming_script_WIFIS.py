@@ -250,6 +250,15 @@ def sendCmdPacket(packetString): #send command message to T_controller and wait 
     time.sleep(0.05)
     ser.write('*OPC\n') 
     time.sleep(0.05)
+
+def temperature_check(str_array):
+    inputA = float(str_array[2])
+    inputB = float(str_array[3])
+    if abs(inputA - inputB) > 3.0:
+        print 'Warning: input A and B do not agree.'
+        print 'Using input B as the reliable source.'
+        str_array[2] = str_array[3]
+    return str_array
     
 def read_temperature():  #reads all 4 temperature sensors and 2 heaters, and 2 setpoints
     #//////// This section of codes reads the sensor inputs
@@ -278,7 +287,9 @@ def read_temperature():  #reads all 4 temperature sensors and 2 heaters, and 2 s
 
     pressure = readPressure()
     returnedString.append(pressure)
-    current_temperatures = returnedString
+
+    #current_temperatures = returnedString
+    current_temperatures = temperature_check(returnedString)#!!!!!!!!!!!!!!!!!!!!Temp code!!!!!!!!!!!!!!Take out once input A reliability issue is fixed!!!!!!!!!!!!!!!!!!!!!!!!
     #//////// End of sensor input reading    
     
     return returnedString

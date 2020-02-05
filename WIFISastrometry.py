@@ -37,11 +37,15 @@ def read_defaults():
 
     return valuesdict
 
-def getAstrometricSoln(fl, telSock, head, rotangleget, verbose = False, catalog = 'sdss'):
+def getAstrometricSoln(fl, telSock, head, rotangleget, verbose = False, catalog = 'sdss',
+        force_IIS = False):
     """Takes an ra and dec as grabbed from the telemetry and returns a field
     from UNSO for use in solving the guider field"""
 
+    #Get the image data and the location of the stars in the image
     data, head, RA, DEC, centroids = load_img(fl, head, telSock)
+    if verbose:
+        print "Guessed RA and DEC of image: ", RA, DEC
 
     if type(fl) != str:
         head['IIS'] = rotangleget
@@ -52,10 +56,18 @@ def getAstrometricSoln(fl, telSock, head, rotangleget, verbose = False, catalog 
     Iarr = np.array(centroids[2])
 
     yorigflip = -1*(yorig - 1024)
-    rotangle = float(head['IIS'])
+    if force_IIS:
+        rotangle = rotangleget
+    else:
+        rotangle = float(head['IIS'])
+
+    #if verbose:
+    print "IIS value is: ", rotangle
 
     valuesdict = read_defaults()
     guider_offsets = [float(valuesdict['GuideRA']), float(valuesdict['GuideDEC'])]
+    if verbose:
+        print "Guider offsets are: ", guider_offsets[0], guider_offsets[1]
     
     coord = SkyCoord(RA, DEC, unit=(u.hourangle, u.deg))
     ra_deg = coord.ra.deg
@@ -65,6 +77,7 @@ def getAstrometricSoln(fl, telSock, head, rotangleget, verbose = False, catalog 
 
     name, rad, ded, rmag, ra_deg, dec_deg, fov_am ,coord, newcoord, newcatalog = grabUNSOfield(RA, DEC, offsets=offsets, catalog = catalog)
     catalog = newcatalog
+    print "There are "+str(len(rad))+" stars in the catalog."
 
     cxrot, cyrot, cxrotneg, cyrotneg = rotate_points(rotangle,xorig,yorig)
 
@@ -83,6 +96,7 @@ def getAstrometricSoln(fl, telSock, head, rotangleget, verbose = False, catalog 
         print 'lots of nan'
     elif catalog == 'unso':
         magval = 17.5
+        #magval = 19
         k = rmag < magval
     elif catalog == 'sdss':
         magval = 20
@@ -163,10 +177,12 @@ def getAstrometricSoln(fl, telSock, head, rotangleget, verbose = False, catalog 
         xproj = np.array(xproj)
         yproj = np.array(yproj)
 
-        #mpl.plot(x,y, 'r*')
         k = rmag < magval
-        #mpl.plot(xproj[k], yproj[k],'b.')
-        #mpl.show()
+        if verbose:
+            mpl.plot(xproj[k], yproj[k],'ro', label='Catalog Stars')
+            mpl.plot(x,y, 'b.', label="Image Stars")
+            mpl.legend()
+            mpl.show()
         
         if verbose:
             return [platesolve, fieldoffset, realcenter, solvecenter, offsets,[x,y,k,xproj,yproj,data,head,coord],[xorig, yorig, cxrot, cyrot, cxrotneg, cyrotneg, Iarr]]
@@ -885,7 +901,7 @@ class AstrometryThread(QThread):
     astrometricPlotSignal = pyqtSignal(list,str)
     astrometryMove = pyqtSignal(float,float)
 
-    def __init__(self, guider, RAObj, DECObj, ObjText, GuiderExpTime, head):
+    def __init__(self, guider, RAObj, DECObj, ObjText, GuiderExpTime, head, rotangle):
 
         QThread.__init__(self)
 
@@ -896,6 +912,7 @@ class AstrometryThread(QThread):
         self.ObjText = ObjText
         self.GuiderExpTime = GuiderExpTime
         self.head = head
+        self.rotangle = float(rotangle)
 
     def __del__(self):
         self.wait()
@@ -911,7 +928,7 @@ class AstrometryThread(QThread):
             self.updateText.emit("STARTING ASTROMETRIC DERIVATION")
             try:
                 results = getAstrometricSoln(img, self.telSock, \
-                        self.head, self.guider.rotangle.text(), catalog='unso')
+                        self.head, self.rotangle, catalog='unso')
                 if len(results) < 3:
                     self.updateText.emit("NO ASTROMETRIC SOLUTION...NOT ENOUGH STARS? >=3")
                     self.updateText.emit("Try increasing exp time, or moving to a different field?")

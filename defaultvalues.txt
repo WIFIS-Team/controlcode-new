@@ -1,2 +1,2 @@
-GuideRA		-0.93
-GuideDEC		361.0
+GuideRA		-5.2
+GuideDEC		361.3
