@@ -179,7 +179,8 @@ class h2rg(QObject):
         
         return(False)
       
-    def writeObsData(self,directory,obsType,sourceName):
+    def writeObsData(self,directory,obsType,sourceName, noweather = False):
+
         f = open(directory+"/obsinfo.dat","w")
         f.write("Obs Type: "+obsType+"\n")
         f.write("Source: "+sourceName+"\n")
@@ -194,15 +195,19 @@ class h2rg(QObject):
 
         telemf.close()
 
-        #weatherjson = requests.get('http://140.252.86.113:42080/bokdev/bokdev/latest_new.json')
-        #weatherinfo = json.loads(weatherjson.text)
-        #f.write('INHUMID\t'+str(weatherinfo['inside_outside']['inhumid'])+'\n')
-        #f.write('OUTHUMID\t'+str(weatherinfo['inside_outside']['outhumid'])+'\n')
-        #f.write('MIRHUMID\t'+str(weatherinfo['mirror_cell']['mcell_humid'])+'\n')
-        #f.write('INTEMP\t'+str(weatherinfo['inside_outside']['intemp'])+'\n')
-        #f.write('OUTTEMP\t'+str(weatherinfo['inside_outside']['outtemp'])+'\n')
-        #f.write('MIRTEMP\t'+str(weatherinfo['mirror_cell']['mcell_temp'])+'\n')
-        f.write('WEATHER\tDOWN'+'\n')
+        if noweather:
+            f.write('WEATHER\tDOWN'+'\n')
+        else:
+            f.write('WEATHER\tUP'+'\n')
+            weatherjson = requests.get('http://140.252.86.113:42080/bokdev/bokdev/latest_new.json')
+            weatherinfo = json.loads(weatherjson.text)
+            f.write('INHUMID\t'+str(weatherinfo['inside_outside']['inhumid'])+'\n')
+            f.write('OUTHUMID\t'+str(weatherinfo['inside_outside']['outhumid'])+'\n')
+            f.write('MIRHUMID\t'+str(weatherinfo['mirror_cell']['mcell_humid'])+'\n')
+            f.write('INTEMP\t'+str(weatherinfo['inside_outside']['intemp'])+'\n')
+            f.write('OUTTEMP\t'+str(weatherinfo['inside_outside']['outtemp'])+'\n')
+            f.write('MIRTEMP\t'+str(weatherinfo['mirror_cell']['mcell_temp'])+'\n')
+
         f.write('GEOELEV\t'+str(2071)+'\n')
         f.write('LATITUDE\t'+str('+31d57m46.5s')+'\n')
         f.write('LONGITUD\t'+str('111d36m01.6s')+'\n')
@@ -371,7 +376,8 @@ class h2rgExposeThread(QThread):
     startProgBar = pyqtSignal()
     endProgBar = pyqtSignal()
 
-    def __init__(self,detector,exposureType,nreads=2,nramps=1,sourceName=""):
+    def __init__(self,detector,exposureType,nreads=2,nramps=1, \
+            weatherdown= False, sourceName=""):
         QThread.__init__(self)
 
         self.detector = detector
@@ -406,7 +412,7 @@ class h2rgExposeThread(QThread):
             if(self.exposureTypeText == "Single Frame"):
                 output = self.detector.exposeSF(self.sourceNameText)
             elif(self.exposureTypeText == "CDS"):
-                output = self.detector.exposeCDS(self.sourceNameText)
+                output = self.detector.exposeCDS(self.sourceNameText, weatherdown=weatherdown)
             elif(self.exposureTypeText == "Ramp"):
                 output = self.detector.exposeRamp(self.nreadsText, self.nrampsText, "Ramp", \
                         self.sourceNameText)
