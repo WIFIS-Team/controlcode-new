@@ -1720,10 +1720,10 @@ class UpdateLabels(QThread):
                     steppos = "N/A"
                     ccdTemp = "N/A"
                 
-                if self.motorcontrol != None:
+                #if self.motorcontrol != None:
                     #self.updatemotors = True
-                    self.motorcontrol.update_status()
-                    self.motorcontrol.get_position()
+                #    self.motorcontrol.update_status()
+                #    self.motorcontrol.get_position()
 
                 #self.updatemotors = False
 

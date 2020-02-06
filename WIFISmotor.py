@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------------------------
-# Name:     motor_controller.py
-# Purpose:  Motor control interface for WIFIS
-# Authors:  Jason Leung
-# Date:     July 2015
+# Name:             WIFISmotor.py
+# Purpose:          Motor control backend for WIFIS Control GUI
+# Author:           R Elliot Meyer
 #------------------------------------------------------------------------------
+
 """
-This is a module used to control the motors for WIFIS
+This is a module that contains methods to control the WIFIS motors.
 """
 
 # initialize a serial RTU client instance
