@@ -206,13 +206,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         #Connecting to Motor Controller
         #/// Currently disabled due to unknown crashes caused by the Motor Serial connection
         if motors:
-            self.connectMotorAction()
+            self.motorcontrol = wm.MotorControl()
+            self.motorcontrol.updateText.connect(self._handleMotorText)
+
             self.MotorsEnabledLabel.setText("Enabled")
             self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
             self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: green;}")
         else:
             self.motorcontrol = None
-            self.motorson = False
+
             self.MotorsEnabledLabel.setText("Disabled")
             self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
             self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: red;}")
@@ -220,33 +222,11 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         # Iniializae telemetry label update thread
         if self.telescope:
             updatevals = [self.RAObj, self.DECObj]
-            self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, \
-                    self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry,\
-                    self.motoraction, self.textlabels)
+            self.labelsThread = UpdateLabels(self.guider, self.guideron, updatevals,\
+                    self.EnableForceIIS, self.ForceIISEntry, self.textlabels)
             self.labelsThread.updateText.connect(self._handleUpdateLabels)
             self.labelsThread.start()
             self.updateon = True
-            #if not self.updateon:
-            #    self.labelsThread = UpdateLabels(self.guider, self.motorcontrol, \
-            #            self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry,\
-            #            self.motoraction, self.textlabels)
-            #    self.labelsThread.updateText.connect(self._handleUpdateLabels)
-            #    self.labelsThread.start()
-            #    self.updateon = True
-            #else:
-            #    if self.labelsThread.isrunning:
-            #        self.labelsThread.stop()
-            #        self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
-            #                self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry, \
-            #                self.motoraction, self.textlabels)
-            #        self.labelsThread.updateText.connect(self._handleUpdateLabels)
-            #        self.labelsThread.start()
-            #    else:
-            #        self.labelsThread = UpdateLabels(self.guider, self.motorcontrol,\
-            #                self.guideron,updatevals, self.EnableForceIIS, self.ForceIISEntry,\
-            #                self.motoraction, self.textlabels)
-            #        self.labelsThread.updateText.connect(self._handleUpdateLabels)
-            #        self.labelsThread.start()
         
         # Defining settings for exposure progress bar
         self.ExpProgressBar.setMinimum(0)
@@ -282,9 +262,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.FocusStop.clicked.connect(self.motorcontrol.m1_stop)
             self.FilterStop.clicked.connect(self.motorcontrol.m2_stop)
             self.GratingStop.clicked.connect(self.motorcontrol.m3_stop)
-            self.TBButton.clicked.connect(self.motorcontrol.gotoTB)
-            self.HButton.clicked.connect(self.motorcontrol.gotoH)
-            self.BlankButton.clicked.connect(self.motorcontrol.gotoBlank)
+            #self.TBButton.clicked.connect(self.motorcontrol.gotoTB)
+            #self.HButton.clicked.connect(self.motorcontrol.gotoH)
+            #self.BlankButton.clicked.connect(self.motorcontrol.gotoBlank)
 
         # Connecting other functions to GUI elements
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
@@ -512,25 +492,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.TakeCalibButton.setEnabled(val)
         self.ExpTypeSelect.model().item(3).setEnabled(val)
         self.ExpTypeSelect.model().item(4).setEnabled(val)
-
-    def connectMotorAction(self):
-        try:
-            self.motorclient = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
-            bytesize=8, parity='E', baudrate=9600, timeout=0.1)
-            print "Connecting to motors..."
-            self.motorclient.connect()
-
-            #motorlabels = [self.FocusPosition, self.FilterPosition, self.GratingPosition,\
-            #    self.FocusStatus, self.FilterStatus, self.GratingStatus, self.FocusStep,\
-            #    self.FilterStep, self.GratingStep]
-
-            self.motorcontrol = wm.MotorControl(self.motorclient) 
-            self.motorcontrol.updateText.connect(self._handleMotorText)
-            self.motorson = True
-        except Exception as e:
-            print "Something went wrong connecting to the motors...."
-            print e
-            self.motorson = False
 
     def connectPowerAction(self):
         try:
@@ -1671,20 +1632,17 @@ class UpdateLabels(QThread):
 
     updateText = pyqtSignal(list)
 
-    def __init__(self, guider, motorcontrol, guideron, updatevals, EnableForceIIS,\
-            ForceIISEntry, motoraction, textlabels):
+    def __init__(self, guider, guideron, updatevals, EnableForceIIS,\
+            ForceIISEntry, textlabels):
         QThread.__init__(self)
 
         self.guider = guider
-        self.motorcontrol = motorcontrol
         self.guideron = guideron
         self.RAObj, self.DECObj = updatevals
         self.stopthread = False
         self.isrunning = False
         self.EnableForceIIS = EnableForceIIS
         self.ForceIISEntry = ForceIISEntry
-        self.updatemotors = True
-        self.motoraction = motoraction
         self.textlabels = textlabels
 
     def __del__(self):
@@ -1697,6 +1655,7 @@ class UpdateLabels(QThread):
     def run(self):
 
         while not self.stopthread:
+            
             self.isrunning = True
             try:
                 telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
@@ -1720,13 +1679,6 @@ class UpdateLabels(QThread):
                     steppos = "N/A"
                     ccdTemp = "N/A"
                 
-                #if self.motorcontrol != None:
-                    #self.updatemotors = True
-                #    self.motorcontrol.update_status()
-                #    self.motorcontrol.get_position()
-
-                #self.updatemotors = False
-
                 self.updateText.emit([telemDict,steppos,ccdTemp])
 
                 self.printLabels()

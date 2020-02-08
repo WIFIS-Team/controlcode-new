@@ -15,36 +15,69 @@ import time
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
 import traceback
 from serial import SerialException
+import logger
+import os
 
 class MotorControl(QObject):
 
     updateText = pyqtSignal(str, str, int)
 
-    def __init__(self, client):
+    def __init__(self):
         super(MotorControl, self).__init__()
 
+        homedir = os.path.split(os.path.realpath(__file__))[0]
+
+        #Set up logger
+        self.logger = logging.getLogger('motors')
+        self.logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler(homedir + '/log/motor.log')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
+
+        #Default values
         self.motor_speed1 = 10
         self.motor_speed2 = 500
         self.motor_speed3 = 10
 
-        self.client = client
-        #self.client = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
-        #bytesize=8, parity='E', baudrate=9600, timeout=0.1)
-        #print "Connecting to motors..."
-        #self.client.connect()
+        #Connect to the motor
+        self.connectMotor()
 
+    def connectMotor(self):
+        try:
+            print "Connecting to motors..."
+            self.logger.info("Connecting to motor modbus serial client")
+
+            self.client = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
+            bytesize=8, parity='E', baudrate=9600, timeout=0.1)
+            self.motorclient.connect()
+
+            self.logger.info("Connected to motor modbus serial client")
+
+            self.motorson = True
+        except Exception as e:
+            print "Something went wrong connecting to the motors...."
+            print e
+            self.logger.exception("Something went wrong with motor connection")
+            self.motorson = False
 
     def get_position(self):
         
         #Focus, Filter, Grating
+        self.logger.info("Getting the positions of all motors")
         for i in range(3):
             unit = i + 1
             try:
+                self.logger.info("Reading positon of motor %s", unit)
                 temp = self.client.read_holding_registers(0x0118, 2, unit=unit)
+                self.logger.info("Read position of motor %s", unit)
                 #print "temp ", temp
                 if temp != None:
                     self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
+                    self.logger.info("Position of motor %s is %s", self.motor_position)
                     if self.motor_position >= 2**31:
+                        self.logger.debug("Motor position was above 32 bit signed limit")
                         self.motor_position -= 2**32
                     self.updateText.emit(str(self.motor_position), 'Position', i)
             #except Exception as e:
@@ -52,40 +85,64 @@ class MotorControl(QObject):
             #    print e
             #    print "EXCEPTION (UPDATE STATUS)"
             except SerialException:
+                self.logger.exception("Serial exception during the acquisition of motor %s position", \
+                        unit)
                 print traceback.print_exc()
                 print "Unit: ", unit
                 print "Serial Exception (get_position)..."
+            except:
+                self.logger.exception("Exception during the acquisition of motor %s position", \
+                        unit)
 
     def update_status(self):
         #Returns 1025 if moving, 43009 if home, 8193 if stopped and not home, 
         #32768 if not operating/communicating (?) 
         #Focus, Filter, Grating
 
+        self.logger.info("Getting the status of all motors")
         try:
             for unit in range(1,4):
+                self.logger.info("Getting the status motor %s", unit)
                 resp = self.client.read_holding_registers(0x0020,1, unit=unit)
-                #print "resp ", resp
+                self.logger.info("Received the status motor %s", unit)
+
                 if resp != None:
                     bin_resp = '{0:016b}'.format(resp.registers[0])
                     if bin_resp[5] == '1' and bin_resp[2] == '0':
+                        self.logger.debug("Motor %s is MOVING with response %s", \
+                                unit, bin_resp)
                         self.updateText.emit("MOVING",'Status',unit-1)
                     elif bin_resp[4] == '1' and bin_resp[2] == '1':
                         self.updateText.emit("HOME",'Status',unit-1)
+                        self.logger.debug("Motor %s is HOME with response %s", \
+                                unit, bin_resp)
                     elif bin_resp[4] == '0' and bin_resp[2] == '1':
                         self.updateText.emit("READY",'Status',unit-1)
+                        self.logger.debug("Motor %s is READY with response %s", \
+                                unit, bin_resp)
                     elif bin_resp[0] == '1' and bin_resp[2] == '0':
                         self.updateText.emit("OFF/ERR",'Status',unit-1)
+                        self.logger.debug("Motor %s is OFF/ERR with response %s", \
+                                unit, bin_resp)
                     else:
                         self.updateText.emit("UNKN",'Status',unit-1)
+                        self.logger.debug("Motor %s is UNKN with response %s", \
+                                unit, bin_resp)
 
         except SerialException:
         #except Exception as e:
             print traceback.print_exc()
             #print "EXCEPTION (UPDATE STATUS)"
             print "Serial Exception (Update Status)..."
-
+            self.logger.exception("Serial exception during the acquisition of the position of motor %s", \
+                        unit)
+        except:
+            self.logger.exception("Exception during the acquisition of status of motor %s", \
+                        unit)
 
     def stepping_operation(self, value, unit):
+
+        self.logger.info("Initializing a step operation of %s for motor %s", step, unit)
 
         step = int(value)
         if step < 0:
@@ -93,16 +150,27 @@ class MotorControl(QObject):
         upper = step >> 16
         lower = step & 0xFFFF
 
+        self.logger.info("Step of %s converted to upper: %s, and lower: %s", step, upper, lower)
+
         try:
+            self.logger.info("Writing to register 0x001E")
             self.client.write_register(0x001E, 0x2000, unit=unit)
+            self.logger.info("Writing to register 0x0402")
             self.client.write_registers(0x0402, [upper, lower], unit=unit)
+            self.logger.info("Writing to register 0x001E")
             self.client.write_register(0x001E, 0x2101, unit=unit)
+            self.logger.info("Writing to register 0x001E")
             self.client.write_register(0x001E, 0x2001, unit=unit)
         except SerialException:
             print traceback.print_exc()
             print "Value: ", value
             print "Unit: ", unit
             print "Serial Exception (stepping operation)..."
+            self.logger.exception("Serial exception during a stepping operation for motor %s", \
+                        unit)
+        except:
+            self.logger.exception("Exception during a stepping operation for motor %s", \
+                        unit)
 
     def homing_operation(self, unit):
         
@@ -156,13 +224,13 @@ class MotorControl(QObject):
     def m1_home(self):
         self.updateText.emit("",'Home',0)
 
-    def m1_forward(self):
-        self.client.write_register(0x001E, 0x2000, unit=0x01)
-        self.client.write_register(0x001E, 0x2201, unit=0x01)
+    #def m1_forward(self):
+    #    self.client.write_register(0x001E, 0x2000, unit=0x01)
+    #    self.client.write_register(0x001E, 0x2201, unit=0x01)
 
-    def m1_reverse(self):
-        self.client.write_register(0x001E, 0x2000, unit=0x01)
-        self.client.write_register(0x001E, 0x2401, unit=0x01)
+    #def m1_reverse(self):
+    #    self.client.write_register(0x001E, 0x2000, unit=0x01)
+    #    self.client.write_register(0x001E, 0x2401, unit=0x01)
 
     def m1_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x01)
@@ -186,13 +254,13 @@ class MotorControl(QObject):
     def m2_home(self):
         self.updateText.emit("",'Home',1)
 
-    def m2_forward(self):
-        self.client.write_register(0x001E, 0x2000, unit=0x02)
-        self.client.write_register(0x001E, 0x2201, unit=0x02)
+    #def m2_forward(self):
+    #    self.client.write_register(0x001E, 0x2000, unit=0x02)
+    #    self.client.write_register(0x001E, 0x2201, unit=0x02)
 
-    def m2_reverse(self):
-        self.client.write_register(0x001E, 0x2000, unit=0x02)
-        self.client.write_register(0x001E, 0x2401, unit=0x02)
+    #def m2_reverse(self):
+    #    self.client.write_register(0x001E, 0x2000, unit=0x02)
+    #    self.client.write_register(0x001E, 0x2401, unit=0x02)
 
     def m2_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x02)
@@ -216,13 +284,13 @@ class MotorControl(QObject):
     def m3_home(self):
         self.updateText.emit("",'Home',2)
 
-    def m3_forward(self):
-        self.client.write_register(0x001E, 0x2000, unit=0x03)
-        self.client.write_register(0x001E, 0x2201, unit=0x03)
+    #def m3_forward(self):
+    #    self.client.write_register(0x001E, 0x2000, unit=0x03)
+    #    self.client.write_register(0x001E, 0x2201, unit=0x03)
 
-    def m3_reverse(self):
-        self.client.write_register(0x001E, 0x2000, unit=0x03)
-        self.client.write_register(0x001E, 0x2401, unit=0x03)
+    #def m3_reverse(self):
+    #    self.client.write_register(0x001E, 0x2000, unit=0x03)
+    #    self.client.write_register(0x001E, 0x2401, unit=0x03)
 
     def m3_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x03)
