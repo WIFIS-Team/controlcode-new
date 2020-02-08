@@ -37,6 +37,8 @@ class MotorControl(QObject):
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
 
+        self.logger.info("STARTING NEW LOG BELOW\n")
+
         #Default values
         self.motor_speed1 = 10
         self.motor_speed2 = 500
@@ -54,7 +56,7 @@ class MotorControl(QObject):
 
             self.client = ModbusClient(method="rtu", port="/dev/motor", stopbits=1, \
             bytesize=8, parity='E', baudrate=9600, timeout=0.1)
-            self.motorclient.connect()
+            self.client.connect()
 
             self.logger.info("Connected to motor modbus serial client")
 
@@ -74,11 +76,11 @@ class MotorControl(QObject):
             try:
                 self.logger.info("Reading positon of motor %s", unit)
                 temp = self.client.read_holding_registers(0x0118, 2, unit=unit)
-                self.logger.info("Read position of motor %s", unit)
+                self.logger.info("Read response of %s for motor %s", temp, unit)
                 #print "temp ", temp
                 if temp != None:
                     self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
-                    self.logger.info("Position of motor %s is %s", self.motor_position)
+                    self.logger.info("Position of motor %s is %s", unit, self.motor_position)
                     if self.motor_position >= 2**31:
                         self.logger.debug("Motor position was above 32 bit signed limit")
                         self.motor_position -= 2**32
@@ -107,7 +109,7 @@ class MotorControl(QObject):
             for unit in range(1,4):
                 self.logger.info("Getting the status motor %s", unit)
                 resp = self.client.read_holding_registers(0x0020,1, unit=unit)
-                self.logger.info("Received the status motor %s", unit)
+                self.logger.info("Received a response %s for motor %s", resp, unit)
 
                 if resp != None:
                     bin_resp = '{0:016b}'.format(resp.registers[0])
@@ -286,7 +288,7 @@ class MotorControl(QObject):
 
     def m3_home(self):
         #self.updateText.emit("",'Home',2)
-        self.motorqueue.put(self.homing_operation(0x02))
+        self.motorqueue.put(self.homing_operation(0x03))
 
     def m3_stop(self):
         self.motorqueue.put(self.client.write_register(0x001E, 0x2001, unit=0x03))
