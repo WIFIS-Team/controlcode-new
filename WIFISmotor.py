@@ -15,7 +15,7 @@ import time
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
 import traceback
 from serial import SerialException
-import logger
+import logging
 import os
 
 class MotorControl(QObject):
@@ -220,7 +220,8 @@ class MotorControl(QObject):
         self.updateText.emit('','Step',0)
 
     def m1_home(self):
-        self.updateText.emit("",'Home',0)
+        #self.updateText.emit("",'Home',0)
+        self.homing_operation(0x01)
 
     def m1_stop(self):
         self.client.write_register(0x001E, 0x2001, unit=0x01)
@@ -251,7 +252,14 @@ class MotorControl(QObject):
             self.updateText.emit(action,'Step', 1)
 
     def m2_home(self):
-        self.updateText.emit("",'Home',1)
+        #self.updateText.emit("",'Home',1)
+        self.homing_operation(0x02)
+
+    def m2_stop(self):
+        self.client.write_register(0x001E, 0x2001, unit=0x02)
+
+    def m2_off(self):
+        self.client.write_register(0x001E, 0x0000, unit=0x02)
 
     #def m2_forward(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x02)
@@ -260,12 +268,6 @@ class MotorControl(QObject):
     #def m2_reverse(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x02)
     #    self.client.write_register(0x001E, 0x2401, unit=0x02)
-
-    def m2_stop(self):
-        self.client.write_register(0x001E, 0x2001, unit=0x02)
-
-    def m2_off(self):
-        self.client.write_register(0x001E, 0x0000, unit=0x02)
 
     # Motor 3 methods
     def m3_speed(self):
@@ -281,7 +283,14 @@ class MotorControl(QObject):
             self.updateText.emit(action,'Step', 2)
 
     def m3_home(self):
-        self.updateText.emit("",'Home',2)
+        #self.updateText.emit("",'Home',2)
+        self.homing_operation(0x02)
+
+    def m3_stop(self):
+        self.client.write_register(0x001E, 0x2001, unit=0x03)
+
+    def m3_off(self):
+        self.client.write_register(0x001E, 0x0000, unit=0x03)
 
     #def m3_forward(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x03)
@@ -291,27 +300,27 @@ class MotorControl(QObject):
     #    self.client.write_register(0x001E, 0x2000, unit=0x03)
     #    self.client.write_register(0x001E, 0x2401, unit=0x03)
 
-    def m3_stop(self):
-        self.client.write_register(0x001E, 0x2001, unit=0x03)
-
-    def m3_off(self):
-        self.client.write_register(0x001E, 0x0000, unit=0x03)
 
 class HandleMotors(QThread):
 
     updateText = pyqtSignal(list)
+    finished = pyqtSignal(bool)
 
-    def __init__(self, motorcontrol, motorlabels):
+    def __init__(self, motorcontrol, action, motor = False, step = False):
         QThread.__init__(self)
 
         self.motorcontrol = motorcontrol
-        self.FocusPosition, self.FilterPosition, self.GratingPosition,\
-                    self.FocusStatus, self.FilterStatus, self.GratingStatus,\
-                    self.FocusStep, self.FilterStep, self.GratingStep= motorlabels
+        self.action = action
         self.stopthread = False
         self.isrunning = False
-        self.action = False
         self.update = False
+        self.step = step
+        if motor == 1:
+            self.unit = 0x01
+        elif motor == 2:
+            self.unit = 0x02
+        elif motor == 3:
+            self.unit = 0x03
 
     def __del__(self):
         self.wait()
@@ -320,29 +329,11 @@ class HandleMotors(QThread):
         self.stopthread = True
         self.isrunning = False
 
-    def movemotor1(self):
-        self.action = True
-        while self.update:
-            pass
-        self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
-        self.sleep(1)
-        self.action = False
+    def movemotor(self):
+        self.motorcontrol.stepping_operation(step, unit=unit)
 
-    def movemotor2(self):
-        self.action = True
-        while self.update:
-            pass
-        self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
-        self.sleep(1)
-        self.action = False
-
-    def movemotor3(self):
-        self.action = True
-        while self.update:
-            pass
-        self.motorcontrol.stepping_operation(self.FocusStep.text(), unit=0x01)
-        self.sleep(1)
-        self.action = False
+    def homemotor(self):
+        self.motorcontrol.homing_operation(unit)
 
     def run(self):
 
@@ -366,83 +357,3 @@ class HandleMotors(QThread):
                 print e
                 print "############################"
         self.isrunning = False
-
-
-class MotorThread(QThread):
-
-    updateText = pyqtSignal(str, str, int)
-
-    def __init__(self, motorcontrol, unit, move_pos):
-        QThread.__init__(self)
-
-        self.motorcontrol = motorcontrol
-        self.unit = unit
-        self.move_pos = move_pos
-
-    def __del__(self):
-        self.wait()
-
-    def stop(self):
-        self.stopthread = True
-
-    def run(self):
-
-        try: 
-        
-            t1 = time.time()
-            temp = self.motorcontrol.client.read_holding_registers(0x0118, 2, unit=self.unit+1)
-            resp = self.motorcontrol.client.read_holding_registers(0x0020, 1, unit=self.unit+1)
-
-            if temp != None:
-                self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
-                if self.motor_position >= 2**31:
-                    self.motor_position -= 2**32
-            else:
-                print "NO MOTOR_POSITION VARIABLE..."
-                print "TEMP IS ", temp
-                print "RESP IS", resp
-                self.stop()
-
-            self.motor_position = str(self.motor_position)
-
-            while self.motor_position != self.move_pos:
-
-                temp = self.motorcontrol.client.read_holding_registers(0x0118, 2, unit=self.unit+1)
-                resp = self.motorcontrol.client.read_holding_registers(0x0020, 1, unit=self.unit+1)
-
-                if temp != None:
-                    self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
-                    if self.motor_position >= 2**31:
-                        self.motor_position -= 2**32
-                    self.updateText.emit(str(self.motor_position), 'Position', self.unit)
-                    
-                self.motor_position = str(self.motor_position)
-                
-                if resp != None:
-                    bin_resp = '{0:016b}'.format(resp.registers[0])
-                    if bin_resp[5] == '1' and bin_resp[2] == '0':
-                        self.updateText.emit("MOVING",'Status',self.unit)
-                    elif bin_resp[4] == '1' and bin_resp[2] == '1':
-                        self.updateText.emit("HOME",'Status',self.unit)
-                    elif bin_resp[4] == '0' and bin_resp[2] == '1':
-                        self.updateText.emit("READY",'Status',self.unit)
-                    elif bin_resp[0] == '1' and bin_resp[2] == '0':
-                        self.updateText.emit("OFF/ERR",'Status',self.unit)
-                    else:
-                        self.updateText.emit("UNKN",'Status',self.unit)
-                
-
-                t2 = time.time()
-                if (((t2 - t1) / 60.) >= 2.):
-                    print "MOTOR UPDATE TIMEOUT"
-                    break
-
-                self.usleep(500000)
-
-        except Exception as e:
-            print "############################"
-            print "ERROR IN MOTOR UPDATE THREAD"
-            print traceback.print_exc()
-            print e
-            print "############################"
-

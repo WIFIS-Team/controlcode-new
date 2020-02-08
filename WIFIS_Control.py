@@ -1253,13 +1253,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 elif motnum == 2:
                     self.motorcontrol.stepping_operation(s, unit=0x03)
 
-            if labeltype == 'Home':
-                if motnum == 0:
-                    self.motorcontrol.homing_operation(0x01)
-                elif motnum == 1:
-                    self.motorcontrol.homing_operation(0x02)
-                elif motnum == 2:
-                    self.motorcontrol.homing_operation(0x03)
+           # if labeltype == 'Home':
+           #     if motnum == 0:
+           #         self.motorcontrol.homing_operation(0x01)
+           #     elif motnum == 1:
+           #         self.motorcontrol.homing_operation(0x02)
+           #     elif motnum == 2:
+           #         self.motorcontrol.homing_operation(0x03)
 
             self.motoraction = False
 
