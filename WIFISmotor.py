@@ -17,7 +17,7 @@ import traceback
 from serial import SerialException
 import logging
 import os
-import queue
+import Queue
 
 class MotorControl(QObject):
 
@@ -45,7 +45,7 @@ class MotorControl(QObject):
         #Connect to the motor
         self.connectMotor()
         
-        self.motorqueue = queue.Queue()
+        self.motorqueue = Queue.Queue()
 
     def connectMotor(self):
         try:

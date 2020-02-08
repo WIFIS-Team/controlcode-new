@@ -37,7 +37,7 @@ from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 # Global setting for the motors.
 # Default is False due to the currently buggy behaviour of the motor code
 # with the GuI code. 
-motors = False
+motors = True
 
 class Formatter(object):
     '''Class that formats the mouseover readout for matplotlib plots'''
