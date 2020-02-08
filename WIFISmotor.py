@@ -174,28 +174,26 @@ class MotorControl(QObject):
 
     def homing_operation(self, unit):
         
-        #position_labels = [self.pos1,self.pos2,self.pos3]
-        
-        #if int(position_labels[unit-1]) % 1000 < 500:         
-        #    units = [0x01,0x02,0x03]
-            #Forces motor to reverse
-        #    self.client.write_register(0x001E, 0x2000, unit=units[unit-1])
-        #    self.client.write_register(0x001E, 0x2401, unit=units[unit-1])
-        #    while (int(position_labels[unit-1]) % 1000 < 500) or (int(position_labels[unit-1]) % 1000 > 950):
-                #Waits until the motor has gone past home
-        #        position_labels = [self.pos1,self.pos2,self.pos3]
-            #Stops the motor
-        #    self.client.write_register(0x001E, 0x2001, unit=units[unit-1])
+        self.logger.info("Homing motor %s", unit)
         
         #Homes the motor
         try:
+            self.logger.info("Writing to register 0x001E value 0x2000")
             self.client.write_register(0x001E, 0x2000, unit=unit)
+            self.logger.info("Writing to register 0x001E value 0x2800")
             self.client.write_register(0x001E, 0x2800, unit=unit)
+            self.logger.info("Writing to register 0x001E value 0x2000")
             self.client.write_register(0x001E, 0x2000, unit=unit)
+            self.logger.info("Finished writing homing operation for motor %s", unit)
         except SerialException:
             print traceback.print_exc()
             print "Unit: ", unit
             print "Serial Exception (Homing Operation)..."
+            self.logger.exception("Serial exception during the homing operation for motor %s", \
+                        unit)
+        except:
+            self.logger.exception("Exception during a homing operation for motor %s", \
+                        unit)
 
     #Actions
     def gotoTB(self):
@@ -224,6 +222,12 @@ class MotorControl(QObject):
     def m1_home(self):
         self.updateText.emit("",'Home',0)
 
+    def m1_stop(self):
+        self.client.write_register(0x001E, 0x2001, unit=0x01)
+
+    def m1_off(self):
+        self.client.write_register(0x001E, 0x0000, unit=0x01)
+
     #def m1_forward(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x01)
     #    self.client.write_register(0x001E, 0x2201, unit=0x01)
@@ -232,11 +236,6 @@ class MotorControl(QObject):
     #    self.client.write_register(0x001E, 0x2000, unit=0x01)
     #    self.client.write_register(0x001E, 0x2401, unit=0x01)
 
-    def m1_stop(self):
-        self.client.write_register(0x001E, 0x2001, unit=0x01)
-
-    def m1_off(self):
-        self.client.write_register(0x001E, 0x0000, unit=0x01)
 
     # Motor 2 methods
     def m2_speed(self):

@@ -265,6 +265,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #self.TBButton.clicked.connect(self.motorcontrol.gotoTB)
             #self.HButton.clicked.connect(self.motorcontrol.gotoH)
             #self.BlankButton.clicked.connect(self.motorcontrol.gotoBlank)
+            self.TBButton.setEnabled(False)
+            self.HButton.setEnabled(False)
+            self.BlankButton.setEnabled(False)
 
         # Connecting other functions to GUI elements
         self.SkyCheckBox.stateChanged.connect(self.skybuttonchanged)
