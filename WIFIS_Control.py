@@ -212,6 +212,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.MotorsEnabledLabel.setText("Enabled")
             self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
             self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: green;}")
+
+            self.motorThread = wm.UpdateMotorThread(self.motorcontrol)
+            self.motorThread.start()
         else:
             self.motorcontrol = None
 
@@ -352,6 +355,29 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             fl.write('%s\t\t%s\n' % (key, val))
         fl.close()
         self._handleOutputTextUpdate('NEW GUIDE OFFSETS SET')
+
+    def connectMotorAction(self):
+
+        try:
+            if motors:
+                self.motorcontrol = wm.MotorControl()
+                self.motorcontrol.updateText.connect(self._handleMotorText)
+
+                self.MotorsEnabledLabel.setText("Enabled")
+                self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
+                self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: green;}")
+            else:
+                self.motorcontrol = None
+
+                self.MotorsEnabledLabel.setText("Disabled")
+                self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
+                self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: red;}")
+        except Exception as e:
+            print "### can't connect to motors -- something failed"
+            print e
+            self._handleOutputTextUpdate("### can't connect to guider -- something failed")
+            #self.guideron = False
+
         
     def connectGuiderAction(self):
         '''Function that connects to the WIFIS Guider Camera'''
@@ -1228,30 +1254,36 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #while self.labelsThread.updatemotors:
             #    pass
 
-            if self.motoraction == True:
-                self.OutputText.append("MOTORS BUSY, TRY AGAIN")
-                return
+            #if self.motoraction == True:
+            #    self.OutputText.append("MOTORS BUSY, TRY AGAIN")
+            #    return
 
-            self.motoraction = True
+            #self.motoraction = True
 
             if labeltype == 'Step':
                 if motnum == 0:
-                    self.motorcontrol.stepping_operation(self.FocusStep.text(),\
-                            unit=0x01)
+                    self.motorcontrol.motorqueue.put(\
+                            self.motorcontrol.stepping_operation(self.FocusStep.text(),\
+                            unit=0x01))
                 elif motnum == 1:
-                    self.motorcontrol.stepping_operation(self.FilterStep.text(),\
-                            unit=0x02)
+                    self.motorcontrol.motorqueue.put(\
+                            self.motorcontrol.stepping_operation(self.FilterStep.text(),\
+                            unit=0x02))
                 elif motnum == 2:
-                    self.motorcontrol.stepping_operation(self.GratingStep.text(),\
-                            unit=0x03)
+                    self.motorcontrol.motorqueue.put(\
+                            self.motorcontrol.stepping_operation(self.GratingStep.text(),\
+                            unit=0x03))
 
             if (labeltype == 'Step') and (len(s) != 0):
                 if motnum == 0:
-                    self.motorcontrol.stepping_operation(s, unit=0x01)
+                    self.motorcontrol.motorqueue.put(\
+                            self.motorcontrol.stepping_operation(s, unit=0x01))
                 elif motnum == 1:
-                    self.motorcontrol.stepping_operation(s, unit=0x02)
+                    self.motorcontrol.motorqueue.put(\
+                            self.motorcontrol.stepping_operation(s, unit=0x02))
                 elif motnum == 2:
-                    self.motorcontrol.stepping_operation(s, unit=0x03)
+                    self.motorcontrol.motorqueue.put(\
+                            self.motorcontrol.stepping_operation(s, unit=0x03))
 
            # if labeltype == 'Home':
            #     if motnum == 0:
@@ -1261,7 +1293,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
            #     elif motnum == 2:
            #         self.motorcontrol.homing_operation(0x03)
 
-            self.motoraction = False
+            #self.motoraction = False
 
     def _handleMoveMotor(self, s1, s2, mot):
         if self.motoraction == True:

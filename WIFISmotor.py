@@ -17,6 +17,7 @@ import traceback
 from serial import SerialException
 import logging
 import os
+import queue
 
 class MotorControl(QObject):
 
@@ -43,6 +44,8 @@ class MotorControl(QObject):
 
         #Connect to the motor
         self.connectMotor()
+        
+        self.motorqueue = queue.Queue()
 
     def connectMotor(self):
         try:
@@ -221,13 +224,13 @@ class MotorControl(QObject):
 
     def m1_home(self):
         #self.updateText.emit("",'Home',0)
-        self.homing_operation(0x01)
+        self.motorqueue.put(self.homing_operation(0x01))
 
     def m1_stop(self):
-        self.client.write_register(0x001E, 0x2001, unit=0x01)
+        self.motorqueue.put(self.client.write_register(0x001E, 0x2001, unit=0x01))
 
     def m1_off(self):
-        self.client.write_register(0x001E, 0x0000, unit=0x01)
+        self.motorqueue.put(self.client.write_register(0x001E, 0x0000, unit=0x01))
 
     #def m1_forward(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x01)
@@ -236,7 +239,6 @@ class MotorControl(QObject):
     #def m1_reverse(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x01)
     #    self.client.write_register(0x001E, 0x2401, unit=0x01)
-
 
     # Motor 2 methods
     def m2_speed(self):
@@ -253,13 +255,13 @@ class MotorControl(QObject):
 
     def m2_home(self):
         #self.updateText.emit("",'Home',1)
-        self.homing_operation(0x02)
+        self.motorqueue.put(self.homing_operation(0x02))
 
     def m2_stop(self):
-        self.client.write_register(0x001E, 0x2001, unit=0x02)
+        self.motorqueue.put(self.client.write_register(0x001E, 0x2001, unit=0x02))
 
     def m2_off(self):
-        self.client.write_register(0x001E, 0x0000, unit=0x02)
+        self.motorqueue.put(self.client.write_register(0x001E, 0x0000, unit=0x02))
 
     #def m2_forward(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x02)
@@ -284,13 +286,13 @@ class MotorControl(QObject):
 
     def m3_home(self):
         #self.updateText.emit("",'Home',2)
-        self.homing_operation(0x02)
+        self.motorqueue.put(self.homing_operation(0x02))
 
     def m3_stop(self):
-        self.client.write_register(0x001E, 0x2001, unit=0x03)
+        self.motorqueue.put(self.client.write_register(0x001E, 0x2001, unit=0x03))
 
     def m3_off(self):
-        self.client.write_register(0x001E, 0x0000, unit=0x03)
+        self.motorqueue.put(self.client.write_register(0x001E, 0x0000, unit=0x03))
 
     #def m3_forward(self):
     #    self.client.write_register(0x001E, 0x2000, unit=0x03)
@@ -356,4 +358,43 @@ class HandleMotors(QThread):
                 print traceback.print_exc()
                 print e
                 print "############################"
+        self.isrunning = False
+
+class UpdateMotorThread(QThread):
+
+    updateText = pyqtSignal(list)
+    finished = pyqtSignal(bool)
+
+    def __init__(self, motorcontrol):
+        QThread.__init__(self)
+
+        self.motorcontrol = motorcontrol
+        self.stopthread = False
+        self.isrunning = False
+
+    def __del__(self):
+        self.wait()
+
+    def stop(self):
+        self.stopthread = True
+        self.isrunning = False
+
+    def run(self):
+
+        while not self.stopthread:
+            self.isrunning = True
+            try:
+                self.motorcontrol.motorqueue.put(self.motorcontrol.update_status())
+                self.motorcontrol.motorqueue.put(self.motorcontrol.get_position())
+                
+                self.sleep(5)
+
+            except Exception as e:
+                print "############################"
+                print "ERROR IN LABEL UPDATE THREAD"
+                print traceback.print_exc()
+                print e
+                print "############################"
+                self.motorcontrol.logger.exception("Issue in the motor update thread")
+
         self.isrunning = False
