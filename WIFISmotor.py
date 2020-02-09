@@ -15,9 +15,7 @@ import time
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
 import traceback
 from serial import SerialException
-import logging
-import os
-import Queue
+import os, sys, Queue, logging
 
 class MotorControl(QObject):
 
@@ -31,11 +29,18 @@ class MotorControl(QObject):
         #Set up logger
         self.logger = logging.getLogger('motors')
         self.logger.setLevel(logging.DEBUG)
+
         fh = logging.FileHandler(homedir + '/log/motor.log')
         fh.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh.setFormatter(formatter)
+
+        sh = logging.StreamHandler(sys.stdout)
+        sh.setLevel(logging.WARNING)
+        sh.setFormatter(formatter)
+
         self.logger.addHandler(fh)
+        self.logger.addHandler(sh)
 
         self.logger.info("STARTING NEW LOG BELOW\n")
 
@@ -70,17 +75,17 @@ class MotorControl(QObject):
     def get_position(self):
         
         #Focus, Filter, Grating
-        self.logger.info("Getting the positions of all motors")
+        self.logger.info("GETTING THE POSITIONS OF ALL MOTORS")
         for i in range(3):
             unit = i + 1
             try:
                 self.logger.info("Reading positon of motor %s", unit)
                 temp = self.client.read_holding_registers(0x0118, 2, unit=unit)
-                self.logger.info("Read response of %s for motor %s", temp, unit)
+                self.logger.info("Respose: %s", temp)
                 #print "temp ", temp
                 if temp != None:
                     self.motor_position = (temp.registers[0] << 16) + temp.registers[1]
-                    self.logger.info("Position of motor %s is %s", unit, self.motor_position)
+                    self.logger.info("Motor %s Position: %s", unit, self.motor_position)
                     if self.motor_position >= 2**31:
                         self.logger.debug("Motor position was above 32 bit signed limit")
                         self.motor_position -= 2**32
@@ -104,30 +109,30 @@ class MotorControl(QObject):
         #32768 if not operating/communicating (?) 
         #Focus, Filter, Grating
 
-        self.logger.info("Getting the status of all motors")
+        self.logger.info("GETTING THE STATUS OF ALL MOTORS")
         try:
             for unit in range(1,4):
                 self.logger.info("Getting the status motor %s", unit)
                 resp = self.client.read_holding_registers(0x0020,1, unit=unit)
-                self.logger.info("Received a response %s for motor %s", resp, unit)
+                self.logger.info("Respose: %s", resp)
 
                 if resp != None:
                     bin_resp = '{0:016b}'.format(resp.registers[0])
                     if bin_resp[5] == '1' and bin_resp[2] == '0':
-                        self.logger.debug("Motor %s is MOVING with response %s", \
+                        self.logger.debug("Motor %s: MOVING with response %s", \
                                 unit, bin_resp)
                         self.updateText.emit("MOVING",'Status',unit-1)
                     elif bin_resp[4] == '1' and bin_resp[2] == '1':
                         self.updateText.emit("HOME",'Status',unit-1)
-                        self.logger.debug("Motor %s is HOME with response %s", \
+                        self.logger.debug("Motor %s: HOME with response %s", \
                                 unit, bin_resp)
                     elif bin_resp[4] == '0' and bin_resp[2] == '1':
                         self.updateText.emit("READY",'Status',unit-1)
-                        self.logger.debug("Motor %s is READY with response %s", \
+                        self.logger.debug("Motor %s: READY with response %s", \
                                 unit, bin_resp)
                     elif bin_resp[0] == '1' and bin_resp[2] == '0':
                         self.updateText.emit("OFF/ERR",'Status',unit-1)
-                        self.logger.debug("Motor %s is OFF/ERR with response %s", \
+                        self.logger.debug("Motor %s: OFF/ERR with response %s", \
                                 unit, bin_resp)
                     else:
                         self.updateText.emit("UNKN",'Status',unit-1)
