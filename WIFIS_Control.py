@@ -54,35 +54,6 @@ class CustomWIFISToolbar(NavigationToolbar):
 
     toolitems = [t for t in NavigationToolbar.toolitems if t[0] in ('Home','Back','Forward','Pan','Zoom')]
 
-
-class PlotWindow(QDialog):
-    '''Creates a single plot window. Now depreciated for the double plot window'''
-
-    def __init__(self, title, parent=None):
-        super(PlotWindow, self).__init__(parent)
-       
-        self.setWindowTitle(title)
-        self.figure = mpl.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
-        # set the layout
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.toolbar)
-        self.layout.addWidget(self.canvas)
-        self.setLayout(self.layout)
-        self.fullclose = False
-
-    def closeEvent(self, event):
-        
-        if not self.fullclose:
-            reply = QMessageBox.question(self, "Message", \
-                    "Close the main window to exit the GUI.\nClosing this window will break plotting.",\
-                    QMessageBox.Cancel)
-            event.ignore()
-        else:
-            event.accept()
-
 class DoublePlotWindow(QDialog):
     '''Creates a window with plots for the H2RG and the Guider.
     Simplifies the number of GUI windows'''
@@ -151,12 +122,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
         # Load all of the GUI elements
         self.setupUi(self)
-
-        #Create the plotting windows
-        #self.plotwindow = PlotWindow('WIFIS Plot Window')
-        #self.plotwindow.show()
-        #self.guideplotwindow = PlotWindow('Guider Plot Window')
-        #self.guideplotwindow.show()
 
         # Create the double plot window.
         self.plotwindow = DoublePlotWindow("WIFIS Plot Window")
@@ -300,7 +265,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         '''Loads the default or saved values for some of the GUI entry forms'''
 
         # Opens the file and reads the variable and value into a dictionary
-        f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+        f = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','r')
         valuesdict = {}
         for line in f:
             spl = line.split()
@@ -350,7 +315,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guidevals['GuideDEC'] = self.GuideDEC.text()
 
         # Save the new offsets to file. 
-        fl = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','w')
+        fl = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','w')
         for key, val in self.guidevals.iteritems():
             fl.write('%s\t\t%s\n' % (key, val))
         fl.close()
