@@ -213,7 +213,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
             self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: green;}")
 
-            self.motorThread = wm.UpdateMotorThread(self.motorcontrol)
+            self.motorThread = wm.RunMotorThread(self.motorcontrol)
             self.motorThread.start()
         else:
             self.motorcontrol = None
@@ -366,6 +366,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 self.MotorsEnabledLabel.setText("Enabled")
                 self.MotorsEnabledLabel.setAlignment(Qt.AlignCenter)
                 self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: green;}")
+
+                self.motorThread = wm.RunMotorThread(self.motorcontrol)
+                self.motorThread.start()
             else:
                 self.motorcontrol = None
 
@@ -1263,27 +1266,27 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             if labeltype == 'Step':
                 if motnum == 0:
                     self.motorcontrol.motorqueue.put(\
-                            self.motorcontrol.stepping_operation(self.FocusStep.text(),\
+                            lambda: self.motorcontrol.stepping_operation(self.FocusStep.text(),\
                             unit=0x01))
                 elif motnum == 1:
                     self.motorcontrol.motorqueue.put(\
-                            self.motorcontrol.stepping_operation(self.FilterStep.text(),\
+                            lambda: self.motorcontrol.stepping_operation(self.FilterStep.text(),\
                             unit=0x02))
                 elif motnum == 2:
                     self.motorcontrol.motorqueue.put(\
-                            self.motorcontrol.stepping_operation(self.GratingStep.text(),\
+                            lambda: self.motorcontrol.stepping_operation(self.GratingStep.text(),\
                             unit=0x03))
 
             if (labeltype == 'Step') and (len(s) != 0):
                 if motnum == 0:
                     self.motorcontrol.motorqueue.put(\
-                            self.motorcontrol.stepping_operation(s, unit=0x01))
+                            lambda: self.motorcontrol.stepping_operation(s, unit=0x01))
                 elif motnum == 1:
                     self.motorcontrol.motorqueue.put(\
-                            self.motorcontrol.stepping_operation(s, unit=0x02))
+                            lambda: self.motorcontrol.stepping_operation(s, unit=0x02))
                 elif motnum == 2:
                     self.motorcontrol.motorqueue.put(\
-                            self.motorcontrol.stepping_operation(s, unit=0x03))
+                            lambda: self.motorcontrol.stepping_operation(s, unit=0x03))
 
            # if labeltype == 'Home':
            #     if motnum == 0:
