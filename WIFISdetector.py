@@ -195,6 +195,7 @@ class h2rg(QObject):
 
         telemf.close()
 
+        noweather = True
         if noweather:
             f.write('WEATHER\tDOWN'+'\n')
         else:

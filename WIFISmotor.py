@@ -28,6 +28,7 @@ class MotorControl(QObject):
 
         #Set up logger
         self.logger = logging.getLogger('motors')
+        self.logger.propagate = False
         self.logger.setLevel(logging.DEBUG)
 
         fh = logging.FileHandler(homedir + '/log/motor.log')
@@ -152,9 +153,10 @@ class MotorControl(QObject):
 
     def stepping_operation(self, value, unit):
 
+        step = int(value)
+
         self.logger.info("Initializing a step operation of %s for motor %s", step, unit)
 
-        step = int(value)
         if step < 0:
             step += 2**32
         upper = step >> 16
@@ -163,13 +165,13 @@ class MotorControl(QObject):
         self.logger.info("Step of %s converted to upper: %s, and lower: %s", step, upper, lower)
 
         try:
-            self.logger.info("Writing to register 0x001E")
+            self.logger.info("Writing 0x2000 to register 0x001E")
             self.client.write_register(0x001E, 0x2000, unit=unit)
-            self.logger.info("Writing to register 0x0402")
+            self.logger.info("Writing %s & %s to register 0x0402", upper, lower)
             self.client.write_registers(0x0402, [upper, lower], unit=unit)
-            self.logger.info("Writing to register 0x001E")
+            self.logger.info("Writing 0x2101 to register 0x001E")
             self.client.write_register(0x001E, 0x2101, unit=unit)
-            self.logger.info("Writing to register 0x001E")
+            self.logger.info("Writing 0x001E to register 0x001E")
             self.client.write_register(0x001E, 0x2001, unit=unit)
         except SerialException:
             print traceback.print_exc()
@@ -376,7 +378,6 @@ class RunMotorThread(QThread):
         QThread.__init__(self)
 
         self.motorcontrol = motorcontrol
-        self.queue = self.motorcontrol.motorqueue
         self.stopthread = False
         self.isrunning = False
 
@@ -392,14 +393,14 @@ class RunMotorThread(QThread):
         while not self.stopthread:
             self.isrunning = True
             try:
-                if self.queue.empty:
+                if self.motorcontrol.motorqueue.empty():
                     self.motorcontrol.update_status()
                     self.motorcontrol.get_position()
                 else:
-                    f = self.queue.get()
+                    f = self.motorcontrol.motorqueue.get()
                     f()
                 
-                self.sleep(2)
+                self.sleep(1)
 
             except Exception as e:
                 print "############################"
