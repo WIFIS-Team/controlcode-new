@@ -19,11 +19,11 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 
-import WIFISpower as pc
+import WIFISpower as wp
 import WIFISmotor as wm
-import WIFIStelescope as wg
+import WIFIStelescope as wt
 import WIFISdetector as wd
-import WIFISguider as gf
+import WIFISguider as wg
 import WIFISastrometry as wa
 from WIFIScalibration import CalibrationControl
 
@@ -353,7 +353,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             #Connecting to Guider
             try:
                 #Guider Control and Threads
-                self.guider = gf.WIFISGuider(self.guide_widgets)
+                self.guider = wg.WIFISGuider(self.guide_widgets)
                 self.guider.updateText.connect(self._handleGuidingTextUpdate)
                 self.guider.plotSignal.connect(self._handleGuidePlotting)
                 self.guider.astrometryCalc.connect(self._handleAstrometryCalc)
@@ -504,7 +504,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if on:
             try:
                 #Power Control
-                self.powercontrol = pc.PowerControl(self.power_widgets)
+                self.powercontrol = wp.PowerControl(self.power_widgets)
                 self.switch1 = self.powercontrol.switch1
                 self.switch2 = self.powercontrol.switch2
                 self.poweron = True
@@ -644,8 +644,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         if on:
             #Connect to telescope
             try:
-                self.telsock = wg.connect_to_telescope()
-                telemDict = wg.get_telemetry(self.telsock, verbose=False)
+                self.telsock = wt.connect_to_telescope()
+                telemDict = wt.get_telemetry(self.telsock, verbose=False)
                 if self.EnableForceIIS.isChecked():
                     if self.ForceIISEntry.text() != '':
                         try:
@@ -781,15 +781,15 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.connectGuiderAction()
 
     def initGuideExposure(self):
-        self.guideexp = gf.ExposeGuider(self.guider, False)
+        self.guideexp = wg.ExposeGuider(self.guider, False)
         self.guideexp.start()
 
     def initGuideExposureSave(self):
-        self.guideexp = gf.ExposeGuider(self.guider, True)
+        self.guideexp = wg.ExposeGuider(self.guider, True)
         self.guideexp.start()
 
     def startGuiding(self):
-        self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
+        self.guideThread = wg.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
                 self.GuiderExpTime.text(), self.OverGuideStar, self.coords)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidingPlotting)
@@ -798,7 +798,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guideThread.start()
 
     def focusCamera(self):
-        self.fcthread = gf.FocusCamera(self.guider.cam, self.guider.foc, self.ExpTime)
+        self.fcthread = wg.FocusCamera(self.guider.cam, self.guider.foc, self.ExpTime)
         self.fcthread.plotSignal.connect(self._handleGuidingPlotting)
         self.fcthread.updateText.connect(self._handleGuidingTextUpdate)
         self.fcthread.start()
@@ -817,7 +817,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 QMessageBox.Yes | QMessageBox.Cancel)
 
         if reply == QMessageBox.Yes:
-            wg.move_next(self.telsock)
+            wt.move_next(self.telsock)
             self._handleGuidingTextUpdate("### MOVING TELESCOPE TO NEXT")
 
     def _handleOutputTextUpdate(self, txt):
@@ -840,7 +840,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         RAText = '%.1f' % (RAText)
         DECText = '%.1f' % (DECText)
      
-        return1 = wg.set_next_radec(self.telsock,RAText,DECText)
+        return1 = wt.set_next_radec(self.telsock,RAText,DECText)
         self._handleOutputTextUpdate(return1)
 
     def resetExposureFlag(self):
@@ -858,9 +858,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self._handleOutputTextUpdate('Exposure time must be at least 3 seconds')
             return
 
+        labelvals = []
+        for l in self.textlabels:
+            labelvals.append(l.text())
+
         self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect.currentText(),\
                 nreads=nreads,nramps=int(self.NRampsText.text()),\
-                sourceName=self.ObjText.text())
+                sourceName=self.ObjText.text(), labelvalues=labelvals)
         self.scidetexpose.updateText.connect(self._handleOutputTextUpdate)
         self.scidetexpose.finished.connect(self._handleExpFinished)
         self.scidetexpose.startProgBar.connect(self._startProgBar)
@@ -953,10 +957,10 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def _handleNoddingGuide(self, s):
         if s == 'Sky':
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
+            self.guideThread = wg.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
                     self.GuiderExpTime.text(), self.OverGuideStar, self.coords, sky=True)
         else:
-            self.guideThread = gf.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
+            self.guideThread = wg.RunGuiding(self.guider.telSock, self.guider.cam, self.ObjText, self.IISLabel, \
                     self.GuiderExpTime.text(), self.OverGuideStar, self.coords, sky=False)
         self.guideThread.updateText.connect(self._handleGuidingTextUpdate)
         self.guideThread.plotSignal.connect(self._handleGuidingPlotting)
@@ -1044,11 +1048,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
         fieldrecObj.plotField.connect(self._handleFRPlotting)
         fieldrecObj.doFieldRec()
-
-
-        #Old implementation without classes
-        #do_get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
-        #        '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
 
     def arcWidthMap(self):
         arcwidthObj = get_src_pos.arc_width_map('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst')
@@ -1264,14 +1263,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 elif motnum == 2:
                     self.GratingStatus.setText(s)
         else:
-            #while self.labelsThread.updatemotors:
-            #    pass
-
-            #if self.motoraction == True:
-            #    self.OutputText.append("MOTORS BUSY, TRY AGAIN")
-            #    return
-
-            #self.motoraction = True
 
             if labeltype == 'Step':
                 if motnum == 0:
@@ -1297,28 +1288,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 elif motnum == 2:
                     self.motorcontrol.motorqueue.put(\
                             lambda: self.motorcontrol.stepping_operation(s, unit=0x03))
-
-           # if labeltype == 'Home':
-           #     if motnum == 0:
-           #         self.motorcontrol.homing_operation(0x01)
-           #     elif motnum == 1:
-           #         self.motorcontrol.homing_operation(0x02)
-           #     elif motnum == 2:
-           #         self.motorcontrol.homing_operation(0x03)
-
-            #self.motoraction = False
-
-    def _handleMoveMotor(self, s1, s2, mot):
-        if self.motoraction == True:
-            self.OutputText.append("MOTORS BUSY, TRY AGAIN")
-            return
-        self.motoraction = True
-        self.motorcontrol.stepping_operation(s1, unit=0x01)
-        self.motoraction = False
-
-        #self.motormove = wm.MotorThread(self.motorcontrol, mot, s1)
-        #self.motormove.updateText.connect(self._handleMotorText)
-        #self.motormove.start()
 
     def readLabels(self):
         #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
@@ -1349,7 +1318,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                 QMessageBox.Yes | QMessageBox.Cancel)
 
         if reply == QMessageBox.Yes:
-            result = wg.move_telescope(self.telsock, FOffsethms, FOffsetdms)
+            result = wt.move_telescope(self.telsock, FOffsethms, FOffsetdms)
             self.GuidingText.append(result)
         else:
             return
@@ -1624,7 +1593,8 @@ class NoddingExposure(QThread):
                         break
 
                     self.progBar.emit(self.nreadssec, self.nrampsval)
-                    self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval)
+                    self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval, \
+                            textlabels = self.textlabels)
 
                     self.stopGuiding.emit()
                     self.sleep(5)
@@ -1637,7 +1607,8 @@ class NoddingExposure(QThread):
                         break
 
                     self.progBar.emit(self.nreadssec, self.nrampsval)
-                    self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky')
+                    self.scidet.exposeRamp(self.nreadsval, self.nrampsval, 'Ramp', self.objnameval+'Sky',\
+                            textlabels = self.textlabels)
                     
                     self.stopGuiding.emit()
                     self.sleep(5)
@@ -1710,7 +1681,7 @@ class UpdateLabels(QThread):
             try:
                 if self.telescope:
 
-                    telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
+                    telemDict = wt.get_telemetry(self.guider.telSock, verbose=False)
 
                     if self.EnableForceIIS.isChecked():
                         if self.ForceIISEntry.text() != '':
@@ -1723,7 +1694,7 @@ class UpdateLabels(QThread):
                     telemDict['RAObj'] = self.RAObj.text()
                     telemDict['DECObj'] = self.DECObj.text()
 
-                    wg.write_telemetry(telemDict)
+                    wt.write_telemetry(telemDict)
                 else:
                     telemDict = [] 
 

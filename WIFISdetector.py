@@ -196,20 +196,22 @@ class h2rg(QObject):
       
     def writeObsData(self,directory,obsType,sourceName, noweather = False, textlabels = []):
 
+        textlabelnames = ['TARNAME','RAGUI','DECGUI','RANOD','DECNOD']
+
         f = open(directory+"/obsinfo.dat","w")
         f.write("Obs Type: "+obsType+"\n")
         f.write("Source: "+sourceName+"\n")
 
         telemf = open("/home/utopea/WIFIS-Team/wifiscontrol/BokTelemetry.txt","r")
         defaults = read_gc_defaults()
-        #labelsdict = read_labels()
 
         for line in telemf:
             f.write(line)
         f.write('GCRAOff\t'+defaults['GuideRA']+'\n')
         f.write('GCDECOff\t'+defaults['GuideDEC']+'\n')
-        #for label in labelsdict.keys():
-        #    f.write(label+'\t'+labelsdict[label]+'\n')
+        if textlabels != []:
+            for i in range(1, len(textlabelnames):
+                    f.write(textlabelnames[i]+'\t'+textlabels[i]+'\n')
 
         telemf.close()
 
@@ -298,7 +300,7 @@ class h2rg(QObject):
         added = [f for f in after if not f in before]
         
         finalPath = watchpath+"/"+added[0]
-        self.writeObsData(finalPath,obsType,sourceName)
+        self.writeObsData(finalPath,obsType,sourceName, textlabels=textlabels)
         self.h2rgstatus.setStyleSheet('color: green')
 
         if not calib:
@@ -340,12 +342,12 @@ class h2rg(QObject):
             self.printTxt("SOMETHING WENT WRONG WITH PLOTTING...")
 
 
-    def flatramp(self,sourcename, notoggle = False):
+    def flatramp(self,sourcename, notoggle = False, textlabels=[]):
         if self.calibon:
             self.calibrationcontrol.flatsetup()
             sleep(7)
             sourcename = 'CalFlat ' + sourcename
-            added = self.exposeRamp(5, 1, 'Ramp',sourcename, calib=True)
+            added = self.exposeRamp(5, 1, 'Ramp',sourcename, calib=True, textlabels=textlabels)
 
             f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/flat.lst','w')
             f1.write(str(added[0]))
@@ -356,12 +358,12 @@ class h2rg(QObject):
         else:
             self.printTxt("CALIBRATION CONTROL OFF...CONNECT AND RESTART GUI")
 
-    def arcramp(self,sourcename, flat=False):
+    def arcramp(self,sourcename, flat=False, textlabels=[]):
         if self.calibon:
             self.calibrationcontrol.arcsetup()
             sleep(3)
             sourcename = 'CalArc ' + sourcename
-            added = self.exposeRamp(5, 1, 'Ramp', sourcename, calib=True)
+            added = self.exposeRamp(5, 1, 'Ramp', sourcename, calib=True, textlabels=textlabels)
             
             f1 = open('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','w')
             f1.write(str(added[0]))
@@ -372,13 +374,13 @@ class h2rg(QObject):
         else:
             self.printTxt("CALIBRATION CONTROL OFF...CONNECT AND RESTART GUI")
 
-    def takecalibrations(self, sourcename):
+    def takecalibrations(self, sourcename, textlabels=[]):
         if self.calibon:
             self.printTxt("STARTING CALIBRATIONS")
-            self.arcramp(sourcename,flat=True)
+            self.arcramp(sourcename,flat=True, textlabels=textlabels)
             #self.calibrationcontrol.flatsetup()
             #sleep(7)
-            self.flatramp(sourcename)
+            self.flatramp(sourcename, textlabels=textlabels)
             self.printTxt("FINISHED CALIBRATIONS")
         else:
             self.printTxt("CALIBRATION CONTROL OFF...CONNECT AND RESTART GUI")
@@ -435,13 +437,13 @@ class h2rgExposeThread(QThread):
                 output = self.detector.exposeCDS(self.sourceNameText, weatherdown=weatherdown)
             elif(self.exposureTypeText == "Ramp"):
                 output = self.detector.exposeRamp(self.nreadsText, self.nrampsText, "Ramp", \
-                        self.sourceNameText)
+                        self.sourceNameText, textlabels=self.labelvalues)
             elif(self.exposureTypeText == "Flat Ramp"):
-                output = self.detector.flatramp(self.sourceNameText)
+                output = self.detector.flatramp(self.sourceNameText, textlabels=self.labelvalues)
             elif(self.exposureTypeText == "Arc Ramp"):
-                output = self.detector.arcramp(self.sourceNameText)
+                output = self.detector.arcramp(self.sourceNameText, textlabels=self.labelvalues)
             elif(self.exposureTypeText == "Calibrations"):
-                output = self.detector.takecalibrations(self.sourceNameText)
+                output = self.detector.takecalibrations(self.sourceNameText, textlabels=self.labelvalues)
 
             t3 = time()
             print "TIME 3 - 2: ", t3-t2
