@@ -31,7 +31,7 @@ import traceback
 import numpy as np
 import get_src_pos
 import time
-import sys
+import sys, os
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient  
 
 # Global setting for the motors.
@@ -121,6 +121,8 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
         super(WIFISUI, self).__init__()
+
+        self.dirpath = os.path.dirname(os.path.realpath(__file__))
 
         # Load all of the GUI elements
         self.setupUi(self)
@@ -260,7 +262,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SetGuideOffset.clicked.connect(self.setGuideOffset)
 
         # Load guider bias frame to remove from images
-        guidebiasff = fits.open('/home/utopea/elliot/20190418T073052_Bias.fits')
+        guidebiasff = fits.open(self.dirpath+'/data/GuiderBias.fits')
         self.guidebias = guidebiasff[0].data
         self.guidebias = self.guidebias.astype('float')
 
@@ -268,7 +270,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         '''Loads the saved guider offset values'''
 
         # Opens the file and reads the variable and value into a dictionary
-        f = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','r')
+        f = open(self.dirpath+'/data/guideroffsets.txt','r')
         valuesdict = {}
         for line in f:
             spl = line.split()
@@ -282,7 +284,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         '''Loads the targets defined in the target list file. The targets are loaded
         as buttons in the Target List Menu'''
 
-        tarlistfile = '/home/utopea/WIFIS-Team/wifiscontrol/targetlist.txt'
+        tarlistfile = self.dirpath+'/data/targetlist.txt'
         self.tars = np.loadtxt(tarlistfile, dtype=str)
     
         if self.targetsloaded:
@@ -317,7 +319,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guidevals['GuideDEC'] = self.GuideDEC.text()
 
         # Save the new offsets to file. 
-        fl = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','w')
+        fl = open(self.dirpath+'/data/guideroffsets.txt','w')
         for key, val in self.guidevals.iteritems():
             fl.write('%s\t\t%s\n' % (key, val))
         fl.close()
@@ -1046,13 +1048,13 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.CCDTemp.setText(ccdtemp)
 
     def checkcentering(self):
-        fieldrecObj = get_src_pos.get_src_pos('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst',\
-                '/home/utopea/WIFIS-Team/wifiscontrol/obs.lst')
+        fieldrecObj = get_src_pos.get_src_pos(self.dirpath+'/data/wave.lst',self.dirpath+'/data/flat.lst',\
+                self.dirpath+'/data/obs.lst')
         fieldrecObj.plotField.connect(self._handleFRPlotting)
         fieldrecObj.doFieldRec()
 
     def arcWidthMap(self):
-        arcwidthObj = get_src_pos.arc_width_map('/home/utopea/WIFIS-Team/wifiscontrol/wave.lst','/home/utopea/WIFIS-Team/wifiscontrol/flat.lst')
+        arcwidthObj = get_src_pos.arc_width_map(self.dirpath+'/data/wave.lst',self.dirpath+'/data/flat.lst')
         arcwidthObj.plotField.connect(self._handleArcPlotting)
         arcwidthObj.get_arc_map()
 
@@ -1294,7 +1296,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def readLabels(self):
 
         try:
-            f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','r')
+            f = open(self.dirpath+'/data/textlabels.txt','r')
             values = []
             for l in f:
                 values.append(l.split('\t')[-1][:-1])
@@ -1722,7 +1724,7 @@ class UpdateLabels(QThread):
         self.isrunning = False
 
     def printLabels(self):
-        f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','w')
+        f = open(self.dirpath+'/data/textlabels.txt','w')
         #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
         textlabelnames = ['Target','RAObj','DECObj','RANod','DECNod','FocStep','FiltStep','GratStep']
         for i in range(len(textlabelnames)):

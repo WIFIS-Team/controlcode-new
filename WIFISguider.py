@@ -30,6 +30,7 @@ from astropy.visualization import (PercentileInterval,\
                                 LinearStretch, ImageNormalize)
 
 plate_scale = 0.29125
+homedir = os.path.dirname(os.path.realpath(__file__))
 
 try:
     import FLI
@@ -593,7 +594,6 @@ class FocusCamera(QThread):
         
         self.updateText.emit("### FINISHED FOCUSING")
 
-
 class RunGuiding(QThread):
 
     updateText = pyqtSignal(str)
@@ -703,7 +703,7 @@ class RunGuiding(QThread):
         fieldinfo = guidingstuff[7]
         try:
             if (fieldinfo != None) and (guidingstuff[3] != None):
-                fieldinfofl = np.savetxt('/home/utopea/elliot/guidefield/'+time.strftime('%Y%m%dT%H%M%S')+\
+                fieldinfofl = np.savetxt(homedir+'/data/guidefield/'+time.strftime('%Y%m%dT%H%M%S')+\
                         '_'+self.guideTargetText+'.txt', np.transpose(fieldinfo))
         except Exception as e:
             print e
@@ -763,8 +763,8 @@ class RunGuiding(QThread):
             self.sky=False
 
     def checkGuideVariable(self):
-        gfl = '/home/utopea/elliot/guidefiles/'+time.strftime('%Y%m%d')+'_'+self.guideTargetText+'.txt'
-        guidefls = glob('/home/utopea/elliot/guidefiles/*.txt')
+        gfl = homedir+'/data/guidefiles/'+time.strftime('%Y%m%d')+'_'+self.guideTargetText+'.txt'
+        guidefls = glob(homedir+'/data/guidefiles/*.txt')
         if self.guideTargetText == '':
             return '', False
         if (gfl in guidefls) and (self.overguidestar.isChecked()):
@@ -1089,7 +1089,7 @@ class RunGuiding(QThread):
                 self.updateText.emit("\n")
 
         #Record for guiding checking later
-        f = open('/home/utopea/elliot/guidinglog/'+time.strftime('%Y%m%dT%H')+'.txt', 'a')
+        f = open(homedir+'/log/guidinglog/'+time.strftime('%Y%m%dT%H')+'.txt', 'a')
         f.write("%f\t%f\n" % (radec[1],radec[0]))
         f.close()
 

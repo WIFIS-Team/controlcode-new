@@ -10,13 +10,15 @@ from sys import exit
 from scipy.stats import mode
 from numpy.linalg import inv
 import traceback
-import time
+import time, os
 
 from PyQt5.QtCore import QThread, QCoreApplication, QTimer, pyqtSlot, pyqtSignal
 
 plate_scale = 0.29125
 #flength = 9206.678
 flength = 9207.218
+
+homedir = os.path.dirname(os.path.realpath(__file__))
 
 class Formatter(object):
     def __init__(self, im):
@@ -27,7 +29,7 @@ class Formatter(object):
 
 def read_defaults():
 
-    f = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','r')
+    f = open(homedir+'/data/guideroffsets.txt','r')
     #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
     valuesdict = {}
     for line in f:
@@ -580,7 +582,7 @@ def sdss(radeg,decdeg,fovam): # RA/Dec in decimal degrees/J2000.0 FOV in arc min
     return name,rad,ded,zmag
 
 def load_img(fl, head, telSock):
-    biasff = fits.open('/home/utopea/elliot/20190418T073052_Bias.fits')
+    biasff = fits.open(homedir+'/data/GuiderBias.fits')
     bias = biasff[0].data
     bias = bias.astype('float')
 

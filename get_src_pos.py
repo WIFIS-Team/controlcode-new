@@ -29,7 +29,8 @@ class get_src_pos(QObject):
         self.waveLstFile = waveLstFile
         self.flatLstFile = flatLstFile
         self.obsLstFile = obsLstFile
-        self.varFile = '/home/utopea/WIFIS-Team/wifiscontrol/wifisConfig.inp'
+        self.dirpath = os.path.dirname(os.path.realpath(__file__))
+        self.varFile = self.dirpath+'/data/wifisConfig.inp'
 
     def doFieldRec(self):
         waveLst = wifisIO.readAsciiList(self.waveLstFile)
@@ -60,7 +61,8 @@ class arc_width_map(QObject):
 
         self.waveLstFile = waveLstFile
         self.flatLstFile = flatLstFile
-        self.varFile = '/home/utopea/WIFIS-Team/wifiscontrol/wifisConfig.inp'
+        self.dirpath = os.path.dirname(os.path.realpath(__file__))
+        self.varFile = self.dirpath+'/data/wifisConfig.inp'
 
     def get_arc_map(self):
 
