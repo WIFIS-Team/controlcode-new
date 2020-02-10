@@ -43,18 +43,6 @@ class Formatter(object):
         z = self.im.get_array()[int(y), int(x)]
         return 'x={:.01f}, y={:.01f}, z={:.01f}'.format(x, y, z)
 
-def read_defaults():
-
-    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
-    #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
-    valuesdict = {}
-    for line in f:
-        spl = line.split()
-        valuesdict[spl[0]] = spl[1]
-    f.close()
-
-    return valuesdict
-
 ###########################################################
 def load_FLIDevices():
     '''Loads the FLI devices into variables and sets the 
@@ -185,7 +173,7 @@ class WIFISGuider(QObject):
         currentcoord = self.getSkyCoord()
         decdeg = currentcoord.dec.deg
 
-        guidevals = read_defaults()
+        guidevals = WA.read_defaults()
         guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
 
         offsets,x_rot,y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
@@ -252,7 +240,7 @@ class WIFISGuider(QObject):
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
 
-            guidevals = read_defaults()
+            guidevals = WA.read_defaults()
             guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
             print guideroffsets
 
@@ -272,7 +260,7 @@ class WIFISGuider(QObject):
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
 
-            guidevals = read_defaults()
+            guidevals = WA.read_defaults()
             guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
 
             offsets = WA.get_rotation_solution_offset(float(self.rotangle.text()), guideroffsets[:2], decdeg)
@@ -429,7 +417,7 @@ class WIFISGuider(QObject):
             currentcoord = self.getSkyCoord()
             decdeg = currentcoord.dec.deg
 
-            guidevals = read_defaults()
+            guidevals = WA.read_defaults()
             guideroffsets = [float(guidevals['GuideRA']), float(guidevals['GuideDEC']), decdeg]
                 
             offsets, x_rot, y_rot = WG.get_rotation_solution(float(self.rotangle.text()), guideroffsets)
@@ -626,7 +614,7 @@ class RunGuiding(QThread):
         self.rotangle = float(rotangle.text())
         self.overguidestar = overguidestar
         self.coords = coords
-        self.guidevals = read_defaults()
+        self.guidevals = WA.read_defaults()
 
     def __del__(self):
         self.wait()

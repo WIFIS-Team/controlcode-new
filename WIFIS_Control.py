@@ -113,6 +113,8 @@ class DoublePlotWindow(QDialog):
         else:
             event.accept()
 
+#########################################################
+################## MAIN GUI PROGRAM #####################
 class WIFISUI(QMainWindow, Ui_MainWindow):
     '''WIFIS Control Software Primary GUI Program.
     '''
@@ -188,13 +190,12 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.MotorsEnabledLabel.setStyleSheet("QLabel {background-color: red;}")
 
         # Iniializae telemetry label update thread
-        if self.telescope:
-            updatevals = [self.RAObj, self.DECObj]
-            self.labelsThread = UpdateLabels(self.guider, self.guideron, updatevals,\
-                    self.EnableForceIIS, self.ForceIISEntry, self.textlabels)
-            self.labelsThread.updateText.connect(self._handleUpdateLabels)
-            self.labelsThread.start()
-            self.updateon = True
+        updatevals = [self.RAObj, self.DECObj]
+        self.labelsThread = UpdateLabels(self.guider, self.guideron, updatevals,\
+                self.EnableForceIIS, self.ForceIISEntry, self.textlabels, self.telescope)
+        self.labelsThread.updateText.connect(self._handleUpdateLabels)
+        self.labelsThread.start()
+        self.updateon = True
         
         # Defining settings for exposure progress bar
         self.ExpProgressBar.setMinimum(0)
@@ -262,7 +263,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.guidebias = self.guidebias.astype('float')
 
     def read_defaults(self):
-        '''Loads the default or saved values for some of the GUI entry forms'''
+        '''Loads the saved guider offset values'''
 
         # Opens the file and reads the variable and value into a dictionary
         f = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','r')
@@ -291,7 +292,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             act = self.menuTarget_List.addAction(self.tars[i][0])
             act.triggered.connect(lambda checked, val=i: self.enterTargetInfo(val))
             self.taractions.append(act)
-
 
         self.targetsloaded = True
 
@@ -345,36 +345,41 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             print e
             self._handleOutputTextUpdate("### can't connect to guider -- something failed")
             #self.guideron = False
-
         
-    def connectGuiderAction(self):
+    def connectGuiderAction(self, on=True):
         '''Function that connects to the WIFIS Guider Camera'''
 
-        #Connecting to Guider
-        try:
-            #Guider Control and Threads
-            self.guider = gf.WIFISGuider(self.guide_widgets)
-            self.guider.updateText.connect(self._handleGuidingTextUpdate)
-            self.guider.plotSignal.connect(self._handleGuidePlotting)
-            self.guider.astrometryCalc.connect(self._handleAstrometryCalc)
-            self.guideron = True
-        except:
-            print "### can't connect to guider -- something failed"
-            self._handleOutputTextUpdate("### can't connect to guider -- something failed")
+        if on:
+            #Connecting to Guider
+            try:
+                #Guider Control and Threads
+                self.guider = gf.WIFISGuider(self.guide_widgets)
+                self.guider.updateText.connect(self._handleGuidingTextUpdate)
+                self.guider.plotSignal.connect(self._handleGuidePlotting)
+                self.guider.astrometryCalc.connect(self._handleAstrometryCalc)
+                self.guideron = True
+            except:
+                print "### can't connect to guider -- something failed"
+                self._handleOutputTextUpdate("### can't connect to guider -- something failed")
 
-            self.guideron = False
+                self.guideron = False
 
-        if not self.guider.guiderready:
-            print "### Can't connect to one or all of the guider components"
-            print "FOC: ",self.guider.foc
-            print "CAM: ",self.guider.cam
-            print "FLT: ",self.guider.flt
+            if not self.guider.guiderready:
+                print "### Can't connect to one or all of the guider components"
+                print "FOC: ",self.guider.foc
+                print "CAM: ",self.guider.cam
+                print "FLT: ",self.guider.flt
+                self.guideron = False
+                self.guiderToggle(False)
+            else:
+                self.guiderToggle(True)
+                self.guiderSwitch()
+                print "### Connected to Guider"
+        else:
+            #Disconnecting from Guider
+            print "### Disconnecting from Guider"
             self.guideron = False
             self.guiderToggle(False)
-        else:
-            self.guiderToggle(True)
-            self.guiderSwitch()
-            print "### Connected to Guider"
 
     def guiderSwitch(self):
         '''Connects all the guider elements to the proper functions'''
@@ -429,32 +434,37 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.StopGuidingButton.setEnabled(en)
         self.doAstrometryButton.setEnabled(en)
 
-    def connectCalibAction(self):
-        if self.poweron:
-            try:
-                #Calibration Control
-                self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, self.caliblabels)
-                self.calibon = True
+    def connectCalibAction(self, on=True):
+        if on:
+            if self.poweron:
+                try:
+                    #Calibration Control
+                    self.calibrationcontrol = CalibrationControl(self.switch1, self.switch2, self.caliblabels)
+                    self.calibon = True
 
-                self.calibToggle(True)
-                self.calibrationcontrol.checkStatus1()
-                self.calibrationcontrol.checkStatus2()
+                    self.calibToggle(True)
+                    self.calibrationcontrol.checkStatus1()
+                    self.calibrationcontrol.checkStatus2()
 
-                self.calibSwitch()
-                print "### Connected to Calibration Unit"
+                    self.calibSwitch()
+                    print "### Connected to Calibration Unit"
 
-            except Exception as e:
-                print "### Can't connect to Calibraiton Unit -- Something Failed"
-                print e
+                except Exception as e:
+                    print "### Can't connect to Calibraiton Unit -- Something Failed"
+                    print e
+                    self.calibon = False
+                    self.calibrationcontrol = None
+                    self.calibToggle(False)
+                    
+            else:
+                print "### Can't connect to Calibraiton Unit -- No Power Connection"
                 self.calibon = False
                 self.calibrationcontrol = None
-                self.calibToggle(False)
-                
-        else:
-            print "### Can't connect to Calibraiton Unit -- No Power Connection"
-            self.calibon = False
-            self.calibrationcontrol = None
 
+                self.calibToggle(False)
+        else:
+            print "### Disconnecting to Calibration Unit"
+            self.calibon = False
             self.calibToggle(False)
 
     def calibSwitch(self):
@@ -490,45 +500,50 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.ExpTypeSelect.model().item(3).setEnabled(val)
         self.ExpTypeSelect.model().item(4).setEnabled(val)
 
-    def connectPowerAction(self):
-        try:
-            #Power Control
-            self.powercontrol = pc.PowerControl(self.power_widgets)
-            self.switch1 = self.powercontrol.switch1
-            self.switch2 = self.powercontrol.switch2
-            self.poweron = True
-            self.ConnectPower.setText('Power - O')
+    def connectPowerAction(self, on=True):
+        if on:
+            try:
+                #Power Control
+                self.powercontrol = pc.PowerControl(self.power_widgets)
+                self.switch1 = self.powercontrol.switch1
+                self.switch2 = self.powercontrol.switch2
+                self.poweron = True
+                self.ConnectPower.setText('Power - O')
 
-            self.powercontrol.powerStatusUpdate()
-            if self.switch1.verify() == True:
-                val1 = True
-            else:
-                val1 = False
+                self.powercontrol.powerStatusUpdate()
+                if self.switch1.verify() == True:
+                    val1 = True
+                else:
+                    val1 = False
 
-            if self.switch2.verify() == True:
-                val2 = True
-            else:
-                val2 = False
+                if self.switch2.verify() == True:
+                    val2 = True
+                else:
+                    val2 = False
 
-            self.powerToggle(True, val1, val2)
+                self.powerToggle(True, val1, val2)
 
-            
-            self.powerSwitch()
-            if (val1 == False) and (val2 == False):
+                self.powerSwitch()
+                if (val1 == False) and (val2 == False):
+                    print "### Can't connect to Power Controllers -- Something Failed"
+                elif (val1 == False) and (val2 == True):
+                    print "### Can't connect to Power Controller 1 -- Something Failed"
+                elif (val1 == True) and (val2 == False):
+                    print "### Can't connect to Power Controller 2 -- Something Failed"
+                else:
+                    print "###Connected to Power Controllers"
+
+            except Exception as e:
                 print "### Can't connect to Power Controllers -- Something Failed"
-            elif (val1 == False) and (val2 == True):
-                print "### Can't connect to Power Controller 1 -- Something Failed"
-            elif (val1 == True) and (val2 == False):
-                print "### Can't connect to Power Controller 2 -- Something Failed"
-            else:
-                print "###Connected to Power Controllers"
-
-        except Exception as e:
-            print "### Can't connect to Power Controllers -- Something Failed"
-            print e
-            print traceback.print_exc()
+                print e
+                print traceback.print_exc()
+                self.poweron = False
+                self.ConnectPower.setText('Power - X')
+                self.powerToggle(False, False, False)
+        else:
+            #Disconnecting from Power
+            print "### Disconnecting from Power"
             self.poweron = False
-            self.ConnectPower.setText('Power - X')
             self.powerToggle(False, False, False)
 
     def powerSwitch(self):
@@ -551,7 +566,6 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.Power26.clicked.connect(self.powercontrol.toggle_plug6)
             self.Power27.clicked.connect(self.powercontrol.toggle_plug7)
             self.Power28.clicked.connect(self.powercontrol.toggle_plug8)
-
 
     def powerToggle(self, status, switch1, switch2):
         if status: 
@@ -626,33 +640,38 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             self.guiderToggle(False)
             self.calibToggle(False)
     
-    def connectTelescopeAction(self):
-        #Connect to telescope
-        try:
-            self.telsock = wg.connect_to_telescope()
-            telemDict = wg.get_telemetry(self.telsock, verbose=False)
-            if self.EnableForceIIS.isChecked():
-                if self.ForceIISEntry.text() != '':
-                    try:
-                        float(self.ForceIISEntry.text())
-                        self.IISLabel.setText(self.ForceIISEntry.text())
-                    except:
-                        self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
-                        self.IISLabel.setText(telemDict['IIS']) 
-            else:
-                #Set IIS early because certain functions rely on this value
-                self.IISLabel.setText(telemDict['IIS']) 
+    def connectTelescopeAction(self, on = True):
+        if on:
+            #Connect to telescope
+            try:
+                self.telsock = wg.connect_to_telescope()
+                telemDict = wg.get_telemetry(self.telsock, verbose=False)
+                if self.EnableForceIIS.isChecked():
+                    if self.ForceIISEntry.text() != '':
+                        try:
+                            float(self.ForceIISEntry.text())
+                            self.IISLabel.setText(self.ForceIISEntry.text())
+                        except:
+                            self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
+                            self.IISLabel.setText(telemDict['IIS']) 
+                else:
+                    #Set IIS early because certain functions rely on this value
+                    self.IISLabel.setText(telemDict['IIS']) 
 
-            self.telescope = True
+                self.telescope = True
 
-            self.telescopeToggle(True)
+                self.telescopeToggle(True)
 
-            print "### Connected to Telescope"
+                print "### Connected to Telescope"
 
-        except Exception as e:
-            print "### Can't connect to telescope -- Something Failed"
-            print e
-            print traceback.print_exc()
+            except Exception as e:
+                print "### Can't connect to telescope -- Something Failed"
+                print e
+                print traceback.print_exc()
+                self.telescope = False
+                self.telescopeToggle(False)
+        else:
+            print "### Disconnecting from telescope"
             self.telescope = False
             self.telescopeToggle(False)
 
@@ -682,35 +701,41 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
         self.SetNextButton.setEnabled(val)
         self.MoveNextButton.setEnabled(val)
 
-    def connectH2RGAction(self):
-        #Connecting to Detector
-        if self.poweron:
-            try:
-                #Detector Control and Threads
-                self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2,\
-                        self.calibrationcontrol)
-                self.scidet.updateText.connect(self._handleOutputTextUpdate)
-                self.scidet.plotSignal.connect(self._handlePlotting)
+    def connectH2RGAction(self, on = True):
 
-                if self.scidet.scideton:
-                    self.scideton = True
-                    self.H2RGToggle(True)
-                    self.scidetSwitch()
-                    print "### Connected to Science Array"
-                else:
+        if on:
+            #Connecting to Detector
+            if self.poweron:
+                try:
+                    #Detector Control and Threads
+                    self.scidet = wd.h2rg(self.DetectorStatusLabel, self.switch1, self.switch2,\
+                            self.calibrationcontrol)
+                    self.scidet.updateText.connect(self._handleOutputTextUpdate)
+                    self.scidet.plotSignal.connect(self._handlePlotting)
+
+                    if self.scidet.scideton:
+                        self.scideton = True
+                        self.H2RGToggle(True)
+                        self.scidetSwitch()
+                        print "### Connected to Science Array"
+                    else:
+                        self.scideton = False
+                        print "### Can't Connect to Science Array -- Something Failed"
+                        print e
+                        print traceback.print_exc()
+                        self.H2RGToggle(False)
+                except Exception as e:
                     self.scideton = False
                     print "### Can't Connect to Science Array -- Something Failed"
                     print e
                     print traceback.print_exc()
                     self.H2RGToggle(False)
-            except Exception as e:
+            else:
+                print "### Can't Connect to Science Array -- No Power Connection"
                 self.scideton = False
-                print "### Can't Connect to Science Array -- Something Failed"
-                print e
-                print traceback.print_exc()
                 self.H2RGToggle(False)
         else:
-            print "### Can't Connect to Science Array -- No Power Connection"
+            print "### Disconnecting from H2RG"
             self.scideton = False
             self.H2RGToggle(False)
 
@@ -970,27 +995,47 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
     def _handleUpdateLabels(self, labelupdates):
         telemDict,steppos,ccdtemp = labelupdates
 
-        self.head = telemDict
-        DECText = telemDict['DEC']
-        RAText = telemDict['RA']
+        if telemDict != []:
+            self.head = telemDict
+            DECText = telemDict['DEC']
+            RAText = telemDict['RA']
 
-        self.RALabel.setText(RAText[0:2]+':'+RAText[2:4]+':'+RAText[4:])
-        self.DECLabel.setText(DECText[0:3]+':'+DECText[3:5]+':'+DECText[5:])
-        self.AZLabel.setText(telemDict['AZ'])
-        self.ELLabel.setText(telemDict['EL'])
-        #self.IISLabel.setText(telemDict['IIS'])
-        if self.EnableForceIIS.isChecked():
-            if self.ForceIISEntry.text() != '':
-                try:
-                    float(self.ForceIISEntry.text())
-                    self.IISLabel.setText(self.ForceIISEntry.text())
-                except:
-                    self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
-                    self.IISLabel.setText(telemDict['IIS']) 
+            self.RALabel.setText(RAText[0:2]+':'+RAText[2:4]+':'+RAText[4:])
+            self.DECLabel.setText(DECText[0:3]+':'+DECText[3:5]+':'+DECText[5:])
+            self.AZLabel.setText(telemDict['AZ'])
+            self.ELLabel.setText(telemDict['EL'])
+            self.HALabel.setText(telemDict['HA'])
+            self.IISLabel.setText(telemDict['IIS'])
+            #if self.EnableForceIIS.isChecked():
+            #    if self.ForceIISEntry.text() != '':
+            #        try:
+            #            float(self.ForceIISEntry.text())
+            #            self.IISLabel.setText(self.ForceIISEntry.text())
+            #        except:
+            #            self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
+            #            self.IISLabel.setText(telemDict['IIS']) 
+            #else:
+            #    #Set IIS early because certain functions rely on this value
+            #    self.IISLabel.setText(telemDict['IIS']) 
         else:
-            #Set IIS early because certain functions rely on this value
-            self.IISLabel.setText(telemDict['IIS']) 
-        self.HALabel.setText(telemDict['HA'])
+            self.RALabel.setText('N/A')
+            self.DECLabel.setText('N/A')
+            self.AZLabel.setText('N/A')
+            self.ELLabel.setText('N/A')
+            self.HALabel.setText('N/A')
+            #self.IISLabel.setText(telemDict['IIS'])
+            if self.EnableForceIIS.isChecked():
+                if self.ForceIISEntry.text() != '':
+                    try:
+                        float(self.ForceIISEntry.text())
+                        self.IISLabel.setText(self.ForceIISEntry.text())
+                    except:
+                        self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
+                        self.IISLabel.setText('N/A') 
+            else:
+                self.IISLabel.setText('N/A') 
+
+
         self.FocPosition.setText(steppos)
         self.CCDTemp.setText(ccdtemp)
 
@@ -1484,6 +1529,7 @@ class NoddingExposure(QThread):
         self.RAObj = targetRA
         self.DECObj = targetDEC
         self.nreadssec = int(self.nreads.text())
+        self.textlabels = [objname, targetRA, targetDEC, nodra, noddec]
 
         self.stopthread = False
 
@@ -1636,7 +1682,7 @@ class UpdateLabels(QThread):
     updateText = pyqtSignal(list)
 
     def __init__(self, guider, guideron, updatevals, EnableForceIIS,\
-            ForceIISEntry, textlabels):
+            ForceIISEntry, textlabels, telescope):
         QThread.__init__(self)
 
         self.guider = guider
@@ -1647,6 +1693,7 @@ class UpdateLabels(QThread):
         self.EnableForceIIS = EnableForceIIS
         self.ForceIISEntry = ForceIISEntry
         self.textlabels = textlabels
+        self.telescope = telescope
 
     def __del__(self):
         self.wait()
@@ -1661,19 +1708,24 @@ class UpdateLabels(QThread):
             
             self.isrunning = True
             try:
-                telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
-                if self.EnableForceIIS.isChecked():
-                    if self.ForceIISEntry.text() != '':
-                        try:
-                            float(self.ForceIISEntry.text())
-                            telemDict['IIS'] = self.ForceIISEntry.text()
-                        except:
-                            self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
+                if self.telescope:
 
-                telemDict['RAObj'] = self.RAObj.text()
-                telemDict['DECObj'] = self.DECObj.text()
+                    telemDict = wg.get_telemetry(self.guider.telSock, verbose=False)
 
-                wg.write_telemetry(telemDict)
+                    if self.EnableForceIIS.isChecked():
+                        if self.ForceIISEntry.text() != '':
+                            try:
+                                float(self.ForceIISEntry.text())
+                                telemDict['IIS'] = self.ForceIISEntry.text()
+                            except:
+                                self._handleOutputTextUpdate('### FORCED IIS NOT A FLOAT')
+
+                    telemDict['RAObj'] = self.RAObj.text()
+                    telemDict['DECObj'] = self.DECObj.text()
+
+                    wg.write_telemetry(telemDict)
+                else:
+                    telemDict = [] 
 
                 if self.guideron:
                     steppos = str(self.guider.foc.get_stepper_position())
@@ -1751,9 +1803,9 @@ def main():
 
     try:
         app = QApplication(sys.argv)  # A new instance of QApplication
-        wifis = WIFISUI()                 # We set the form to be our ExampleApp (design)
-        wifis.show()                         # Show the form
-        app.exec_()                         # and execute the app
+        wifis = WIFISUI()             # We set the form to be our ExampleApp (design)
+        wifis.show()                  # Show the form
+        app.exec_()                   # and execute the app
     except Exception as e:
         print e
         print traceback.print_exc()

@@ -30,7 +30,7 @@ buffersize = 1024
 
 def read_gc_defaults():
 
-    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','r')
     #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
     valuesdict = {}
     for line in f:
@@ -39,6 +39,21 @@ def read_gc_defaults():
     f.close()
 
     return valuesdict
+
+def read_labels():
+    textlabels = ['OBJTEXT', 'RAGUI', 'DECGUI', 'RANOD', 'DECNOD']
+    labeldict = {}
+    try:
+        f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','r')
+        values = []
+        for l in f:
+            values.append(l.split('\t')[-1][:-1])
+        for i,label in enumerate(textlabels):
+            labeldict[label] = values[i]
+    except:
+        print "### Old labels were not found"
+
+    return labeldict
  
 class Formatter(object):
     def __init__(self, im):
@@ -179,7 +194,7 @@ class h2rg(QObject):
         
         return(False)
       
-    def writeObsData(self,directory,obsType,sourceName, noweather = False):
+    def writeObsData(self,directory,obsType,sourceName, noweather = False, textlabels = []):
 
         f = open(directory+"/obsinfo.dat","w")
         f.write("Obs Type: "+obsType+"\n")
@@ -187,11 +202,14 @@ class h2rg(QObject):
 
         telemf = open("/home/utopea/WIFIS-Team/wifiscontrol/BokTelemetry.txt","r")
         defaults = read_gc_defaults()
+        #labelsdict = read_labels()
 
         for line in telemf:
             f.write(line)
         f.write('GCRAOff\t'+defaults['GuideRA']+'\n')
         f.write('GCDECOff\t'+defaults['GuideDEC']+'\n')
+        #for label in labelsdict.keys():
+        #    f.write(label+'\t'+labelsdict[label]+'\n')
 
         telemf.close()
 
@@ -258,7 +276,7 @@ class h2rg(QObject):
 
         self.plotImage("CDS",1,finalPath+"/Result/CDSResult.fits", None)
 
-    def exposeRamp(self,nreads,nramps,obsType,sourceName, calib=False):
+    def exposeRamp(self,nreads,nramps,obsType,sourceName, calib=False, textlabels = []):
         if sourceName != "":
             self.printTxt("ACQUIRING RAMP FOR "+sourceName)
         else:
@@ -378,7 +396,7 @@ class h2rgExposeThread(QThread):
     endProgBar = pyqtSignal()
 
     def __init__(self,detector,exposureType,nreads=2,nramps=1, \
-            weatherdown= False, sourceName=""):
+            weatherdown= False, sourceName="", labelvalues = []):
         QThread.__init__(self)
 
         self.detector = detector
@@ -386,6 +404,7 @@ class h2rgExposeThread(QThread):
         self.nreads = nreads
         self.nramps = nramps
         self.sourceName = sourceName
+        self.labelvalues = labelvalues
         
     def __del__(self):
         self.wait()

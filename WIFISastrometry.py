@@ -27,7 +27,7 @@ class Formatter(object):
 
 def read_defaults():
 
-    f = open('/home/utopea/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
+    f = open('/home/utopea/WIFIS-Team/wifiscontrol/guideroffsets.txt','r')
     #f = open('/Users/relliotmeyer/WIFIS-Team/wifiscontrol/defaultvalues.txt','r')
     valuesdict = {}
     for line in f:
