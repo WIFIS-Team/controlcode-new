@@ -156,7 +156,9 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                         self.Power28]
         self.caliblabels = [self.CalibModeButton,self.ObsModeButton,\
                 self.ArclampModeButton,self.ISphereModeButton]
-        self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDecText]
+        self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDecText, \
+                self.FocusStep, self.FilterStep, self.GratingStep]
+        self.infolabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDecText]
         # Update other forms with saved values from the last execution
         self.readLabels()
 
@@ -859,7 +861,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
             return
 
         labelvals = []
-        for l in self.textlabels:
+        for l in self.infolabels:
             labelvals.append(l.text())
 
         self.scidetexpose = wd.h2rgExposeThread(self.scidet, self.ExpTypeSelect.currentText(),\
@@ -1290,7 +1292,7 @@ class WIFISUI(QMainWindow, Ui_MainWindow):
                             lambda: self.motorcontrol.stepping_operation(s, unit=0x03))
 
     def readLabels(self):
-        #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
+
         try:
             f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','r')
             values = []
@@ -1722,7 +1724,7 @@ class UpdateLabels(QThread):
     def printLabels(self):
         f = open('/home/utopea/WIFIS-Team/wifiscontrol/textlabels.txt','w')
         #self.textlabels = [self.ObjText, self.RAObj, self.DECObj, self.NodRAText, self.NodDECText]
-        textlabelnames = ['Target','RAObj','DECObj','RANod','DECNod']
+        textlabelnames = ['Target','RAObj','DECObj','RANod','DECNod','FocStep','FiltStep','GratStep']
         for i in range(len(textlabelnames)):
             f.write('%s:\t%s\n' % (textlabelnames[i], self.textlabels[i].text()))
 

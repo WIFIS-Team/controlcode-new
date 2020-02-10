@@ -3,3 +3,6 @@ RAObj:	140609.6
 DECObj:	+095343.3
 RANod:	0
 DECNod:	300
+FocStep:	-125
+FiltStep:	20000
+GratStep:	-180

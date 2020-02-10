@@ -210,7 +210,7 @@ class h2rg(QObject):
         f.write('GCRAOff\t'+defaults['GuideRA']+'\n')
         f.write('GCDECOff\t'+defaults['GuideDEC']+'\n')
         if textlabels != []:
-            for i in range(1, len(textlabelnames):
+            for i in range(3, len(textlabelnames)):
                     f.write(textlabelnames[i]+'\t'+textlabels[i]+'\n')
 
         telemf.close()
