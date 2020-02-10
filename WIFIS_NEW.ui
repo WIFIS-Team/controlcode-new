@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>988</width>
-    <height>911</height>
+    <width>1008</width>
+    <height>855</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -425,7 +425,7 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>3</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -3239,7 +3239,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>988</width>
+     <width>1008</width>
      <height>22</height>
     </rect>
    </property>
@@ -3276,9 +3276,21 @@
     <addaction name="LoadTargetsAction"/>
     <addaction name="separator"/>
    </widget>
+   <widget class="QMenu" name="menuDisable">
+    <property name="title">
+     <string>Disable</string>
+    </property>
+    <addaction name="DisableGuider"/>
+    <addaction name="DisableCalibUnit"/>
+    <addaction name="DisableTelescope"/>
+    <addaction name="DisablePower"/>
+    <addaction name="DisableH2RG"/>
+    <addaction name="DisbleMotors"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuInitialie"/>
    <addaction name="menuConnect"/>
+   <addaction name="menuDisable"/>
    <addaction name="menuTarget_List"/>
   </widget>
   <action name="actionConnect">
@@ -3353,6 +3365,36 @@
   <action name="LoadTargetsAction">
    <property name="text">
     <string>Load List</string>
+   </property>
+  </action>
+  <action name="DisableGuider">
+   <property name="text">
+    <string>Guider</string>
+   </property>
+  </action>
+  <action name="DisableCalibUnit">
+   <property name="text">
+    <string>Calib Unit</string>
+   </property>
+  </action>
+  <action name="DisableTelescope">
+   <property name="text">
+    <string>Telescope</string>
+   </property>
+  </action>
+  <action name="DisablePower">
+   <property name="text">
+    <string>Power</string>
+   </property>
+  </action>
+  <action name="DisableH2RG">
+   <property name="text">
+    <string>H2RG</string>
+   </property>
+  </action>
+  <action name="DisbleMotors">
+   <property name="text">
+    <string>Motors</string>
    </property>
   </action>
  </widget>
