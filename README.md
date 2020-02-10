@@ -1,14 +1,16 @@
-# Control Code
+# WIFIS Control GUI
 
-A repository for all scripts related to controlling WIFIS as well as for data handling.
+This module contains both the back and frontend for the WIFIS Control Software.
 
-The control subdirectory should contain all the software which controls various WIFIS components. The data-handling subdirectory should contain all the software that handles the raw WIFIS data.
+The main frontend program is launched with WIFIS\_Control.py
+
+The backend for the different WIFIS components can be found in the WIFIS\*.py scripts.
 
 Contributors:
 
-* Suresh Sivanandam
+* Dr R Elliot Meyer
+* Prof Suresh Sivanandam
 * Mark Ma
-* Elliot Meyer
 * Jason Leung
 * Miranda Jarvis
 
