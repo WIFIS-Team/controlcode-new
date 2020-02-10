@@ -7,3 +7,5 @@ quick_reduction
 exposurecontrol/*.lst
 exposurecontrol/get_arc_width_map.py
 exposurecontrol/get_src_pos.py
+BokTelemetry.txt
+monitor/t_stream.html
